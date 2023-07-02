@@ -22,6 +22,7 @@ public class PieceInfo {
 	Team team;
 	PieceType type;
 	int doublePawnMoveOnMoveNumber = -1;
+	boolean hasMoved = false;
 	public PieceInfo(Team team, PieceType type) {
 		super();
 		this.team = team;

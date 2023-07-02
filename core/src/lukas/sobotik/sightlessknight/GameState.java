@@ -113,12 +113,15 @@ public class GameState implements InputProcessor {
             }
             validMoves.clear();
             selected = null;
+
+            FenUtils fenUtils = new FenUtils(board.pieces, board.whiteKing, board.blackKing, board.lastTo, board.lastMovedDoubleWhitePawn, board.lastMovedDoubleBlackPawn);
+            System.out.println(fenUtils.generateFenFromCurrentPosition());
         } else {
             PieceInfo piece = board.getPiece(tileIdx);
             if (piece == null) return false;
             if (piece.team == currentTurn) {
                 selected = tileIdx;
-                Rules.GetValidMoves(validMoves, tileIdx, piece, board);
+                Rules.getValidMoves(validMoves, tileIdx, piece, board);
             }
         }
 

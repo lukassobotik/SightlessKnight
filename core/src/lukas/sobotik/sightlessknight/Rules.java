@@ -23,43 +23,41 @@ public class Rules {
 
     }
 
-    static void GetValidMoves(ArrayList<IntPoint2D> list, IntPoint2D selection, PieceInfo piece, Board board) {
-        GetValidMoves(list, selection, piece, board, true);
+    static void getValidMoves(ArrayList<IntPoint2D> list, IntPoint2D selection, PieceInfo piece, Board board) {
+        getValidMoves(list, selection, piece, board, true);
     }
-
-    static void GetValidMoves(ArrayList<IntPoint2D> list, IntPoint2D selection, PieceInfo piece, Board board, boolean checkForChecks) {
+    static void getValidMoves(ArrayList<IntPoint2D> list, IntPoint2D selection, PieceInfo piece, Board board, boolean checkForChecks) {
         switch (piece.type) {
             case PAWN:
-                GetValidMovesPawn(list, selection, piece.team, board);
+                getValidMovesPawn(list, selection, piece.team, board);
                 break;
             case BISHOP:
-                GetValidMovesBishop(list, selection, piece.team, board);
+                getValidMovesBishop(list, selection, piece.team, board);
                 break;
             case KNIGHT:
-                GetValidMovesKnight(list, selection, piece.team, board);
+                getValidMovesKnight(list, selection, piece.team, board);
                 break;
             case ROOK:
-                GetValidMovesRook(list, selection, piece.team, board);
+                getValidMovesRook(list, selection, piece.team, board);
                 break;
             case KING:
-                GetValidMovesKing(list, selection, piece.team, board);
+                getValidMovesKing(list, selection, piece.team, board);
                 break;
             case QUEEN:
-                GetValidMovesQueen(list, selection, piece.team, board);
+                getValidMovesQueen(list, selection, piece.team, board);
                 break;
         }
         if (checkForChecks) {
-            CheckForChecks(list, selection, piece.team, board);
+            checkForChecks(list, selection, piece.team, board);
         }
     }
-
-    private static void CheckForChecks(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
+    private static void checkForChecks(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
         for (int i = 0; i < list.size(); i++) {
             IntPoint2D move = list.get(i);
 
             board.tryMovingPieces(selection, move);
 
-            if (CheckForChecks(team, board) == CheckState.CHECK) {
+            if (checkForChecks(team, board) == CheckState.CHECK) {
                 list.remove(i);
                 i--;
             }
@@ -67,14 +65,13 @@ public class Rules {
             board.undoMove();
         }
     }
-
-    public static CheckState CheckForChecks(Team team, Board board) {
+    public static CheckState checkForChecks(Team team, Board board) {
         ArrayList<IntPoint2D> list = new ArrayList<>();
         IntPoint2D king = board.getKing(team);
 
         for (PieceType type : PieceType.values()) {
             PieceInfo info = new PieceInfo(team, type);
-            GetValidMoves(list, king, info, board, false);
+            getValidMoves(list, king, info, board, false);
             for (IntPoint2D move : list) {
                 PieceInfo target = board.getPiece(move);
                 if (target != null && target.type == type) {
@@ -85,8 +82,7 @@ public class Rules {
         }
         return CheckState.NONE;
     }
-
-    private static void GetValidMovesQueen(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
+    private static void getValidMovesQueen(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
         for (int xDir = -1; xDir <= 1; xDir++) {
             for (int yDir = -1; yDir <= 1; yDir++) {
                 if (xDir == 0 && yDir == 0) {
@@ -99,14 +95,11 @@ public class Rules {
 
     private static void pieceDirections(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board, int xDir, int yDir) {
         IntPoint2D move = selection;
-
         do {
             move = move.transpose(xDir, yDir);
         } while (checkIfInBounds(list, team, board, move));
     }
-
-
-    private static void GetValidMovesKnight(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
+    private static void getValidMovesKnight(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
         for (int direction = 0; direction < 2; direction++) {
             for (int longDir = -2; longDir <= 2; longDir += 4) {
                 for (int shortDir = -1; shortDir <= 1; shortDir += 2) {
@@ -122,11 +115,9 @@ public class Rules {
                     }
                 }
             }
-
         }
     }
-
-    private static void GetValidMovesKing(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
+    private static void getValidMovesKing(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
         for (int xDir = -1; xDir <= 1; xDir++) {
             for (int yDir = -1; yDir <= 1; yDir++) {
                 if (xDir == 0 && yDir == 0) {
@@ -139,11 +130,8 @@ public class Rules {
                 }
             }
         }
-
     }
-
-
-    private static void GetValidMovesRook(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
+    private static void getValidMovesRook(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
         for (int direction = 0; direction < 2; direction++) {
             for (int direction2 = -1; direction2 <= 1; direction2 += 2) {
                 IntPoint2D move = selection;
@@ -158,7 +146,6 @@ public class Rules {
             }
         }
     }
-
     private static boolean checkIfInBounds(ArrayList<IntPoint2D> list, Team team, Board board, IntPoint2D move) {
         if (!board.isInBounds(move)) {
             return false;
@@ -178,7 +165,7 @@ public class Rules {
     }
 
 
-    private static void GetValidMovesBishop(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
+    private static void getValidMovesBishop(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
         for (int xDir = -1; xDir <= 1; xDir += 2) {
             for (int yDir = -1; yDir <= 1; yDir += 2) {
                 pieceDirections(list, selection, team, board, xDir, yDir);
@@ -187,8 +174,7 @@ public class Rules {
     }
 
 
-    public static void GetValidMovesPawn(ArrayList<IntPoint2D> list, IntPoint2D point, Team team, Board board) {
-        System.out.println("-----------------------");
+    public static void getValidMovesPawn(ArrayList<IntPoint2D> list, IntPoint2D point, Team team, Board board) {
         int forwardDirection = (team == Team.BLACK) ? 1 : -1;
         IntPoint2D forwardPoint = new IntPoint2D(point.getX(), point.getY() + forwardDirection);
         IntPoint2D doubleForwardPoint = new IntPoint2D(point.getX(), point.getY() + 2 * forwardDirection);
@@ -209,12 +195,8 @@ public class Rules {
         IntPoint2D leftCapture = new IntPoint2D(point.getX() - 1, point.getY() + forwardDirection);
         IntPoint2D rightCapture = new IntPoint2D(point.getX() + 1, point.getY() + forwardDirection);
 
-        System.out.println("rightCapture cords: " + rightCapture.getX() + ":" + rightCapture.getY());
-        System.out.println("leftCapture cords: " + leftCapture.getX() + ":" + leftCapture.getY());
-
         if (board.isInBounds(leftCapture)) {
             PieceInfo leftCapturePiece = board.getPiece(leftCapture);
-
             if (board.lastMovedDoubleWhitePawn == null || board.lastMovedDoubleBlackPawn == null) {
                 return;
             }
@@ -227,7 +209,6 @@ public class Rules {
 
         if (board.isInBounds(rightCapture)) {
             PieceInfo rightCapturePiece = board.getPiece(rightCapture);
-
             if (board.lastMovedDoubleWhitePawn == null || board.lastMovedDoubleBlackPawn == null) {
                 return;
             }
@@ -252,20 +233,6 @@ public class Rules {
     }
 
     private static void checkEnPassant(ArrayList<IntPoint2D> list, Team team, Board board, IntPoint2D capture, PieceInfo capturePiece, IntPoint2D point) {
-//        IntPoint2D lastMovedDoublePawn = team == Team.WHITE ? board.lastMovedDoubleBlackPawn : board.lastMovedDoubleWhitePawn;
-//        boolean lastMovedDoublePawnEqualsLastMove = team == Team.WHITE ? ((leftCapture.getX() == board.lastMovedDoubleBlackPawn.getX()) && (leftCapture.getY() == board.lastMovedDoubleBlackPawn.getY())) : ((leftCapture.getX() == board.lastMovedDoubleWhitePawn.getX()) && (leftCapture.getY() == board.lastMovedDoubleWhitePawn.getY()));
-//
-//        System.out.println("Capture: " + leftCapture.getX() + " " + leftCapture.getY() + " " + leftCapturePiece);
-//        System.out.println("lastMovedDoublePawn: " + lastMovedDoublePawn.getX() + " " + lastMovedDoublePawn.getY());
-//        System.out.println("lastMovedDoublePawn: " + (board.lastMovedDoubleWhitePawn != null ? board.lastMovedDoubleWhitePawn.getX() : "null") + ":" + (board.lastMovedDoubleWhitePawn != null ? board.lastMovedDoubleWhitePawn.getY() : "null") + " " + (board.lastMovedDoubleBlackPawn != null ? board.lastMovedDoubleBlackPawn.getX() : "null") + ":" + (board.lastMovedDoubleBlackPawn != null ? board.lastMovedDoubleBlackPawn.getY() : "null"));
-//        System.out.println(lastMovedDoublePawnEqualsLastMove);
-//
-//        if (leftCapturePiece != null && leftCapturePiece.team != team) {
-//            list.add(leftCapture);
-//        } else if (leftCapturePiece == null && ((lastMovedDoublePawn.getX() == leftCapture.getX()) && (lastMovedDoublePawn.getY() == leftCapture.getY()))) { // Check for en passant left capture
-//            list.add(leftCapture);
-//        }
-
         IntPoint2D leftPoint = new IntPoint2D(point.getX() - 1, point.getY());
         IntPoint2D rightPoint = new IntPoint2D(point.getX() + 1, point.getY());
 

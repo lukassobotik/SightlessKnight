@@ -1,6 +1,8 @@
 package lukas.sobotik.sightlessknight;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -28,6 +30,7 @@ public class Board {
     PieceInfo lastRemoved;
     IntPoint2D lastMovedDoubleWhitePawn;
     IntPoint2D lastMovedDoubleBlackPawn;
+    FenUtils fenUtils;
 
     public Board(int size, TextureAtlas pieceAtlas) {
         this.size = size;
@@ -52,38 +55,14 @@ public class Board {
             }
         }
 
-        pieces = new PieceInfo[8][8];
-
-        pieces[0][0] = new PieceInfo(Team.BLACK, PieceType.ROOK);
-        pieces[1][0] = new PieceInfo(Team.BLACK, PieceType.KNIGHT);
-        pieces[2][0] = new PieceInfo(Team.BLACK, PieceType.BISHOP);
-        pieces[3][0] = new PieceInfo(Team.BLACK, PieceType.KING);
-        pieces[4][0] = new PieceInfo(Team.BLACK, PieceType.QUEEN);
-        pieces[5][0] = new PieceInfo(Team.BLACK, PieceType.BISHOP);
-        pieces[6][0] = new PieceInfo(Team.BLACK, PieceType.KNIGHT);
-        pieces[7][0] = new PieceInfo(Team.BLACK, PieceType.ROOK);
-        for (int i = 0; i < 8; i++) {
-            pieces[i][1] = new PieceInfo(Team.BLACK, PieceType.PAWN);
-        }
-
-        pieces[0][7] = new PieceInfo(Team.WHITE, PieceType.ROOK);
-        pieces[1][7] = new PieceInfo(Team.WHITE, PieceType.KNIGHT);
-        pieces[2][7] = new PieceInfo(Team.WHITE, PieceType.BISHOP);
-        pieces[3][7] = new PieceInfo(Team.WHITE, PieceType.KING);
-        pieces[4][7] = new PieceInfo(Team.WHITE, PieceType.QUEEN);
-        pieces[5][7] = new PieceInfo(Team.WHITE, PieceType.BISHOP);
-        pieces[6][7] = new PieceInfo(Team.WHITE, PieceType.KNIGHT);
-        pieces[7][7] = new PieceInfo(Team.WHITE, PieceType.ROOK);
-        for (int i = 0; i < 8; i++) {
-            pieces[i][6] = new PieceInfo(Team.WHITE, PieceType.PAWN);
-        }
-
         whiteKing = new IntPoint2D(3, 7);
         blackKing = new IntPoint2D(3, 0);
 
+        fenUtils = new FenUtils(pieces, whiteKing, blackKing, lastTo, lastMovedDoubleWhitePawn, lastMovedDoubleBlackPawn);
+        pieces = fenUtils.generatePositionFromFEN("RNBKQBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbkqbnr w kqKQ - 1 0");
+
         generateTexture();
     }
-
     private void generateTexture() {
         int nextPow2 = Integer.highestOneBit(size - 1) << 1;
 
@@ -113,13 +92,13 @@ public class Board {
     public void draw(SpriteBatch batch) {
         batch.draw(boardTextureRegion, 0, 0);
 
-        for (int c = 0; c < 8; c++) {
-            for (int r = 0; r < 8; r++) {
-                drawPiece(batch, c, r);
+        for (int col = 0; col < pieces.length; col++) {
+            PieceInfo[] infos = pieces[col];
+            for (int row = 0; row < infos.length; row++) {
+                drawPiece(batch, col, row);
             }
         }
     }
-
     private void drawPiece(SpriteBatch batch, int col, int row) {
         PieceInfo info = pieces[col][row];
 
@@ -152,13 +131,9 @@ public class Board {
         // Check if the moved piece is a pawn and moved two squares
         PieceInfo movedPiece = pieces[to.getX()][to.getY()];
         if (movedPiece.type == PieceType.PAWN && Math.abs(from.getY() - to.getY()) == 2) {
-            System.out.println("Double pawn move");
             if (movedPiece.team == Team.WHITE) lastMovedDoubleWhitePawn = to;
             if (movedPiece.team == Team.BLACK) lastMovedDoubleBlackPawn = to;
             movedPiece.doublePawnMoveOnMoveNumber = GameState.moveNumber;
-        } else {
-            System.out.println("Not a double pawn move");
-            System.out.println(GameState.moveNumber);
         }
 
         // Handle en passant capture
@@ -166,6 +141,8 @@ public class Board {
         if (getPiece(enPassantCapture) != null && from.getX() != to.getX() && getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1) {
             removePiece(enPassantCapture);
         }
+
+        movedPiece.hasMoved = true;
 
         lastFrom = from;
         lastTo = to;
