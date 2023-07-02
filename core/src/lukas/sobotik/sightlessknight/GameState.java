@@ -28,9 +28,8 @@ public class GameState implements InputProcessor {
     Team currentTurn;
     ArrayList<IntPoint2D> validMoves;
     IntPoint2D selected;
-    IntPoint2D highlightCaptureMoveRight;
-    IntPoint2D highlightCaptureMoveLeft;
     static int moveNumber = 0;
+    static final Team playerTeam = Team.WHITE;
 
     GameState(int size, Board board) {
         validMoves = new ArrayList<>();
@@ -63,17 +62,6 @@ public class GameState implements InputProcessor {
             overlayBoxSprite.draw(batch);
         }
 
-        if (highlightCaptureMoveRight != null && highlightCaptureMoveLeft != null) {
-            IntRect tileRight = board.getRectangle(highlightCaptureMoveRight);
-            overlayBoxSprite.setPosition(tileRight.getX(), tileRight.getY());
-            overlayBoxSprite.setColor(Color.RED);
-            overlayBoxSprite.draw(batch);
-            IntRect tileLeft = board.getRectangle(highlightCaptureMoveLeft);
-            overlayBoxSprite.setPosition(tileLeft.getX(), tileLeft.getY());
-            overlayBoxSprite.setColor(Color.RED);
-            overlayBoxSprite.draw(batch);
-        }
-
         for (IntPoint2D moveTile : validMoves) {
             IntRect tile = board.getRectangle(moveTile);
             overlayBoxSprite.setPosition(tile.getX(), tile.getY());
@@ -103,10 +91,10 @@ public class GameState implements InputProcessor {
         IntPoint2D tileIdx = board.getPoint(x, y);
 
         if (!validMoves.isEmpty()) {
-            moveNumber++;
-            System.err.println("moveNumber: " + moveNumber);
             for (IntPoint2D move : validMoves) {
                 if (tileIdx.equals(move)) {
+                    moveNumber++;
+                    System.err.println("moveNumber: " + moveNumber);
                     movePieceAndEndTurn(tileIdx);
                     break;
                 }

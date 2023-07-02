@@ -86,24 +86,24 @@ public class FenUtils {
         }
 
         // Active color
-        Team activeColor = (lastFrom != null && pieces[lastFrom.getX()][lastFrom.getY()] != null) ? pieces[lastFrom.getX()][lastFrom.getY()].team : Team.WHITE;
-        fenBuilder.append(" ").append(activeColor == team ? "w" : "b");
+        Team activeColor = GameState.moveNumber % 2 == 0 ? Team.BLACK : Team.WHITE;
+        fenBuilder.append(" ").append(activeColor == Team.WHITE ? "b" : "w");
 
         // Castling availability
         StringBuilder castlingAvailability = new StringBuilder();
-        if (whiteKing.equals(new IntPoint2D(3, 7)) && pieces[3][7] != null && pieces[3][7].type == PieceType.KING && !pieces[3][7].hasMoved) {
-            if (pieces[7][7] != null && pieces[7][7].type == PieceType.ROOK && !pieces[7][7].hasMoved) {
+        if (whiteKing.equals(new IntPoint2D(4, 0)) && pieces[4][0] != null && pieces[4][0].type == PieceType.KING && !pieces[4][0].hasMoved) {
+            if (pieces[7][0] != null && pieces[7][0].type == PieceType.ROOK && !pieces[7][0].hasMoved) {
                 castlingAvailability.append("K");
             }
-            if (pieces[0][7] != null && pieces[0][7].type == PieceType.ROOK && !pieces[0][7].hasMoved) {
+            if (pieces[0][0] != null && pieces[0][0].type == PieceType.ROOK && !pieces[0][0].hasMoved) {
                 castlingAvailability.append("Q");
             }
         }
-        if (blackKing.equals(new IntPoint2D(3, 0)) && pieces[3][0] != null && pieces[3][0].type == PieceType.KING && !pieces[3][0].hasMoved) {
-            if (pieces[7][0] != null && pieces[7][0].type == PieceType.ROOK && !pieces[7][0].hasMoved) {
+        if (blackKing.equals(new IntPoint2D(4, 7)) && pieces[4][7] != null && pieces[4][7].type == PieceType.KING && !pieces[4][7].hasMoved) {
+            if (pieces[7][7] != null && pieces[7][7].type == PieceType.ROOK && !pieces[7][7].hasMoved) {
                 castlingAvailability.append("k");
             }
-            if (pieces[0][0] != null && pieces[0][0].type == PieceType.ROOK && !pieces[0][0].hasMoved) {
+            if (pieces[0][7] != null && pieces[0][7].type == PieceType.ROOK && !pieces[0][7].hasMoved) {
                 castlingAvailability.append("q");
             }
         }

@@ -19,6 +19,7 @@ enum CheckState {
 }
 
 public class Rules {
+    static final Team playerTeam = GameState.playerTeam;
     private Rules() {
 
     }
@@ -175,18 +176,18 @@ public class Rules {
 
 
     public static void getValidMovesPawn(ArrayList<IntPoint2D> list, IntPoint2D point, Team team, Board board) {
-        int forwardDirection = (team == Team.BLACK) ? 1 : -1;
-        IntPoint2D forwardPoint = new IntPoint2D(point.getX(), point.getY() + forwardDirection);
-        IntPoint2D doubleForwardPoint = new IntPoint2D(point.getX(), point.getY() + 2 * forwardDirection);
-
+        int forwardDirection = (team == playerTeam) ? 1 : -1;
+        IntPoint2D forwardPoint = new IntPoint2D(point.getX(), (point.getY() + (forwardDirection)));
+        IntPoint2D doubleForwardPoint = new IntPoint2D(point.getX(), (point.getY() + (2 * forwardDirection)));
+        System.out.println(forwardDirection + " " + forwardPoint.getX() + "." + forwardPoint.getY() + "  --  " + point.getY() + (forwardDirection));
         // Check for normal move forward
         if (board.isInBounds(forwardPoint) && board.getPiece(forwardPoint) == null) {
             list.add(forwardPoint);
 
             // Check for double move forward (if the pawn hasn't moved yet)
-            if (team == Team.BLACK && point.getY() == 1 && board.getPiece(doubleForwardPoint) == null) {
+            if (team == (playerTeam == Team.WHITE ? Team.WHITE : Team.BLACK) && point.getY() == 1 && board.getPiece(doubleForwardPoint) == null) {
                 list.add(doubleForwardPoint);
-            } else if (team == Team.WHITE && point.getY() == 6 && board.getPiece(doubleForwardPoint) == null) {
+            } else if (team == (playerTeam == Team.BLACK ? Team.WHITE : Team.BLACK) && point.getY() == 6 && board.getPiece(doubleForwardPoint) == null) {
                 list.add(doubleForwardPoint);
             }
         }
@@ -239,7 +240,7 @@ public class Rules {
         if (board.getPiece(rightPoint) != null
                 && board.getPiece(rightPoint).type.equals(PieceType.PAWN)
                 && board.getPiece(rightPoint).team != team
-                && (team == Team.BLACK ? point.getY() == 4 : point.getY() == 3)
+                && (team == playerTeam ? point.getY() == 4 : point.getY() == 3)
                 && board.getPiece(rightPoint).doublePawnMoveOnMoveNumber == GameState.moveNumber
                 && point.getX() < capture.getX()) {
             System.out.println("Pawn on the Right: " + board.getPiece(rightPoint).doublePawnMoveOnMoveNumber);
@@ -248,7 +249,7 @@ public class Rules {
         if (board.getPiece(leftPoint) != null
                 && board.getPiece(leftPoint).type.equals(PieceType.PAWN)
                 && board.getPiece(leftPoint).team != team
-                && (team == Team.BLACK ? point.getY() == 4 : point.getY() == 3)
+                && (team == playerTeam ? point.getY() == 4 : point.getY() == 3)
                 && board.getPiece(leftPoint).doublePawnMoveOnMoveNumber == GameState.moveNumber
                 && point.getX() > capture.getX()) {
             System.out.println("Pawn on the Left: " + board.getPiece(leftPoint).doublePawnMoveOnMoveNumber);

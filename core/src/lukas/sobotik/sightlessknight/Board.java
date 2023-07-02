@@ -31,6 +31,7 @@ public class Board {
     IntPoint2D lastMovedDoubleWhitePawn;
     IntPoint2D lastMovedDoubleBlackPawn;
     FenUtils fenUtils;
+    static final Team playerTeam = GameState.playerTeam;
 
     public Board(int size, TextureAtlas pieceAtlas) {
         this.size = size;
@@ -55,11 +56,17 @@ public class Board {
             }
         }
 
-        whiteKing = new IntPoint2D(3, 7);
-        blackKing = new IntPoint2D(3, 0);
+        if (playerTeam == Team.WHITE) {
+            whiteKing = new IntPoint2D(4, 0);
+            blackKing = new IntPoint2D(4, 7);
+        } else {
+            whiteKing = new IntPoint2D(3, 7);
+            blackKing = new IntPoint2D(3, 0);
+        }
 
         fenUtils = new FenUtils(pieces, whiteKing, blackKing, lastTo, lastMovedDoubleWhitePawn, lastMovedDoubleBlackPawn);
-        pieces = fenUtils.generatePositionFromFEN("RNBKQBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbkqbnr w kqKQ - 1 0");
+        pieces = fenUtils.generatePositionFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        System.out.println(fenUtils.generateFenFromCurrentPosition());
 
         generateTexture();
     }
@@ -138,6 +145,7 @@ public class Board {
 
         // Handle en passant capture
         IntPoint2D enPassantCapture = new IntPoint2D(to.getX(), from.getY());
+        System.err.println("x:" + from.getX() + "-" + to.getX() + " y:" + from.getY() + "-" + from.getX() + " capturedPiece:" + (getPiece(enPassantCapture) != null ? getPiece(enPassantCapture).type + "-" + getPiece(enPassantCapture).doublePawnMoveOnMoveNumber : "") + " move:" + GameState.moveNumber);
         if (getPiece(enPassantCapture) != null && from.getX() != to.getX() && getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1) {
             removePiece(enPassantCapture);
         }
