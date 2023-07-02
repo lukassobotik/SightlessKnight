@@ -1,0 +1,88 @@
+chess_sprites.png
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+w_knight
+  rotate: false
+  xy: 2, 458
+  size: 150, 150
+  orig: 150, 150
+  offset: 0, 0
+  index: 4
+w_castle
+  rotate: false
+  xy: 154, 306
+  size: 150, 150
+  orig: 150, 150
+  offset: 0, 0
+  index: 6
+b_bishop
+  rotate: false
+  xy: 2, 2
+  size: 150, 150
+  orig: 150, 150
+  offset: 0, 0
+  index: 3
+b_pawn
+  rotate: false
+  xy: 154, 154
+  size: 150, 150
+  orig: 150, 150
+  offset: 0, 0
+  index: 1
+b_knight
+  rotate: false
+  xy: 2, 154
+  size: 150, 150
+  orig: 150, 150
+  offset: 0, 0
+  index: 5
+b_king
+  rotate: false
+  xy: 306, 2
+  size: 150, 150
+  orig: 150, 150
+  offset: 0, 0
+  index: 9
+b_castle
+  rotate: false
+  xy: 154, 2
+  size: 150, 150
+  orig: 150, 150
+  offset: 0, 0
+  index: 6
+w_pawn
+  rotate: false
+  xy: 154, 458
+  size: 150, 150
+  orig: 150, 150
+  offset: 0, 0
+  index: 0
+w_bishop
+  rotate: false
+  xy: 2, 306
+  size: 150, 150
+  orig: 150, 150
+  offset: 0, 0
+  index: 2
+w_king
+  rotate: false
+  xy: 306, 306
+  size: 150, 150
+  orig: 150, 150
+  offset: 0, 0
+  index: 8
+b_queen
+  rotate: false
+  xy: 306, 154
+  size: 150, 150
+  orig: 150, 150
+  offset: 0, 0
+  index: 11
+w_queen
+  rotate: false
+  xy: 306, 458
+  size: 150, 150
+  orig: 150, 150
+  offset: 0, 0
+  index: 10
