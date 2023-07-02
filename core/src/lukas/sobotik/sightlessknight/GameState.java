@@ -113,7 +113,6 @@ public class GameState implements InputProcessor {
             }
         }
 
-        System.out.println("clickedTile: " + tileIdx.getX() + ":" + tileIdx.getY());
         return false;
     }
 

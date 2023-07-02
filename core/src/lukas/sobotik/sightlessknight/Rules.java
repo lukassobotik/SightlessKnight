@@ -179,7 +179,6 @@ public class Rules {
         int forwardDirection = (team == playerTeam) ? 1 : -1;
         IntPoint2D forwardPoint = new IntPoint2D(point.getX(), (point.getY() + (forwardDirection)));
         IntPoint2D doubleForwardPoint = new IntPoint2D(point.getX(), (point.getY() + (2 * forwardDirection)));
-        System.out.println(forwardDirection + " " + forwardPoint.getX() + "." + forwardPoint.getY() + "  --  " + point.getY() + (forwardDirection));
         // Check for normal move forward
         if (board.isInBounds(forwardPoint) && board.getPiece(forwardPoint) == null) {
             list.add(forwardPoint);
@@ -243,7 +242,6 @@ public class Rules {
                 && (team == playerTeam ? point.getY() == 4 : point.getY() == 3)
                 && board.getPiece(rightPoint).doublePawnMoveOnMoveNumber == GameState.moveNumber
                 && point.getX() < capture.getX()) {
-            System.out.println("Pawn on the Right: " + board.getPiece(rightPoint).doublePawnMoveOnMoveNumber);
             list.add(capture);
         }
         if (board.getPiece(leftPoint) != null
@@ -252,7 +250,6 @@ public class Rules {
                 && (team == playerTeam ? point.getY() == 4 : point.getY() == 3)
                 && board.getPiece(leftPoint).doublePawnMoveOnMoveNumber == GameState.moveNumber
                 && point.getX() > capture.getX()) {
-            System.out.println("Pawn on the Left: " + board.getPiece(leftPoint).doublePawnMoveOnMoveNumber);
             list.add(capture);
         }
     }

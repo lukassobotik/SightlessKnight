@@ -145,7 +145,6 @@ public class Board {
 
         // Handle en passant capture
         IntPoint2D enPassantCapture = new IntPoint2D(to.getX(), from.getY());
-        System.err.println("x:" + from.getX() + "-" + to.getX() + " y:" + from.getY() + "-" + from.getX() + " capturedPiece:" + (getPiece(enPassantCapture) != null ? getPiece(enPassantCapture).type + "-" + getPiece(enPassantCapture).doublePawnMoveOnMoveNumber : "") + " move:" + GameState.moveNumber);
         if (getPiece(enPassantCapture) != null && from.getX() != to.getX() && getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1) {
             removePiece(enPassantCapture);
         }
