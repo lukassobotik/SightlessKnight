@@ -1,9 +1,5 @@
 package lukas.sobotik.sightlessknight;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Pixmap.Format;
@@ -14,8 +10,10 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Array;
 
+import java.util.HashMap;
+
 public class Board {
-    PieceInfo[][] pieces;
+    PieceInfo[] pieces;
     int size;
     int squareSize;
     Texture boardTexture;
@@ -67,6 +65,20 @@ public class Board {
         fenUtils = new FenUtils(pieces, whiteKing, blackKing, lastTo, lastMovedDoubleWhitePawn, lastMovedDoubleBlackPawn);
         pieces = fenUtils.generatePositionFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         System.out.println(fenUtils.generateFenFromCurrentPosition());
+        // Print the board in the console
+        for (int rank = 7; rank >= 0; rank--) {
+            for (int file = 0; file < 8; file++) {
+                int index = rank * 8 + file;
+                PieceInfo piece = pieces[index];
+
+                if (piece == null) {
+                    System.out.print(". "); // Empty square
+                } else {
+                    System.out.print(fenUtils.getSymbolFromPieceType(piece.type, piece.team) + " "); // Piece character
+                }
+            }
+            System.out.println(); // Move to the next line for the next rank
+        }
 
         generateTexture();
     }
@@ -99,15 +111,15 @@ public class Board {
     public void draw(SpriteBatch batch) {
         batch.draw(boardTextureRegion, 0, 0);
 
-        for (int col = 0; col < pieces.length; col++) {
-            PieceInfo[] infos = pieces[col];
-            for (int row = 0; row < infos.length; row++) {
-                drawPiece(batch, col, row);
+        for (int rank = 7; rank >= 0; rank--) {
+            for (int file = 0; file < 8; file++) {
+                drawPiece(batch, rank, file);
             }
         }
     }
-    private void drawPiece(SpriteBatch batch, int col, int row) {
-        PieceInfo info = pieces[col][row];
+    private void drawPiece(SpriteBatch batch, int rank, int file) {
+        int index = rank * 8 + file;
+        PieceInfo info = pieces[index];
 
         if (info == null) {
             return;
@@ -116,8 +128,8 @@ public class Board {
         String name = info.getSpriteName();
 
         Sprite sprite = sprites.get(spriteIndexMap.get(name));
-        sprite.setX(col * squareSize + (float) squareSize / 2 - sprite.getWidth() / 2);
-        sprite.setY(row * squareSize + (float) squareSize / 2 - sprite.getHeight() / 2);
+        sprite.setX(file * squareSize + (float) squareSize / 2 - sprite.getWidth() / 2);
+        sprite.setY(rank * squareSize + (float) squareSize / 2 - sprite.getHeight() / 2);
         sprite.draw(batch);
     }
 
@@ -129,14 +141,14 @@ public class Board {
         if (!isInBounds(location)) {
             return null;
         }
-        return pieces[location.getX()][location.getY()];
+        return pieces[location.getX() + location.getY() * 8];
     }
 
     public void movePiece(IntPoint2D from, IntPoint2D to) {
         movePieceWithoutSpecialMoves(from, to);
 
         // Check if the moved piece is a pawn and moved two squares
-        PieceInfo movedPiece = pieces[to.getX()][to.getY()];
+        PieceInfo movedPiece = pieces[to.getX() + to.getY() * 8];
         if (movedPiece.type == PieceType.PAWN && Math.abs(from.getY() - to.getY()) == 2) {
             if (movedPiece.team == Team.WHITE) lastMovedDoubleWhitePawn = to;
             if (movedPiece.team == Team.BLACK) lastMovedDoubleBlackPawn = to;
@@ -167,16 +179,16 @@ public class Board {
             blackKing = to;
         }
 
-        lastRemoved = pieces[to.getX()][to.getY()];
+        lastRemoved = pieces[to.getX() + to.getY() * 8];
 
-        pieces[to.getX()][to.getY()] = pieces[from.getX()][from.getY()];
-        pieces[from.getX()][from.getY()] = null;
+        pieces[to.getX() + to.getY() * 8] = pieces[from.getX() + from.getY() * 8];
+        pieces[from.getX() + from.getY() * 8] = null;
     }
     public void removePiece(IntPoint2D location) {
         if (!isInBounds(location)) {
             return;
         }
-        pieces[location.getX()][location.getY()] = null;
+        pieces[location.getX() + location.getY() * 8] = null;
     }
 
     public void undoMove() {
@@ -184,7 +196,7 @@ public class Board {
 
         movePiece(lastTo, lastFrom);
 
-        pieces[lastFrom.getX()][lastFrom.getY()] = temp;
+        pieces[lastFrom.getX() + lastFrom.getY() * 8] = temp;
     }
 
     public IntPoint2D getPoint(int x, int y) {
