@@ -13,7 +13,7 @@ import com.badlogic.gdx.utils.Array;
 import java.util.HashMap;
 
 public class Board {
-    PieceInfo[] pieces;
+    Piece[] pieces;
     int size;
     int squareSize;
     Texture boardTexture;
@@ -21,15 +21,17 @@ public class Board {
 	TextureAtlas pieceAtlas;
     HashMap<String, Integer> spriteIndexMap;
     Array<Sprite> sprites;
-    IntPoint2D whiteKing;
-    IntPoint2D blackKing;
-    IntPoint2D lastFrom;
-    IntPoint2D lastTo;
-    PieceInfo lastRemoved;
-    IntPoint2D lastMovedDoubleWhitePawn;
-    IntPoint2D lastMovedDoubleBlackPawn;
+    BoardLocation whiteKingLocation;
+    BoardLocation blackKingLocation;
+    BoardLocation lastFromLocation;
+    BoardLocation lastToLocation;
+    Piece lastRemovedPiece;
+    BoardLocation lastDoublePawnMoveWithWhitePieces;
+    BoardLocation lastDoublePawnMoveWithBlackPieces;
     FenUtils fenUtils;
     static final Team playerTeam = GameState.playerTeam;
+
+    public static final String STARTING_FEN_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     public Board(int size, TextureAtlas pieceAtlas) {
         this.size = size;
@@ -49,27 +51,34 @@ public class Board {
         for (PieceType type : PieceType.values()) {
 
             for (Team team : Team.values()) {
-                String name = new PieceInfo(team, type).getSpriteName();
+                String name = new Piece(team, type).getSpriteName();
                 spriteIndexMap.put(name, count++);
             }
         }
 
+        // TODO: Automatically set this from FEN
         if (playerTeam == Team.WHITE) {
-            whiteKing = new IntPoint2D(4, 0);
-            blackKing = new IntPoint2D(4, 7);
+            whiteKingLocation = new BoardLocation(4, 0);
+            blackKingLocation = new BoardLocation(4, 7);
         } else {
-            whiteKing = new IntPoint2D(3, 7);
-            blackKing = new IntPoint2D(3, 0);
+            whiteKingLocation = new BoardLocation(3, 7);
+            blackKingLocation = new BoardLocation(3, 0);
         }
 
-        fenUtils = new FenUtils(pieces, whiteKing, blackKing, lastTo, lastMovedDoubleWhitePawn, lastMovedDoubleBlackPawn);
-        pieces = fenUtils.generatePositionFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        fenUtils = new FenUtils(pieces, whiteKingLocation, blackKingLocation, lastToLocation, lastDoublePawnMoveWithWhitePieces, lastDoublePawnMoveWithBlackPieces);
+        pieces = fenUtils.generatePositionFromFEN(STARTING_FEN_POSITION);
+
         System.out.println(fenUtils.generateFenFromCurrentPosition());
-        // Print the board in the console
+        printBoardInConsole();
+
+        generateAllSquaresTexture();
+    }
+
+    private void printBoardInConsole() {
         for (int rank = 7; rank >= 0; rank--) {
             for (int file = 0; file < 8; file++) {
                 int index = rank * 8 + file;
-                PieceInfo piece = pieces[index];
+                Piece piece = pieces[index];
 
                 if (piece == null) {
                     System.out.print(". "); // Empty square
@@ -79,10 +88,9 @@ public class Board {
             }
             System.out.println(); // Move to the next line for the next rank
         }
-
-        generateTexture();
     }
-    private void generateTexture() {
+
+    private void generateAllSquaresTexture() {
         int nextPow2 = Integer.highestOneBit(size - 1) << 1;
 
         Pixmap pixmap = new Pixmap(nextPow2, nextPow2, Format.RGBA8888);
@@ -119,7 +127,7 @@ public class Board {
     }
     private void drawPiece(SpriteBatch batch, int rank, int file) {
         int index = rank * 8 + file;
-        PieceInfo info = pieces[index];
+        Piece info = pieces[index];
 
         if (info == null) {
             return;
@@ -133,101 +141,114 @@ public class Board {
         sprite.draw(batch);
     }
 
-    IntPoint2D getKing(Team team) {
-        return (team == Team.WHITE) ? whiteKing : blackKing;
+    BoardLocation getKing(Team team) {
+        return (team == Team.WHITE) ? whiteKingLocation : blackKingLocation;
     }
 
-    public PieceInfo getPiece(IntPoint2D location) {
-        if (!isInBounds(location)) {
+    public Piece getPiece(BoardLocation boardLocation) {
+        if (!isInBounds(boardLocation)) {
             return null;
         }
-        return pieces[location.getX() + location.getY() * 8];
+        return pieces[boardLocation.getX() + boardLocation.getY() * 8];
     }
 
-    public void movePiece(IntPoint2D from, IntPoint2D to) {
+    public void movePiece(BoardLocation from, BoardLocation to) {
         if (from == null || to == null) return;
         movePieceWithoutSpecialMoves(from, to);
 
-        PieceInfo movedPiece = pieces[to.getX() + to.getY() * 8];
+        Piece movedPiece = pieces[to.getX() + to.getY() * 8];
         if (movedPiece == null) return;
 
         // Move the rook when the king castles
         if (movedPiece.type == PieceType.KING && Math.abs(from.getX() - to.getX()) == 2) {
             // Queenside Castling
             if (from.getX() > to.getX()) {
-                tryMovingPieces(movedPiece.team == Team.WHITE ? new IntPoint2D(0, 0) : new IntPoint2D(0, 7), movedPiece.team == Team.WHITE ? new IntPoint2D(3, 0) : new IntPoint2D(3, 7));
+                movePieceWithoutSpecialMovesAndSave(
+                        movedPiece.team == Team.WHITE
+                            ? new BoardLocation(0, 0)
+                            : new BoardLocation(0, 7),
+                        movedPiece.team == Team.WHITE
+                            ? new BoardLocation(3, 0)
+                            : new BoardLocation(3, 7));
             } // Kingside Castling
             else {
-                tryMovingPieces(movedPiece.team == Team.WHITE ? new IntPoint2D(7, 0) : new IntPoint2D(7, 7), movedPiece.team == Team.WHITE ? new IntPoint2D(5, 0) : new IntPoint2D(5, 7));
+                movePieceWithoutSpecialMovesAndSave(
+                        movedPiece.team == Team.WHITE
+                            ? new BoardLocation(7, 0)
+                            : new BoardLocation(7, 7),
+                        movedPiece.team == Team.WHITE
+                            ? new BoardLocation(5, 0)
+                            : new BoardLocation(5, 7));
             }
         }
 
-        // Check if the moved piece is a pawn and moved two squares
+        // Save the last move that was a double pawn move
         if (movedPiece.type == PieceType.PAWN && Math.abs(from.getY() - to.getY()) == 2) {
-            if (movedPiece.team == Team.WHITE) lastMovedDoubleWhitePawn = to;
-            if (movedPiece.team == Team.BLACK) lastMovedDoubleBlackPawn = to;
+            if (movedPiece.team == Team.WHITE) lastDoublePawnMoveWithWhitePieces = to;
+            if (movedPiece.team == Team.BLACK) lastDoublePawnMoveWithBlackPieces = to;
             movedPiece.doublePawnMoveOnMoveNumber = GameState.moveNumber;
         }
 
         // Handle en passant capture
-        IntPoint2D enPassantCapture = new IntPoint2D(to.getX(), from.getY());
+        BoardLocation enPassantCapture = new BoardLocation(to.getX(), from.getY());
         if (getPiece(enPassantCapture) != null && from.getX() != to.getX() && getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1) {
             removePiece(enPassantCapture);
         }
 
         movedPiece.hasMoved = true;
 
-        lastFrom = from;
-        lastTo = to;
+        lastFromLocation = from;
+        lastToLocation = to;
     }
-    public void tryMovingPieces(IntPoint2D from, IntPoint2D to) {
+    public void movePieceWithoutSpecialMovesAndSave(BoardLocation from, BoardLocation to) {
         movePieceWithoutSpecialMoves(from, to);
 
-        lastFrom = from;
-        lastTo = to;
+        lastFromLocation = from;
+        lastToLocation = to;
     }
-    private void movePieceWithoutSpecialMoves(IntPoint2D from, IntPoint2D to) {
-        if (from.equals(whiteKing)) {
-            whiteKing = to;
-        } else if (from.equals(blackKing)) {
-            blackKing = to;
+    private void movePieceWithoutSpecialMoves(BoardLocation from, BoardLocation to) {
+        if (from.equals(whiteKingLocation)) {
+            whiteKingLocation = to;
+        } else if (from.equals(blackKingLocation)) {
+            blackKingLocation = to;
         }
 
-        lastRemoved = pieces[to.getX() + to.getY() * 8];
+        lastRemovedPiece = pieces[to.getX() + to.getY() * 8];
 
         pieces[to.getX() + to.getY() * 8] = pieces[from.getX() + from.getY() * 8];
         pieces[from.getX() + from.getY() * 8] = null;
     }
-    public void removePiece(IntPoint2D location) {
-        if (!isInBounds(location)) {
+    public void removePiece(BoardLocation boardLocation) {
+        if (!isInBounds(boardLocation)) {
             return;
         }
-        pieces[location.getX() + location.getY() * 8] = null;
+        pieces[boardLocation.getX() + boardLocation.getY() * 8] = null;
     }
 
     public void undoMove() {
-        PieceInfo temp = lastRemoved;
+        Piece temp = lastRemovedPiece;
 
-        tryMovingPieces(lastTo, lastFrom);
+        // Todo: Doesn't work in some positions (e.g. FEN:"rnbqkbnr/ppp3pp/4p3/8/8/8/PPPP1PPP/RNBQKBNR w KQkq - 0 0", move:"Qh5")
+        movePieceWithoutSpecialMovesAndSave(lastToLocation, lastFromLocation);
 
-        pieces[lastFrom.getX() + lastFrom.getY() * 8] = temp;
+        pieces[lastFromLocation.getX() + lastFromLocation.getY() * 8] = temp;
     }
 
-    public IntPoint2D getPointFromArrayIndex(int index) {
+    public BoardLocation getPointFromArrayIndex(int index) {
         int x = index % 8;
         int y = index / 8;
-        return new IntPoint2D(x, y);
+        return new BoardLocation(x, y);
     }
 
-    public IntPoint2D getPoint(int x, int y) {
-        return new IntPoint2D(x / squareSize, 7 - y / squareSize);
+    public BoardLocation getPoint(int x, int y) {
+        return new BoardLocation(x / squareSize, 7 - y / squareSize);
     }
 
-    public IntRect getRectangle(IntPoint2D point) {
-        return new IntRect(point.getX() * squareSize, (point.getY()) * squareSize, squareSize, squareSize);
+    public Rectangle getRectangle(BoardLocation point) {
+        return new Rectangle(point.getX() * squareSize, (point.getY()) * squareSize, squareSize, squareSize);
     }
 
-    public boolean isInBounds(IntPoint2D location) {
-        return location.getX() < 8 && location.getX() >= 0 && location.getY() < 8 && location.getY() >= 0;
+    public boolean isInBounds(BoardLocation boardLocation) {
+        return boardLocation.getX() < 8 && boardLocation.getX() >= 0 && boardLocation.getY() < 8 && boardLocation.getY() >= 0;
     }
 }

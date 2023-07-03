@@ -19,9 +19,7 @@ public class SightlessKnight implements ApplicationListener {
         TextureAtlas myTextures = new TextureAtlas("data/chess_sprites.txt");
 
         int size = (int) Math.min(h, w);
-
         board = new Board(size, myTextures);
-
         batch = new SpriteBatch();
 
         gameState = new GameState(size, board);
@@ -39,11 +37,8 @@ public class SightlessKnight implements ApplicationListener {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         batch.begin();
-
         board.draw(batch);
-
         gameState.draw(batch);
-
         batch.end();
     }
 

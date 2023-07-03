@@ -1,36 +1,27 @@
 package lukas.sobotik.sightlessknight;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 public class FenUtils {
-    PieceInfo[] pieces;
+    Piece[] pieces;
     Team team = Team.BLACK;
-    IntPoint2D whiteKing;
-    IntPoint2D blackKing;
-    IntPoint2D lastFrom;
-    IntPoint2D lastMovedDoubleWhitePawn;
-    IntPoint2D lastMovedDoubleBlackPawn;
-    FenUtils(PieceInfo[] pieces, IntPoint2D whiteKing, IntPoint2D blackKing, IntPoint2D lastFrom, IntPoint2D lastMovedDoubleWhitePawn, IntPoint2D lastMovedDoubleBlackPawn) {
+    BoardLocation whiteKingPosition;
+    BoardLocation blackKingPosition;
+    BoardLocation lastFromMove;
+    BoardLocation lastDoublePawnMoveWithWhite;
+    BoardLocation lastDoublePawnMoveWithBlack;
+    FenUtils(Piece[] pieces, BoardLocation whiteKingPosition, BoardLocation blackKingPosition, BoardLocation lastFromMove, BoardLocation lastDoublePawnMoveWithWhite, BoardLocation lastDoublePawnMoveWithBlack) {
         this.pieces = pieces;
-        this.whiteKing = whiteKing;
-        this.blackKing = blackKing;
-        this.lastFrom = lastFrom;
-        this.lastMovedDoubleWhitePawn = lastMovedDoubleWhitePawn;
-        this.lastMovedDoubleBlackPawn = lastMovedDoubleBlackPawn;
+        this.whiteKingPosition = whiteKingPosition;
+        this.blackKingPosition = blackKingPosition;
+        this.lastFromMove = lastFromMove;
+        this.lastDoublePawnMoveWithWhite = lastDoublePawnMoveWithWhite;
+        this.lastDoublePawnMoveWithBlack = lastDoublePawnMoveWithBlack;
     }
 
-    public PieceInfo[] generatePositionFromFEN(String fen) {
-        pieces = new PieceInfo[8 * 8];
-
-        HashMap<Character, PieceType> pieceTypeFromSymbol = new HashMap<>();
-        pieceTypeFromSymbol.put('k', PieceType.KING);
-        pieceTypeFromSymbol.put('p', PieceType.PAWN);
-        pieceTypeFromSymbol.put('n', PieceType.KNIGHT);
-        pieceTypeFromSymbol.put('b', PieceType.BISHOP);
-        pieceTypeFromSymbol.put('r', PieceType.ROOK);
-        pieceTypeFromSymbol.put('q', PieceType.QUEEN);
+    public Piece[] generatePositionFromFEN(String fen) {
+        pieces = new Piece[8 * 8];
 
         String fenBoardString = fen.split(" ")[0];
         char[] fenBoard = fenBoardString.toCharArray();
@@ -45,14 +36,12 @@ public class FenUtils {
                     rank += Character.getNumericValue(symbol);
                 } else {
                     Team pieceColor = (Character.isUpperCase(symbol)) ? Team.WHITE : Team.BLACK;
-                    PieceType pieceType = pieceTypeFromSymbol.get(Character.toLowerCase(symbol));
-                    System.out.println("loop: " + pieceColor + " " + pieceType + " file:" + rank + " rank:" + file);
-                    pieces[file * 8 + rank] = new PieceInfo(pieceColor, pieceType);
+                    PieceType pieceType = getPieceTypeFromSymbol().get(Character.toLowerCase(symbol));
+                    pieces[file * 8 + rank] = new Piece(pieceColor, pieceType);
                     rank++;
                 }
             }
         }
-        Arrays.stream(pieces).forEach(pieceInfo -> System.out.println(pieceInfo != null ? pieceInfo.team + " " + pieceInfo.type : "null"));
 
         return pieces;
     }
@@ -63,7 +52,7 @@ public class FenUtils {
             int emptySquares = 0;
             for (int file = 0; file < 8; file++) {
                 int index = rank * 8 + file;
-                PieceInfo info = pieces[index];
+                Piece info = pieces[index];
 
                 if (info == null) {
                     emptySquares++;
@@ -72,7 +61,6 @@ public class FenUtils {
                         fenBuilder.append(emptySquares);
                         emptySquares = 0;
                     }
-
                     char symbol = getSymbolFromPieceType(info.type, info.team);
                     fenBuilder.append(symbol);
                 }
@@ -80,7 +68,6 @@ public class FenUtils {
             if (emptySquares > 0) {
                 fenBuilder.append(emptySquares);
             }
-
             if (rank > 0) {
                 fenBuilder.append("/");
             }
@@ -92,29 +79,30 @@ public class FenUtils {
 
         // Castling availability
         StringBuilder castlingAvailability = new StringBuilder();
-        castlingAvailability.append(Rules.isCastlingPossible(team, pieces, whiteKing, blackKing, true));
+        castlingAvailability.append(Rules.isCastlingPossible(team, pieces, whiteKingPosition, blackKingPosition, true));
         if (castlingAvailability.length() == 0) {
             castlingAvailability.append("-");
         }
         fenBuilder.append(" ").append(castlingAvailability);
 
+        // En Passant
         checkForEnPassant(fenBuilder, activeColor);
 
-        // Halfmove clock and fullmove number
-        fenBuilder.append(" 0 0");
+        // TODO: Implement Halfmove clock and fullmove number
+        fenBuilder.append(" 0 1");
 
         return fenBuilder.toString();
     }
     private void checkForEnPassant(StringBuilder fenBuilder, Team activeColor) {
         // En passant target square
-        IntPoint2D enPassantTarget = (activeColor == Team.BLACK) ? lastMovedDoubleBlackPawn : lastMovedDoubleWhitePawn;
+        BoardLocation enPassantTarget = (activeColor == Team.BLACK) ? lastDoublePawnMoveWithBlack : lastDoublePawnMoveWithWhite;
         if (enPassantTarget != null) {
-            PieceInfo pieceInfo = pieces[enPassantTarget.getX() + enPassantTarget.getY() * 8];
-            if (pieceInfo == null) {
+            Piece piece = pieces[enPassantTarget.getX() + enPassantTarget.getY() * 8];
+            if (piece == null) {
                 fenBuilder.append(" -");
                 return;
             }
-            int lastMovedPawn = pieceInfo.doublePawnMoveOnMoveNumber;
+            int lastMovedPawn = piece.doublePawnMoveOnMoveNumber;
             if (lastMovedPawn == GameState.moveNumber) {
                 fenBuilder.append(" ").append(getNotationFromIntPoint(enPassantTarget));
             } else {
@@ -125,13 +113,7 @@ public class FenUtils {
         }
     }
     public char getSymbolFromPieceType(PieceType type, Team team) {
-        HashMap<Character, PieceType> pieceTypeFromSymbol = new HashMap<>();
-        pieceTypeFromSymbol.put('k', PieceType.KING);
-        pieceTypeFromSymbol.put('p', PieceType.PAWN);
-        pieceTypeFromSymbol.put('n', PieceType.KNIGHT);
-        pieceTypeFromSymbol.put('b', PieceType.BISHOP);
-        pieceTypeFromSymbol.put('r', PieceType.ROOK);
-        pieceTypeFromSymbol.put('q', PieceType.QUEEN);
+        HashMap<Character, PieceType> pieceTypeFromSymbol = getPieceTypeFromSymbol();
 
         for (Map.Entry<Character, PieceType> entry : pieceTypeFromSymbol.entrySet()) {
             if (entry.getValue() == type) {
@@ -142,7 +124,18 @@ public class FenUtils {
         throw new IllegalArgumentException("Invalid piece type: " + type);
     }
 
-    private String getNotationFromIntPoint(IntPoint2D point) {
+    private HashMap<Character, PieceType> getPieceTypeFromSymbol() {
+        HashMap<Character, PieceType> pieceTypeFromSymbol = new HashMap<>();
+        pieceTypeFromSymbol.put('k', PieceType.KING);
+        pieceTypeFromSymbol.put('p', PieceType.PAWN);
+        pieceTypeFromSymbol.put('n', PieceType.KNIGHT);
+        pieceTypeFromSymbol.put('b', PieceType.BISHOP);
+        pieceTypeFromSymbol.put('r', PieceType.ROOK);
+        pieceTypeFromSymbol.put('q', PieceType.QUEEN);
+        return pieceTypeFromSymbol;
+    }
+
+    private String getNotationFromIntPoint(BoardLocation point) {
         char file;
         char rank;
 

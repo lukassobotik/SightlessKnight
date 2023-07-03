@@ -26,20 +26,18 @@ public class GameState implements InputProcessor {
     Sprite overlayBoxSprite;
     int size;
     Team currentTurn;
-    boolean gameOver = false;
-    ArrayList<IntPoint2D> validMoves;
-    IntPoint2D selected;
+    boolean hasGameEnded = false;
+    ArrayList<BoardLocation> validMoves;
+    BoardLocation selectedPieceLocation;
     static int moveNumber = 0;
     static final Team playerTeam = Team.WHITE;
 
     GameState(int size, Board board) {
         validMoves = new ArrayList<>();
-
         currentTurn = Team.WHITE;
-
         this.size = size;
 
-        IntRect rect = board.getRectangle(new IntPoint2D(0, 0));
+        Rectangle rect = board.getRectangle(new BoardLocation(0, 0));
         int nextPow2 = Integer.highestOneBit(rect.getHeight() - 1) << 1;
         Pixmap pixmap = new Pixmap(nextPow2, nextPow2, Format.RGBA8888);
         int borderWidth = rect.getWidth() / 10 + 1;
@@ -56,15 +54,15 @@ public class GameState implements InputProcessor {
     }
 
     public void draw(SpriteBatch batch) {
-        if (selected != null) {
-            IntRect tile = board.getRectangle(selected);
+        if (selectedPieceLocation != null) {
+            Rectangle tile = board.getRectangle(selectedPieceLocation);
             overlayBoxSprite.setPosition(tile.getX(), tile.getY());
             overlayBoxSprite.setColor(Color.GREEN);
             overlayBoxSprite.draw(batch);
         }
 
-        for (IntPoint2D moveTile : validMoves) {
-            IntRect tile = board.getRectangle(moveTile);
+        for (BoardLocation moveTile : validMoves) {
+            Rectangle tile = board.getRectangle(moveTile);
             overlayBoxSprite.setPosition(tile.getX(), tile.getY());
             Color color = (board.getPiece(moveTile) == null) ? Color.YELLOW : Color.RED;
             overlayBoxSprite.setColor(color);
@@ -89,45 +87,44 @@ public class GameState implements InputProcessor {
 
     @Override
     public boolean touchDown(int x, int y, int pointer, int button) {
-        if (gameOver) {
-            System.out.println("isCheckMate: " + Rules.isCheckmate(currentTurn, board));
-            System.out.println("isStaleMate: " + Rules.isStalemate(currentTurn, board));
+        if (hasGameEnded) {
+            System.out.println("isCheckmate: " + Rules.isCheckmate(currentTurn, board));
+            System.out.println("isStalemate: " + Rules.isStalemate(currentTurn, board));
             return false;
         }
 
-        IntPoint2D tileIdx = board.getPoint(x, y);
+        BoardLocation clickedLocation = board.getPoint(x, y);
 
         if (!validMoves.isEmpty()) {
-            for (IntPoint2D move : validMoves) {
-                if (tileIdx.equals(move)) {
+            for (BoardLocation move : validMoves) {
+                if (clickedLocation.equals(move)) {
                     moveNumber++;
                     System.err.println("moveNumber: " + moveNumber);
-                    movePieceAndEndTurn(tileIdx);
-                    System.out.println("isCheckMate: " + Rules.isCheckmate(currentTurn, board));
-                    System.out.println("isStaleMate: " + Rules.isStalemate(currentTurn, board));
-                    gameOver = Rules.isCheckmate(currentTurn, board) || Rules.isStalemate(currentTurn, board);
+                    movePieceAndEndTurn(clickedLocation);
+                    System.out.println("isCheckmate: " + Rules.isCheckmate(currentTurn, board));
+                    System.out.println("isStalemate: " + Rules.isStalemate(currentTurn, board));
+                    hasGameEnded = Rules.isCheckmate(currentTurn, board) || Rules.isStalemate(currentTurn, board);
                     break;
                 }
             }
             validMoves.clear();
-            selected = null;
+            selectedPieceLocation = null;
 
-            FenUtils fenUtils = new FenUtils(board.pieces, board.whiteKing, board.blackKing, board.lastTo, board.lastMovedDoubleWhitePawn, board.lastMovedDoubleBlackPawn);
+            FenUtils fenUtils = new FenUtils(board.pieces, board.whiteKingLocation, board.blackKingLocation, board.lastToLocation, board.lastDoublePawnMoveWithWhitePieces, board.lastDoublePawnMoveWithBlackPieces);
             System.out.println(fenUtils.generateFenFromCurrentPosition());
         } else {
-            PieceInfo piece = board.getPiece(tileIdx);
+            Piece piece = board.getPiece(clickedLocation);
             if (piece == null) return false;
             if (piece.team == currentTurn) {
-                selected = tileIdx;
-                Rules.getValidMoves(validMoves, tileIdx, piece, board);
+                selectedPieceLocation = clickedLocation;
+                Rules.getValidMoves(validMoves, clickedLocation, piece, board);
             }
         }
-
         return false;
     }
 
-    private void movePieceAndEndTurn(IntPoint2D destination) {
-        board.movePiece(selected, destination);
+    private void movePieceAndEndTurn(BoardLocation destination) {
+        board.movePiece(selectedPieceLocation, destination);
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
 
@@ -144,7 +141,6 @@ public class GameState implements InputProcessor {
 
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
-        // TODO Auto-generated method stub
         return false;
     }
 
