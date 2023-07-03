@@ -376,4 +376,48 @@ public class Rules {
         }
         return list;
     }
+
+    public static boolean isKingInCheck(Team team, Board board) {
+        IntPoint2D kingPosition = team == Team.WHITE ? board.whiteKing : board.blackKing;
+        return isEnemyAttackingThisSquare(kingPosition, team, board);
+    }
+
+    public static boolean isCheckmate(Team team, Board board) {
+        if (!isKingInCheck(team, board)) {
+            return false;
+        }
+        List<IntPoint2D> validMoves = new ArrayList<>();
+        for (int i = 0; i < board.pieces.length; i++) {
+            IntPoint2D point = board.getPointFromArrayIndex(i);
+            PieceInfo piece = board.pieces[i];
+            if (piece != null && piece.team == team) {
+                getValidMoves(validMoves, point, piece, board);
+                for (IntPoint2D move : validMoves) {
+                    board.tryMovingPieces(point, move);
+                    if (!isKingInCheck(team, board)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    public static boolean isStalemate(Team team, Board board) {
+        if (isKingInCheck(team, board)) {
+            return false;
+        }
+        List<IntPoint2D> validMoves = new ArrayList<>();
+        for (int i = 0; i < board.pieces.length; i++) {
+            IntPoint2D point = board.getPointFromArrayIndex(i);
+            PieceInfo piece = board.pieces[i];
+            if (piece != null && piece.team == team) {
+                getValidMoves(validMoves, point, piece, board);
+                if (!validMoves.isEmpty()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 }

@@ -26,6 +26,7 @@ public class GameState implements InputProcessor {
     Sprite overlayBoxSprite;
     int size;
     Team currentTurn;
+    boolean gameOver = false;
     ArrayList<IntPoint2D> validMoves;
     IntPoint2D selected;
     static int moveNumber = 0;
@@ -88,6 +89,12 @@ public class GameState implements InputProcessor {
 
     @Override
     public boolean touchDown(int x, int y, int pointer, int button) {
+        if (gameOver) {
+            System.out.println("isCheckMate: " + Rules.isCheckmate(currentTurn, board));
+            System.out.println("isStaleMate: " + Rules.isStalemate(currentTurn, board));
+            return false;
+        }
+
         IntPoint2D tileIdx = board.getPoint(x, y);
 
         if (!validMoves.isEmpty()) {
@@ -96,6 +103,9 @@ public class GameState implements InputProcessor {
                     moveNumber++;
                     System.err.println("moveNumber: " + moveNumber);
                     movePieceAndEndTurn(tileIdx);
+                    System.out.println("isCheckMate: " + Rules.isCheckmate(currentTurn, board));
+                    System.out.println("isStaleMate: " + Rules.isStalemate(currentTurn, board));
+                    gameOver = Rules.isCheckmate(currentTurn, board) || Rules.isStalemate(currentTurn, board);
                     break;
                 }
             }
@@ -107,7 +117,6 @@ public class GameState implements InputProcessor {
         } else {
             PieceInfo piece = board.getPiece(tileIdx);
             if (piece == null) return false;
-            System.out.println(Rules.isEnemyAttackingThisSquare(new IntPoint2D(4, 4), piece.team, board));
             if (piece.team == currentTurn) {
                 selected = tileIdx;
                 Rules.getValidMoves(validMoves, tileIdx, piece, board);
