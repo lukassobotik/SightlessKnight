@@ -145,10 +145,24 @@ public class Board {
     }
 
     public void movePiece(IntPoint2D from, IntPoint2D to) {
+        if (from == null || to == null) return;
         movePieceWithoutSpecialMoves(from, to);
 
-        // Check if the moved piece is a pawn and moved two squares
         PieceInfo movedPiece = pieces[to.getX() + to.getY() * 8];
+        if (movedPiece == null) return;
+
+        // Move the rook when the king castles
+        if (movedPiece.type == PieceType.KING && Math.abs(from.getX() - to.getX()) == 2) {
+            // Queenside Castling
+            if (from.getX() > to.getX()) {
+                tryMovingPieces(movedPiece.team == Team.WHITE ? new IntPoint2D(0, 0) : new IntPoint2D(0, 7), movedPiece.team == Team.WHITE ? new IntPoint2D(3, 0) : new IntPoint2D(3, 7));
+            } // Kingside Castling
+            else {
+                tryMovingPieces(movedPiece.team == Team.WHITE ? new IntPoint2D(7, 0) : new IntPoint2D(7, 7), movedPiece.team == Team.WHITE ? new IntPoint2D(5, 0) : new IntPoint2D(5, 7));
+            }
+        }
+
+        // Check if the moved piece is a pawn and moved two squares
         if (movedPiece.type == PieceType.PAWN && Math.abs(from.getY() - to.getY()) == 2) {
             if (movedPiece.team == Team.WHITE) lastMovedDoubleWhitePawn = to;
             if (movedPiece.team == Team.BLACK) lastMovedDoubleBlackPawn = to;
@@ -194,9 +208,15 @@ public class Board {
     public void undoMove() {
         PieceInfo temp = lastRemoved;
 
-        movePiece(lastTo, lastFrom);
+        tryMovingPieces(lastTo, lastFrom);
 
         pieces[lastFrom.getX() + lastFrom.getY() * 8] = temp;
+    }
+
+    public IntPoint2D getPointFromArrayIndex(int index) {
+        int x = index % 8;
+        int y = index / 8;
+        return new IntPoint2D(x, y);
     }
 
     public IntPoint2D getPoint(int x, int y) {

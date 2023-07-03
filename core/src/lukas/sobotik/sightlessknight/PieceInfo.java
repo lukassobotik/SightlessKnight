@@ -21,7 +21,7 @@ enum PieceType {
 public class PieceInfo {
 	Team team;
 	PieceType type;
-	int doublePawnMoveOnMoveNumber = -1;
+	int doublePawnMoveOnMoveNumber = -10;
 	boolean hasMoved = false;
 	public PieceInfo(Team team, PieceType type) {
 		super();

@@ -11,6 +11,8 @@ package lukas.sobotik.sightlessknight;
 import com.badlogic.gdx.utils.Array;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 enum CheckState {
     NONE,
@@ -24,35 +26,87 @@ public class Rules {
 
     }
 
-    static void getValidMoves(ArrayList<IntPoint2D> list, IntPoint2D selection, PieceInfo piece, Board board) {
-        getValidMoves(list, selection, piece, board, true);
+    static List<IntPoint2D> getValidMoves(List<IntPoint2D> list, IntPoint2D selection, PieceInfo piece, Board board) {
+        return getValidMoves(list, selection, piece, board, true, true);
     }
-    static void getValidMoves(ArrayList<IntPoint2D> list, IntPoint2D selection, PieceInfo piece, Board board, boolean checkForChecks) {
+    static List<IntPoint2D> getValidMoves(List<IntPoint2D> list, IntPoint2D selection, PieceInfo piece, Board board, boolean checkForChecks, boolean checkCastling) {
+        List<IntPoint2D> validMoves = new ArrayList<>();
         switch (piece.type) {
             case PAWN:
-                getValidMovesPawn(list, selection, piece.team, board);
+                validMoves.addAll(Objects.requireNonNull(getValidMovesPawn(list, selection, piece.team, board)));
                 break;
             case BISHOP:
-                getValidMovesBishop(list, selection, piece.team, board);
+                validMoves.addAll(getValidMovesBishop(list, selection, piece.team, board));
                 break;
             case KNIGHT:
-                getValidMovesKnight(list, selection, piece.team, board);
+                validMoves.addAll(getValidMovesKnight(list, selection, piece.team, board));
                 break;
             case ROOK:
-                getValidMovesRook(list, selection, piece.team, board);
+                validMoves.addAll(getValidMovesRook(list, selection, piece.team, board));
                 break;
             case KING:
-                getValidMovesKing(list, selection, piece.team, board);
+                validMoves.addAll(getValidMovesKing(list, selection, piece.team, board, checkCastling));
                 break;
             case QUEEN:
-                getValidMovesQueen(list, selection, piece.team, board);
+                validMoves.addAll(getValidMovesQueen(list, selection, piece.team, board));
                 break;
         }
         if (checkForChecks) {
             checkForChecks(list, selection, piece.team, board);
         }
+        return validMoves;
     }
-    private static void checkForChecks(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
+    public static boolean isEnemyAttackingThisSquare(IntPoint2D square, Team friendlyTeam, Board board) {
+//        Team enemyTeam = friendlyTeam == Team.WHITE ? Team.BLACK : Team.WHITE;
+//        for (int index = 0; index < board.pieces.length; index++) {
+//            PieceInfo info = board.pieces[index];
+//            if (info == null || info.team != enemyTeam) continue;
+//
+//            List<IntPoint2D> validMoves = getValidMoves(list, board.getPointFromArrayIndex(index), info, board, false);
+//            if (validMoves.contains(square)) return true;
+//        }
+//        return false;
+
+        ArrayList<IntPoint2D> list = new ArrayList<>();
+
+        for (PieceType type : PieceType.values()) {
+            PieceInfo info = new PieceInfo(friendlyTeam, type);
+            getValidMoves(list, square, info, board, false, false);
+            for (IntPoint2D move : list) {
+                PieceInfo target = board.getPiece(move);
+                if (target != null && target.type == type) {
+                    return true;
+                }
+            }
+            list.clear();
+        }
+        return false;
+    }
+    public static String isCastlingPossible(Team team, PieceInfo[] pieces, IntPoint2D whiteKing, IntPoint2D blackKing, boolean getBothTeams) {
+        StringBuilder castlingAvailability = new StringBuilder();
+        if (whiteKing.equals(new IntPoint2D(4, 0)) && pieces[4] != null && pieces[4].type == PieceType.KING && !pieces[4].hasMoved) {
+            if (pieces[7] != null && pieces[7].type == PieceType.ROOK && !pieces[7].hasMoved) {
+                castlingAvailability.append("K");
+            }
+            if (pieces[0] != null && pieces[0].type == PieceType.ROOK && !pieces[0].hasMoved) {
+                castlingAvailability.append("Q");
+            }
+        }
+        if (!getBothTeams) {
+            if (team == Team.WHITE) return castlingAvailability.toString();
+            castlingAvailability = new StringBuilder();
+        }
+        if (blackKing.equals(new IntPoint2D(4, 7)) && pieces[4 + 7 * 8] != null && pieces[4 + 7 * 8].type == PieceType.KING && !pieces[4 + 7 * 8].hasMoved) {
+            if (pieces[7 + 7 * 8] != null && pieces[7 + 7 * 8].type == PieceType.ROOK && !pieces[7 + 7 * 8].hasMoved) {
+                castlingAvailability.append("k");
+            }
+            if (pieces[7 * 8] != null && pieces[7 * 8].type == PieceType.ROOK && !pieces[7 * 8].hasMoved) {
+                castlingAvailability.append("q");
+            }
+        }
+        return castlingAvailability.toString();
+    }
+    private static void checkForChecks(List<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
         for (int i = 0; i < list.size(); i++) {
             IntPoint2D move = list.get(i);
 
@@ -72,7 +126,7 @@ public class Rules {
 
         for (PieceType type : PieceType.values()) {
             PieceInfo info = new PieceInfo(team, type);
-            getValidMoves(list, king, info, board, false);
+            getValidMoves(list, king, info, board, false, false);
             for (IntPoint2D move : list) {
                 PieceInfo target = board.getPiece(move);
                 if (target != null && target.type == type) {
@@ -83,7 +137,7 @@ public class Rules {
         }
         return CheckState.NONE;
     }
-    private static void getValidMovesQueen(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
+    private static List<IntPoint2D> getValidMovesQueen(List<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
         for (int xDir = -1; xDir <= 1; xDir++) {
             for (int yDir = -1; yDir <= 1; yDir++) {
                 if (xDir == 0 && yDir == 0) {
@@ -92,15 +146,17 @@ public class Rules {
                 pieceDirections(list, selection, team, board, xDir, yDir);
             }
         }
+        return list;
     }
 
-    private static void pieceDirections(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board, int xDir, int yDir) {
+    private static List<IntPoint2D> pieceDirections(List<IntPoint2D> list, IntPoint2D selection, Team team, Board board, int xDir, int yDir) {
         IntPoint2D move = selection;
         do {
             move = move.transpose(xDir, yDir);
         } while (checkIfInBounds(list, team, board, move));
+        return list;
     }
-    private static void getValidMovesKnight(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
+    private static List<IntPoint2D> getValidMovesKnight(List<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
         for (int direction = 0; direction < 2; direction++) {
             for (int longDir = -2; longDir <= 2; longDir += 4) {
                 for (int shortDir = -1; shortDir <= 1; shortDir += 2) {
@@ -117,8 +173,9 @@ public class Rules {
                 }
             }
         }
+        return list;
     }
-    private static void getValidMovesKing(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
+    private static List<IntPoint2D> getValidMovesKing(List<IntPoint2D> list, IntPoint2D selection, Team team, Board board, boolean checkCastling) {
         for (int xDir = -1; xDir <= 1; xDir++) {
             for (int yDir = -1; yDir <= 1; yDir++) {
                 if (xDir == 0 && yDir == 0) {
@@ -129,10 +186,72 @@ public class Rules {
                 if (board.isInBounds(move) && (target == null || target.team != team)) {
                     list.add(move);
                 }
+
+                // Check if castling moves are valid
+                if (checkCastling) {
+                    list.addAll(checkCastling(selection, team, board, xDir, yDir));
+                }
             }
         }
+        return list;
     }
-    private static void getValidMovesRook(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
+    public static List<IntPoint2D> checkCastling(IntPoint2D selection, Team team, Board board, int xDir, int yDir) {
+        List<IntPoint2D> list = new ArrayList<>();
+        String teamCastle = isCastlingPossible(team, board.pieces, board.whiteKing, board.blackKing, false);
+        // Kingside Castling
+        ArrayList<IntPoint2D> x = checkKingsideCastling(selection, team, board, xDir, yDir, list, teamCastle);
+        if (x != null) return x;
+        ArrayList<IntPoint2D> x1 = checkQueensideCastling(selection, team, board, xDir, yDir, list, teamCastle);
+        // Queenside Castling
+        if (x1 != null) return x1;
+        return list;
+    }
+
+    private static ArrayList<IntPoint2D> checkQueensideCastling(IntPoint2D selection, Team team, Board board, int xDir, int yDir, List<IntPoint2D> list, String teamCastle) {
+        if (xDir == -1 && yDir == 0 && selection.equals(team == Team.WHITE ? new IntPoint2D(4, 0) : new IntPoint2D(4, 7)))  {
+            if (isEnemyAttackingThisSquare(selection.transpose(xDir, yDir), team, board)
+                    || isEnemyAttackingThisSquare(selection.transpose(xDir - 1, yDir), team, board)
+                    || isEnemyAttackingThisSquare(selection.transpose(xDir - 2, yDir), team, board))
+                return new ArrayList<>();
+            if (board.getPiece(selection.transpose(xDir, yDir)) != null
+                    || board.getPiece(selection.transpose(xDir - 1, yDir)) != null
+                    || board.getPiece(selection.transpose(xDir - 2, yDir)) != null) {
+                System.out.println((board.getPiece(selection.transpose(xDir, yDir)) != null ? board.getPiece(selection.transpose(xDir, yDir)).type : "null") + " " + (board.getPiece(selection.transpose(xDir - 1, yDir)) != null ? board.getPiece(selection.transpose(xDir - 1, yDir)).type : "null") + " " + (board.getPiece(selection.transpose(xDir - 2, yDir)) != null ? board.getPiece(selection.transpose(xDir - 2, yDir)).type : "null"));
+                return new ArrayList<>();
+            }
+
+            if ((teamCastle.contains("Q") && team == Team.WHITE) || (teamCastle.contains("q") && team == Team.BLACK)) {
+                IntPoint2D castleMove = selection.transpose(xDir - 1, yDir);
+                PieceInfo castleTarget = board.getPiece(castleMove);
+                if (board.isInBounds(castleMove) && (castleTarget == null || castleTarget.team != team)) {
+                    list.add(castleMove);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static ArrayList<IntPoint2D> checkKingsideCastling(IntPoint2D selection, Team team, Board board, int xDir, int yDir, List<IntPoint2D> list, String teamCastle) {
+        if (xDir == 1 && yDir == 0 && selection.equals(team == Team.WHITE ? board.whiteKing : board.blackKing))  {
+            if (isEnemyAttackingThisSquare(selection.transpose(xDir, yDir), team, board)
+                    || isEnemyAttackingThisSquare(selection.transpose(xDir + 1, yDir), team, board))
+                return new ArrayList<>();
+            if (board.getPiece(selection.transpose(xDir, yDir)) != null
+                    || board.getPiece(selection.transpose(xDir + 1, yDir)) != null)
+                return new ArrayList<>();
+
+            if ((teamCastle.contains("K") && team == Team.WHITE) || (teamCastle.contains("k") && team == Team.BLACK)) {
+                IntPoint2D castleMove = selection.transpose(xDir + 1, yDir);
+                PieceInfo castleTarget = board.getPiece(castleMove);
+                if (board.isInBounds(castleMove) && (castleTarget == null || castleTarget.team != team)) {
+                    list.add(castleMove);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static List<IntPoint2D> getValidMovesRook(List<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
         for (int direction = 0; direction < 2; direction++) {
             for (int direction2 = -1; direction2 <= 1; direction2 += 2) {
                 IntPoint2D move = selection;
@@ -146,8 +265,9 @@ public class Rules {
                 } while (checkIfInBounds(list, team, board, move));
             }
         }
+        return list;
     }
-    private static boolean checkIfInBounds(ArrayList<IntPoint2D> list, Team team, Board board, IntPoint2D move) {
+    private static boolean checkIfInBounds(List<IntPoint2D> list, Team team, Board board, IntPoint2D move) {
         if (!board.isInBounds(move)) {
             return false;
         }
@@ -166,16 +286,17 @@ public class Rules {
     }
 
 
-    private static void getValidMovesBishop(ArrayList<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
+    private static List<IntPoint2D> getValidMovesBishop(List<IntPoint2D> list, IntPoint2D selection, Team team, Board board) {
         for (int xDir = -1; xDir <= 1; xDir += 2) {
             for (int yDir = -1; yDir <= 1; yDir += 2) {
                 pieceDirections(list, selection, team, board, xDir, yDir);
             }
         }
+        return list;
     }
 
 
-    public static void getValidMovesPawn(ArrayList<IntPoint2D> list, IntPoint2D point, Team team, Board board) {
+    public static List<IntPoint2D> getValidMovesPawn(List<IntPoint2D> list, IntPoint2D point, Team team, Board board) {
         int forwardDirection = (team == playerTeam) ? 1 : -1;
         IntPoint2D forwardPoint = new IntPoint2D(point.getX(), (point.getY() + (forwardDirection)));
         IntPoint2D doubleForwardPoint = new IntPoint2D(point.getX(), (point.getY() + (2 * forwardDirection)));
@@ -198,7 +319,7 @@ public class Rules {
         if (board.isInBounds(leftCapture)) {
             PieceInfo leftCapturePiece = board.getPiece(leftCapture);
             if (board.lastMovedDoubleWhitePawn == null || board.lastMovedDoubleBlackPawn == null) {
-                return;
+                return new ArrayList<>();
             }
 
             if (leftCapturePiece != null && leftCapturePiece.team != team) {
@@ -210,7 +331,7 @@ public class Rules {
         if (board.isInBounds(rightCapture)) {
             PieceInfo rightCapturePiece = board.getPiece(rightCapture);
             if (board.lastMovedDoubleWhitePawn == null || board.lastMovedDoubleBlackPawn == null) {
-                return;
+                return new ArrayList<>();
             }
 
             if (rightCapturePiece != null && rightCapturePiece.team != team) {
@@ -230,9 +351,10 @@ public class Rules {
                 }
             }
         }
+        return list;
     }
 
-    private static void checkEnPassant(ArrayList<IntPoint2D> list, Team team, Board board, IntPoint2D capture, PieceInfo capturePiece, IntPoint2D point) {
+    private static List<IntPoint2D> checkEnPassant(List<IntPoint2D> list, Team team, Board board, IntPoint2D capture, PieceInfo capturePiece, IntPoint2D point) {
         IntPoint2D leftPoint = new IntPoint2D(point.getX() - 1, point.getY());
         IntPoint2D rightPoint = new IntPoint2D(point.getX() + 1, point.getY());
 
@@ -252,5 +374,6 @@ public class Rules {
                 && point.getX() > capture.getX()) {
             list.add(capture);
         }
+        return list;
     }
 }

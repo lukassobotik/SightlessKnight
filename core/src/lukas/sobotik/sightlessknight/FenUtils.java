@@ -92,22 +92,7 @@ public class FenUtils {
 
         // Castling availability
         StringBuilder castlingAvailability = new StringBuilder();
-        if (whiteKing.equals(new IntPoint2D(4, 0)) && pieces[4] != null && pieces[4].type == PieceType.KING && !pieces[4].hasMoved) {
-            if (pieces[7] != null && pieces[7].type == PieceType.ROOK && !pieces[7].hasMoved) {
-                castlingAvailability.append("K");
-            }
-            if (pieces[0] != null && pieces[0].type == PieceType.ROOK && !pieces[0].hasMoved) {
-                castlingAvailability.append("Q");
-            }
-        }
-        if (blackKing.equals(new IntPoint2D(4, 7)) && pieces[4 + 7 * 8] != null && pieces[4 + 7 * 8].type == PieceType.KING && !pieces[4 + 7 * 8].hasMoved) {
-            if (pieces[7 + 7 * 8] != null && pieces[7 + 7 * 8].type == PieceType.ROOK && !pieces[7 + 7 * 8].hasMoved) {
-                castlingAvailability.append("k");
-            }
-            if (pieces[7 * 8] != null && pieces[7 * 8].type == PieceType.ROOK && !pieces[7 * 8].hasMoved) {
-                castlingAvailability.append("q");
-            }
-        }
+        castlingAvailability.append(Rules.isCastlingPossible(team, pieces, whiteKing, blackKing, true));
         if (castlingAvailability.length() == 0) {
             castlingAvailability.append("-");
         }

@@ -107,6 +107,7 @@ public class GameState implements InputProcessor {
         } else {
             PieceInfo piece = board.getPiece(tileIdx);
             if (piece == null) return false;
+            System.out.println(Rules.isEnemyAttackingThisSquare(new IntPoint2D(4, 4), piece.team, board));
             if (piece.team == currentTurn) {
                 selected = tileIdx;
                 Rules.getValidMoves(validMoves, tileIdx, piece, board);
