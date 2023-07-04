@@ -10,6 +10,8 @@
 
 package lukas.sobotik.sightlessknight;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -17,6 +19,13 @@ import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.utils.Array;
 
 import java.util.ArrayList;
 
@@ -31,6 +40,11 @@ public class GameState implements InputProcessor {
     BoardLocation selectedPieceLocation;
     static int moveNumber = 0;
     static final Team playerTeam = Team.WHITE;
+    static boolean isPawnPromotionPending = false;
+    static BoardLocation promotionLocation;
+    static PieceType selectedPromotionPieceType;
+    Stage stage;
+    Dialog pawnPromotionDialog;
 
     GameState(int size, Board board) {
         validMoves = new ArrayList<>();
@@ -52,7 +66,9 @@ public class GameState implements InputProcessor {
 
         this.board = board;
     }
-
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
     public void draw(SpriteBatch batch) {
         if (selectedPieceLocation != null) {
             Rectangle tile = board.getRectangle(selectedPieceLocation);
@@ -72,6 +88,21 @@ public class GameState implements InputProcessor {
 
     @Override
     public boolean keyDown(int keycode) {
+        if (!isPawnPromotionPending) return false;
+
+        switch (keycode) {
+            case Input.Keys.Q:
+                promotePawn(PieceType.QUEEN);
+                break;
+            case Input.Keys.R:
+                promotePawn(PieceType.ROOK);
+                break;
+            case Input.Keys.K:
+                promotePawn(PieceType.KNIGHT);
+                break;
+            case Input.Keys.B:
+                promotePawn(PieceType.BISHOP);
+        }
         return false;
     }
 
@@ -90,6 +121,9 @@ public class GameState implements InputProcessor {
         if (hasGameEnded) {
             System.out.println("isCheckmate: " + Rules.isCheckmate(currentTurn, board));
             System.out.println("isStalemate: " + Rules.isStalemate(currentTurn, board));
+            return false;
+        }
+        if (isPawnPromotionPending) {
             return false;
         }
 
@@ -122,15 +156,35 @@ public class GameState implements InputProcessor {
         }
         return false;
     }
-
     private void movePieceAndEndTurn(BoardLocation destination) {
-        board.movePiece(selectedPieceLocation, destination);
+        if (destination != null) {
+            board.movePiece(selectedPieceLocation, destination);
+        }
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
-
-
+    private void showPawnPromotionDialog() {
+        pawnPromotionDialog = new Dialog("Promotion", new Skin(Gdx.files.internal("ui-skin.json")));
+        pawnPromotionDialog.text("Press the corresponding letter for a piece to promote the pawn to:");
+        pawnPromotionDialog.button("Queen (q)", PieceType.QUEEN).pad(10);
+        pawnPromotionDialog.button("Bishop (b)", PieceType.BISHOP).pad(10);
+        pawnPromotionDialog.button("Rook (r)", PieceType.ROOK).pad(10);
+        pawnPromotionDialog.button("Knight (k)", PieceType.KNIGHT).pad(10);
+        pawnPromotionDialog.show(stage);
+    }
+    private void promotePawn(PieceType selectedPieceType) {
+        board.promotePawn(promotionLocation, selectedPieceType);
+        currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
+        isPawnPromotionPending = false;
+        promotionLocation = null;
+        selectedPromotionPieceType = null;
+        pawnPromotionDialog.hide();
+        movePieceAndEndTurn(null);
+    }
     @Override
     public boolean touchUp(int x, int y, int pointer, int button) {
+        if (isPawnPromotionPending && promotionLocation != null) {
+            showPawnPromotionDialog();
+        }
         return false;
     }
 

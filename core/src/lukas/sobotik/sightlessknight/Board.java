@@ -195,6 +195,12 @@ public class Board {
             removePiece(enPassantCapture);
         }
 
+        // Check for promotion moves
+        if ((to.getY() == 7 || to.getY() == 0) && movedPiece.type.equals(PieceType.PAWN)) {
+            GameState.promotionLocation = to;
+            GameState.isPawnPromotionPending = true;
+        }
+
         movedPiece.hasMoved = true;
 
         lastFromLocation = from;
@@ -238,6 +244,14 @@ public class Board {
         int x = index % 8;
         int y = index / 8;
         return new BoardLocation(x, y);
+    }
+
+    public void promotePawn(BoardLocation pawnLocation, PieceType selectedPiece) {
+        Team team;
+        if (pawnLocation.getY() == 7) team = Team.WHITE;
+        else team = Team.BLACK;
+        Piece piece = new Piece(team, selectedPiece);
+        pieces[pawnLocation.getX() + pawnLocation.getY() * 8] = piece;
     }
 
     public BoardLocation getPoint(int x, int y) {

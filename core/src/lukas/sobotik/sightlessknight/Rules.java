@@ -1,11 +1,3 @@
-/*
- * TODO:
- * Add En Peasant
- * Add Castling
- * Add promotion
- *
- */
-
 package lukas.sobotik.sightlessknight;
 
 import com.badlogic.gdx.utils.Array;
@@ -314,7 +306,6 @@ public class Rules {
             for (BoardLocation move : legalPawnMoves) {
                 if (move.getY() == 0 || move.getY() == 7) {
                     promotionMoves.add(move);
-                    System.out.println("Promotion move: " + move);
                 }
             }
         }
