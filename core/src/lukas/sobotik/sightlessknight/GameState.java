@@ -19,13 +19,9 @@ import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.utils.Array;
 
 import java.util.ArrayList;
 
@@ -44,7 +40,7 @@ public class GameState implements InputProcessor {
     static BoardLocation promotionLocation;
     static PieceType selectedPromotionPieceType;
     Stage stage;
-    Dialog pawnPromotionDialog;
+    Dialog pawnPromotionDialog, gameOverDialog;
 
     GameState(int size, Board board) {
         validMoves = new ArrayList<>();
@@ -88,21 +84,33 @@ public class GameState implements InputProcessor {
 
     @Override
     public boolean keyDown(int keycode) {
-        if (!isPawnPromotionPending) return false;
-
-        switch (keycode) {
-            case Input.Keys.Q:
-                promotePawn(PieceType.QUEEN);
-                break;
-            case Input.Keys.R:
-                promotePawn(PieceType.ROOK);
-                break;
-            case Input.Keys.K:
-                promotePawn(PieceType.KNIGHT);
-                break;
-            case Input.Keys.B:
-                promotePawn(PieceType.BISHOP);
+        if (isPawnPromotionPending) {
+            switch (keycode) {
+                case Input.Keys.Q:
+                    promotePawn(PieceType.QUEEN);
+                    break;
+                case Input.Keys.R:
+                    promotePawn(PieceType.ROOK);
+                    break;
+                case Input.Keys.K:
+                    promotePawn(PieceType.KNIGHT);
+                    break;
+                case Input.Keys.B:
+                    promotePawn(PieceType.BISHOP);
+            }
         }
+        if (hasGameEnded) {
+            if (keycode == Input.Keys.R) {
+                board.resetBoardPosition();
+                hasGameEnded = false;
+                moveNumber = 0;
+                currentTurn = Team.WHITE;
+                gameOverDialog.cancel();
+                gameOverDialog.hide();
+                gameOverDialog = null;
+            }
+        }
+
         return false;
     }
 
@@ -119,9 +127,14 @@ public class GameState implements InputProcessor {
     @Override
     public boolean touchDown(int x, int y, int pointer, int button) {
         if (hasGameEnded) {
-            System.out.println("isCheckmate: " + Rules.isCheckmate(currentTurn, board));
-            System.out.println("isStalemate: " + Rules.isStalemate(currentTurn, board));
-            return false;
+            if (Rules.isStalemate(currentTurn, board)) {
+                showGameOverDialog(CheckState.STALEMATE);
+                return false;
+            }
+            if (Rules.isCheckmate(currentTurn, board)) {
+                showGameOverDialog(CheckState.CHECKMATE);
+                return false;
+            }
         }
         if (isPawnPromotionPending) {
             return false;
@@ -170,6 +183,19 @@ public class GameState implements InputProcessor {
         pawnPromotionDialog.button("Rook (r)", PieceType.ROOK).pad(10);
         pawnPromotionDialog.button("Knight (k)", PieceType.KNIGHT).pad(10);
         pawnPromotionDialog.show(stage);
+    }
+    private void showGameOverDialog(CheckState state) {
+        if (state.equals(CheckState.CHECKMATE)) {
+            gameOverDialog = new Dialog((currentTurn == Team.WHITE ? "Black" : "White") + " Wins!", new Skin(Gdx.files.internal("ui-skin.json")));
+            gameOverDialog.text((currentTurn == Team.WHITE ? "Black" : "White") + " wins by checkmate.");
+            gameOverDialog.button("Restart (r)", "restart").pad(10);
+            gameOverDialog.show(stage);
+        } else if (state.equals(CheckState.STALEMATE)) {
+            gameOverDialog = new Dialog("Draw", new Skin(Gdx.files.internal("ui-skin.json")));
+            gameOverDialog.text("by stalemate");
+            gameOverDialog.button("Restart (r)", "restart").pad(10);
+            gameOverDialog.show(stage);
+        }
     }
     private void promotePawn(PieceType selectedPieceType) {
         board.promotePawn(promotionLocation, selectedPieceType);

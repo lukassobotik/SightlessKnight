@@ -73,8 +73,13 @@ public class Board {
 
         generateAllSquaresTexture();
     }
+    public void resetBoardPosition() {
+        pieces = fenUtils.generatePositionFromFEN(STARTING_FEN_POSITION);
 
-    private void printBoardInConsole() {
+        System.out.println(fenUtils.generateFenFromCurrentPosition());
+        printBoardInConsole();
+    }
+    public void printBoardInConsole() {
         for (int rank = 7; rank >= 0; rank--) {
             for (int file = 0; file < 8; file++) {
                 int index = rank * 8 + file;
@@ -212,7 +217,8 @@ public class Board {
         lastFromLocation = from;
         lastToLocation = to;
     }
-    private void movePieceWithoutSpecialMoves(BoardLocation from, BoardLocation to) {
+    public void movePieceWithoutSpecialMoves(BoardLocation from, BoardLocation to) {
+        if (from == null || to == null) return;
         if (from.equals(whiteKingLocation)) {
             whiteKingLocation = to;
         } else if (from.equals(blackKingLocation)) {
@@ -232,9 +238,9 @@ public class Board {
     }
 
     public void undoMove() {
+        if (lastFromLocation == null || lastToLocation == null) return;
         Piece temp = lastRemovedPiece;
 
-        // Todo: Doesn't work in some positions (e.g. FEN:"rnbqkbnr/ppp3pp/4p3/8/8/8/PPPP1PPP/RNBQKBNR w KQkq - 0 0", move:"Qh5")
         movePieceWithoutSpecialMovesAndSave(lastToLocation, lastFromLocation);
 
         pieces[lastFromLocation.getX() + lastFromLocation.getY() * 8] = temp;

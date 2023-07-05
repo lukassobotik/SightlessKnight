@@ -9,7 +9,8 @@ import java.util.Objects;
 enum CheckState {
     NONE,
     CHECK,
-    MATE
+    CHECKMATE,
+    STALEMATE
 }
 
 public class Rules {
@@ -360,16 +361,43 @@ public class Rules {
             BoardLocation point = board.getPointFromArrayIndex(i);
             Piece piece = board.pieces[i];
             if (piece != null && piece.team == team) {
-                getValidMoves(validMoves, point, piece, board);
+                getValidMoves(validMoves, point, piece, board, true, false);
                 for (BoardLocation move : validMoves) {
                     board.movePieceWithoutSpecialMovesAndSave(point, move);
                     if (!isKingInCheck(team, board)) {
+                        board.undoMove();
                         return false;
                     }
+                    board.undoMove();
                 }
             }
         }
         return true;
+
+//        List<BoardLocation> validMoves = new ArrayList<>();
+//        for (int i = 0; i < board.pieces.length; i++) {
+//            BoardLocation point = board.getPointFromArrayIndex(i);
+//            Piece piece = board.pieces[i];
+//            if (piece != null && piece.team == team) {
+//                getValidMoves(validMoves, point, piece, board, false, false);
+//                for (BoardLocation move : validMoves) {
+//                    board.movePieceWithoutSpecialMovesAndSave(point, move);
+//                    if (!checkForChecks(team, board).equals(CheckState.CHECK)) {
+//                        board.undoMove();
+//                        board.printBoardInConsole();
+//                        return false;
+//                    }
+//                    board.undoMove();
+//                }
+//            }
+//        }
+//        System.out.println("CHCHCHCHHCHHC");
+//        validMoves.forEach(item -> System.err.println(item.getX() + ":" + item.getY()));
+//        System.err.println(checkForChecks(team, board));
+//                if (validMoves.isEmpty() && checkForChecks(team == Team.WHITE ? Team.BLACK : Team.WHITE, board).equals(CheckState.CHECK)) {
+//                    return true;
+//                }
+//                return false;
     }
 
     public static boolean isStalemate(Team team, Board board) {
