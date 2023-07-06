@@ -8,6 +8,7 @@ public class FenUtils {
     Team team = Team.BLACK;
     BoardLocation whiteKingPosition;
     BoardLocation blackKingPosition;
+    int whiteKingIndex, blackKingIndex;
     BoardLocation lastFromMove;
     BoardLocation lastDoublePawnMoveWithWhite;
     BoardLocation lastDoublePawnMoveWithBlack;
@@ -38,12 +39,20 @@ public class FenUtils {
                     Team pieceColor = (Character.isUpperCase(symbol)) ? Team.WHITE : Team.BLACK;
                     PieceType pieceType = getPieceTypeFromSymbol().get(Character.toLowerCase(symbol));
                     pieces[file * 8 + rank] = new Piece(pieceColor, pieceType);
+                    if (pieceType.equals(PieceType.KING) && pieceColor.equals(Team.WHITE)) whiteKingIndex = file * 8 + rank;
+                    if (pieceType.equals(PieceType.KING) && pieceColor.equals(Team.BLACK)) blackKingIndex = file * 8 + rank;
                     rank++;
                 }
             }
         }
 
         return pieces;
+    }
+    public int getWhiteKingIndex() {
+        return whiteKingIndex;
+    }
+    public int getBlackKingIndex() {
+        return blackKingIndex;
     }
     public String generateFenFromCurrentPosition() {
         StringBuilder fenBuilder = new StringBuilder();

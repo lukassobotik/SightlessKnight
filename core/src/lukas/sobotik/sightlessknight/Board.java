@@ -49,24 +49,19 @@ public class Board {
 
         int count = 0;
         for (PieceType type : PieceType.values()) {
-
             for (Team team : Team.values()) {
                 String name = new Piece(team, type).getSpriteName();
                 spriteIndexMap.put(name, count++);
             }
         }
 
-        // TODO: Automatically set this from FEN
-        if (playerTeam == Team.WHITE) {
-            whiteKingLocation = new BoardLocation(4, 0);
-            blackKingLocation = new BoardLocation(4, 7);
-        } else {
-            whiteKingLocation = new BoardLocation(3, 7);
-            blackKingLocation = new BoardLocation(3, 0);
-        }
-
         fenUtils = new FenUtils(pieces, whiteKingLocation, blackKingLocation, lastToLocation, lastDoublePawnMoveWithWhitePieces, lastDoublePawnMoveWithBlackPieces);
         pieces = fenUtils.generatePositionFromFEN(STARTING_FEN_POSITION);
+
+        whiteKingLocation = getPointFromArrayIndex(fenUtils.getWhiteKingIndex());
+        blackKingLocation = getPointFromArrayIndex(fenUtils.getBlackKingIndex());
+        fenUtils.whiteKingPosition = whiteKingLocation;
+        fenUtils.blackKingPosition = blackKingLocation;
 
         System.out.println(fenUtils.generateFenFromCurrentPosition());
         printBoardInConsole();

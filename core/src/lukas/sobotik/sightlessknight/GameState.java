@@ -1,13 +1,3 @@
-/*
- * TODO:
- * Display check status
- * Display end of game status (check vs stale mate)
- *
- * Change to highlighting tiles by making different colored (or tinted?) textures instead of drawing rectangles
- *
- */
-
-
 package lukas.sobotik.sightlessknight;
 
 import com.badlogic.gdx.Gdx;
