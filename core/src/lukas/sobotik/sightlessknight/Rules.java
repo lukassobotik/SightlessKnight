@@ -183,8 +183,8 @@ public class Rules {
         // Kingside Castling
         ArrayList<BoardLocation> kingsideCastling = checkKingsideCastling(selectedPieceLocation, team, board, xDir, yDir, legalKingMoves, teamCastle);
         if (kingsideCastling != null) return kingsideCastling;
-        ArrayList<BoardLocation> queensideCastling = checkQueensideCastling(selectedPieceLocation, team, board, xDir, yDir, legalKingMoves, teamCastle);
         // Queenside Castling
+        ArrayList<BoardLocation> queensideCastling = checkQueensideCastling(selectedPieceLocation, team, board, xDir, yDir, legalKingMoves, teamCastle);
         if (queensideCastling != null) return queensideCastling;
         return legalKingMoves;
     }

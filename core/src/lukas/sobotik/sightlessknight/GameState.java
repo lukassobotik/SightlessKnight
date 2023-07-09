@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -36,11 +37,14 @@ public class GameState implements InputProcessor {
         validMoves = new ArrayList<>();
         currentTurn = Team.WHITE;
         this.size = size;
-
+        this.board = board;
+        createOverlays();
+    }
+    private void createOverlays() {
         Rectangle rect = board.getRectangle(new BoardLocation(0, 0));
         int nextPow2 = Integer.highestOneBit(rect.getHeight() - 1) << 1;
         Pixmap pixmap = new Pixmap(nextPow2, nextPow2, Format.RGBA8888);
-        int borderWidth = rect.getWidth() / 10 + 1;
+        int borderWidth = rect.getWidth() / 30 + 1;
         pixmap.setColor(Color.WHITE);
         for (int i = 0; i < borderWidth; i++) {
             pixmap.drawRectangle(rect.getX() + i, rect.getY() + i,
@@ -49,8 +53,6 @@ public class GameState implements InputProcessor {
         overlayBoxTexture = new Texture(pixmap);
         pixmap.dispose();
         overlayBoxSprite = new Sprite(overlayBoxTexture, rect.getWidth(), rect.getHeight());
-
-        this.board = board;
     }
     public void setStage(Stage stage) {
         this.stage = stage;

@@ -29,7 +29,6 @@ public class Board {
     BoardLocation lastDoublePawnMoveWithWhitePieces;
     BoardLocation lastDoublePawnMoveWithBlackPieces;
     FenUtils fenUtils;
-    static final Team playerTeam = GameState.playerTeam;
 
     public static final String STARTING_FEN_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -95,10 +94,10 @@ public class Board {
 
         Pixmap pixmap = new Pixmap(nextPow2, nextPow2, Format.RGBA8888);
 
-        pixmap.setColor(Color.GRAY);
+        pixmap.setColor(new Color(0xb58863ff));
         pixmap.fillRectangle(0, 0, size, size);
 
-        pixmap.setColor(Color.WHITE);
+        pixmap.setColor(new Color(0xf0d9b5ff));
 
         int y = 0;
         int x = 0;
