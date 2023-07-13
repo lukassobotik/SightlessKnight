@@ -1,0 +1,11 @@
+@import url('./main-layout.css');    html {
+      --lumo-border-radius-s: calc(var(--lumo-size-m) / 6);
+      --lumo-border-radius-m: calc(var(--lumo-size-m) / 2);
+      --lumo-border-radius-l: var(--lumo-size-m);
+
+    }
+
+    [theme~="dark"] {
+      --lumo-base-color: hsl(214, 22%, 13%);
+
+    }
