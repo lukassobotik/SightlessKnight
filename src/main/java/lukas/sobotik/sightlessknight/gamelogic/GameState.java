@@ -15,9 +15,9 @@ public class GameState {
     static BoardLocation promotionLocation;
     static PieceType selectedPromotionPieceType;
 
-    public GameState(Board board) {
+    public GameState(Board board, Team startingTeam) {
         validMoves = new ArrayList<>();
-        currentTurn = Team.WHITE;
+        currentTurn = startingTeam;
         this.board = board;
     }
 

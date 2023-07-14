@@ -24,15 +24,15 @@ public class PlayView extends VerticalLayout {
     FenUtils fenUtils;
     GameState gameState;
     Board board;
-    public static final String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    public static final String STARTING_POSITION = "rnbqkbnr/pppnpppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1";
     public PlayView() {
-        Piece[] pieces = new Piece[64];
-        board = new Board(64);
-        gameState = new GameState(board);
         setAlignItems(Alignment.CENTER);
 
+        Piece[] pieces = new Piece[64];
         fenUtils = new FenUtils(pieces, null, null, null, null, null);
         pieces = fenUtils.generatePositionFromFEN(STARTING_POSITION);
+        board = new Board(64, pieces);
+        gameState = new GameState(board, fenUtils.getStartingTeam());
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         TextField textField = new TextField();

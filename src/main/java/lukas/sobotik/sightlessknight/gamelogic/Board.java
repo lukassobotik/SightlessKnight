@@ -18,23 +18,12 @@ public class Board {
 
     public static final String STARTING_FEN_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    public Board(int size) {
+    public Board(int size, Piece[] pieces) {
         this.size = size;
+        this.pieces = pieces;
         squareSize = size / 8;
 
-        spriteIndexMap = new HashMap<>();
-
-        int count = 0;
-        for (PieceType type : PieceType.values()) {
-            for (Team team : Team.values()) {
-                String name = new Piece(team, type).getSpriteName();
-                spriteIndexMap.put(name, count++);
-            }
-        }
-
-        fenUtils = new FenUtils(pieces, whiteKingLocation, blackKingLocation, lastToLocation, lastDoublePawnMoveWithWhitePieces, lastDoublePawnMoveWithBlackPieces);
-        pieces = fenUtils.generatePositionFromFEN(STARTING_FEN_POSITION);
-
+        fenUtils = new FenUtils(pieces, null, null, null, null, null);
         whiteKingLocation = getPointFromArrayIndex(fenUtils.getWhiteKingIndex());
         blackKingLocation = getPointFromArrayIndex(fenUtils.getBlackKingIndex());
         fenUtils.whiteKingPosition = whiteKingLocation;

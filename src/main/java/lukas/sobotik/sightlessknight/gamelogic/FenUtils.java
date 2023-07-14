@@ -56,6 +56,9 @@ public class FenUtils {
 
         return pieces;
     }
+    public Team getStartingTeam() {
+        return startingTeam;
+    }
     public int getWhiteKingIndex() {
         return whiteKingIndex;
     }
