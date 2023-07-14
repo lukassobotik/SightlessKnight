@@ -1,0 +1,59 @@
+@import url('./main-layout.css'); html {
+  --lumo-border-radius-s: calc(var(--lumo-size-m) / 6);
+  --lumo-border-radius-m: calc(var(--lumo-size-m) / 2);
+  --lumo-border-radius-l: var(--lumo-size-m);
+}
+
+[theme~="dark"] {
+  --lumo-base-color: hsl(214, 22%, 13%);
+
+}
+
+.board {
+    font-family: monospace;
+    margin-bottom: -1.5rem;
+    width: 40vw;
+    aspect-ratio: 1/1;
+    position: relative;
+}
+
+.board_row {
+    width: 100%;
+    position: relative;
+}
+
+.board_row vaadin-button {
+    width: 12.5%;
+    height: auto;
+    aspect-ratio: 1/1;
+    margin: -0.5rem;
+    border-radius: 0;
+    padding: 0;
+}
+
+.square_image {
+    width: 95%;
+}
+
+.square {
+    width: 1vw;
+    height: auto;
+    aspect-ratio: 1/1;
+    margin: -.5rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    position: relative;
+}
+
+.dark_square {
+    background-color: #b58863;
+}
+
+.light_square {
+    background-color: #f0d9b5;
+}
+
+.selected {
+    background: gold;
+}
