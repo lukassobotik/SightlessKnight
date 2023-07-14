@@ -7,7 +7,7 @@ public class GameState {
     Board board;
     public Team currentTurn;
     public boolean hasGameEnded = false;
-    List<BoardLocation> validMoves;
+    final List<BoardLocation> validMoves;
     BoardLocation selectedPieceLocation;
     static int moveNumber = 0;
     static final Team playerTeam = Team.WHITE;
@@ -19,6 +19,17 @@ public class GameState {
         validMoves = new ArrayList<>();
         currentTurn = Team.WHITE;
         this.board = board;
+    }
+
+    public void onSquareClick(BoardLocation location) {
+        System.out.println("clikc");
+        Piece piece = board.getPiece(location);
+        if (piece == null) return;
+        if (piece.team == currentTurn) {
+            selectedPieceLocation = location;
+            Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board);
+        }
+        validMoves.forEach(loc -> System.out.println("valid: " + loc.getStringLocation()));
     }
 
     public void play(BoardLocation from, BoardLocation to) {
@@ -37,8 +48,11 @@ public class GameState {
         if (piece == null) return;
         if (piece.team == currentTurn) {
             selectedPieceLocation = from;
-            validMoves = Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board);
+            validMoves.addAll(Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board));
         }
+        validMoves.forEach(loc -> System.out.println("valid: " + loc.getStringLocation()));
+
+        System.out.println("validMoves: " + validMoves.size());
 
         if (!validMoves.isEmpty()) {
             for (BoardLocation move : validMoves) {

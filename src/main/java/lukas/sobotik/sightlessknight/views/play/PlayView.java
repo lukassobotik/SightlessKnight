@@ -24,6 +24,7 @@ public class PlayView extends VerticalLayout {
     FenUtils fenUtils;
     GameState gameState;
     Board board;
+    public static final String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     public PlayView() {
         Piece[] pieces = new Piece[64];
         board = new Board(64);
@@ -31,7 +32,7 @@ public class PlayView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
 
         fenUtils = new FenUtils(pieces, null, null, null, null, null);
-        pieces = fenUtils.generatePositionFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        pieces = fenUtils.generatePositionFromFEN(STARTING_POSITION);
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         TextField textField = new TextField();
@@ -96,6 +97,7 @@ public class PlayView extends VerticalLayout {
                 square.addClassName(board.getPointFromArrayIndex(index).getX() + "-" + board.getPointFromArrayIndex(index).getY());
                 square.addClickListener(view -> {
                     if (gameState.hasGameEnded) return;
+                    gameState.play(board.getPointFromArrayIndex(index), new BoardLocation(-1, -1));
 
                     AtomicReference<BoardLocation> selectedSquare = new AtomicReference<>(null);
                     boardLayout.getChildren().forEach(component -> component.getChildren().forEach(componentRow -> {

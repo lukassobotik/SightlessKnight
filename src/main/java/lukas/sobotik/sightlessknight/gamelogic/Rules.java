@@ -21,19 +21,18 @@ public class Rules {
         return getValidMoves(legalMoves, selectedPieceLocation, piece, board, true, true);
     }
     static List<BoardLocation> getValidMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks, boolean checkCastlingMoves) {
-        List<BoardLocation> validMoves = new ArrayList<>();
         switch (piece.type) {
-            case PAWN -> validMoves.addAll(Objects.requireNonNull(getValidPawnMoves(legalMoves, selectedPieceLocation, piece.team, board)));
-            case BISHOP -> validMoves.addAll(getValidBishopMoves(legalMoves, selectedPieceLocation, piece.team, board));
-            case KNIGHT -> validMoves.addAll(getValidKnightMoves(legalMoves, selectedPieceLocation, piece.team, board));
-            case ROOK -> validMoves.addAll(getValidRookMoves(legalMoves, selectedPieceLocation, piece.team, board));
-            case KING -> validMoves.addAll(getValidKingMoves(legalMoves, selectedPieceLocation, piece.team, board, checkCastlingMoves));
-            case QUEEN -> validMoves.addAll(getValidQueenMoves(legalMoves, selectedPieceLocation, piece.team, board));
+            case PAWN -> legalMoves.addAll(Objects.requireNonNull(getValidPawnMoves(legalMoves, selectedPieceLocation, piece.team, board)));
+            case BISHOP -> legalMoves.addAll(getValidBishopMoves(legalMoves, selectedPieceLocation, piece.team, board));
+            case KNIGHT -> legalMoves.addAll(getValidKnightMoves(legalMoves, selectedPieceLocation, piece.team, board));
+            case ROOK -> legalMoves.addAll(getValidRookMoves(legalMoves, selectedPieceLocation, piece.team, board));
+            case KING -> legalMoves.addAll(getValidKingMoves(legalMoves, selectedPieceLocation, piece.team, board, checkCastlingMoves));
+            case QUEEN -> legalMoves.addAll(getValidQueenMoves(legalMoves, selectedPieceLocation, piece.team, board));
         }
         if (checkForChecks) {
-            validMoves.addAll(checkForChecks(legalMoves, selectedPieceLocation, piece.team, board));
+            legalMoves = checkForChecks(legalMoves, selectedPieceLocation, piece.team, board);
         }
-        return validMoves;
+        return legalMoves;
     }
     public static boolean isSquareAttackedByEnemy(BoardLocation square, Team friendlyTeam, Board board) {
         ArrayList<BoardLocation> list = new ArrayList<>();

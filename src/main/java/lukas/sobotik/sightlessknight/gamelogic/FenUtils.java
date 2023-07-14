@@ -12,6 +12,7 @@ public class FenUtils {
     BoardLocation lastFromMove;
     BoardLocation lastDoublePawnMoveWithWhite;
     BoardLocation lastDoublePawnMoveWithBlack;
+    Team startingTeam;
     public FenUtils(Piece[] pieces, BoardLocation whiteKingPosition, BoardLocation blackKingPosition, BoardLocation lastFromMove, BoardLocation lastDoublePawnMoveWithWhite, BoardLocation lastDoublePawnMoveWithBlack) {
         this.pieces = pieces;
         this.whiteKingPosition = whiteKingPosition;
@@ -44,6 +45,13 @@ public class FenUtils {
                     rank++;
                 }
             }
+        }
+
+        String fenStartingTeam = fen.split(" ")[1];
+        if (fenStartingTeam.equals("b")) {
+            startingTeam = Team.BLACK;
+        } else {
+            startingTeam = Team.WHITE;
         }
 
         return pieces;
