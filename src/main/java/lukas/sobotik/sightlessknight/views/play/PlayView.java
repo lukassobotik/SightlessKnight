@@ -1,6 +1,7 @@
 package lukas.sobotik.sightlessknight.views.play;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Image;
@@ -64,11 +65,22 @@ public class PlayView extends VerticalLayout {
         System.out.println(gameState.hasGameEnded);
         if (gameState.hasGameEnded) {
             Notification.show("Game Over!");
+            if (Rules.isStalemate(GameState.currentTurn, board)) {
+                VerticalLayout dialogLayout = new VerticalLayout();
+                Text dialogText = new Text("Game Drawn by Stalemate");
+                createGameOverDialog(dialogLayout, dialogText);
+            }
+            System.out.println(Rules.isStalemate(GameState.currentTurn, board));
+            if (Rules.isCheckmate(GameState.currentTurn, board)) {
+                VerticalLayout dialogLayout = new VerticalLayout();
+                Text dialogText = new Text((GameState.currentTurn == Team.WHITE ? "Black" : "White") + " Won by Checkmate");
+                createGameOverDialog(dialogLayout, dialogText);
+            }
         }
         if (GameState.isPawnPromotionPending) {
             Dialog dialog = new Dialog();
             dialog.setHeaderTitle("Pawn Promotion");
-            Image queenButton = new Image("images/sprites/" + (gameState.currentTurn == Team.WHITE ? "b" : "w" + "_queen.svg"), "Queen");
+            Image queenButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_queen.svg"), "Queen");
             queenButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.QUEEN);
                 dialog.close();
@@ -96,6 +108,25 @@ public class PlayView extends VerticalLayout {
             dialog.open();
             add(dialog);
         }
+    }
+
+    private void createGameOverDialog(VerticalLayout dialogLayout, Text dialogText) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Game Over!");
+        dialog.setCloseOnOutsideClick(true);
+        dialogLayout.add(dialogText);
+        Button newGameButton = new Button("New Game");
+        newGameButton.addClickListener(view -> {
+            board.resetBoardPosition(STARTING_POSITION);
+            GameState.moveNumber = 0;
+            gameState.hasGameEnded = false;
+            dialog.close();
+            createBoard(board.pieces);
+        });
+        dialogLayout.add(newGameButton);
+        dialog.add(dialogLayout);
+        dialog.open();
+        add(dialog);
     }
 
     private void createBoard(Piece[] pieces) {

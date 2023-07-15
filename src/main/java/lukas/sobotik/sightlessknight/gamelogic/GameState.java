@@ -5,11 +5,11 @@ import java.util.List;
 
 public class GameState {
     Board board;
-    public Team currentTurn;
+    public static Team currentTurn;
     public boolean hasGameEnded = false;
     final List<BoardLocation> validMoves;
     BoardLocation selectedPieceLocation;
-    static int moveNumber = 0;
+    public static int moveNumber = 0;
     static final Team playerTeam = Team.WHITE;
     public static boolean isPawnPromotionPending = false;
     static BoardLocation promotionLocation;
@@ -18,26 +18,11 @@ public class GameState {
     public GameState(Board board, Team startingTeam) {
         validMoves = new ArrayList<>();
         currentTurn = startingTeam;
+        moveNumber = 0;
         this.board = board;
     }
-
-    public void onSquareClick(BoardLocation location) {
-        System.out.println("clikc");
-        Piece piece = board.getPiece(location);
-        if (piece == null) return;
-        if (piece.team == currentTurn) {
-            selectedPieceLocation = location;
-            Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board);
-        }
-        validMoves.forEach(loc -> System.out.println("valid: " + loc.getStringLocation()));
-    }
-
     public void play(BoardLocation from, BoardLocation to) {
         if (hasGameEnded) {
-            if (Rules.isStalemate(currentTurn, board)) {
-            }
-            if (Rules.isCheckmate(currentTurn, board)) {
-            }
             return;
         }
         if (isPawnPromotionPending) {
@@ -79,34 +64,12 @@ public class GameState {
         }
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
-    private void showPawnPromotionDialog() {
-
-    }
     public void promotePawn(PieceType selectedPieceType) {
-        System.out.println("PROMOTING to " + selectedPieceType.name());
         board.promotePawn(promotionLocation, selectedPieceType);
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
         isPawnPromotionPending = false;
         promotionLocation = null;
         selectedPromotionPieceType = null;
         movePieceAndEndTurn(null);
-    }
-    public boolean touchUp(int x, int y, int pointer, int button) {
-        if (isPawnPromotionPending && promotionLocation != null) {
-            showPawnPromotionDialog();
-        }
-        return false;
-    }
-
-    public boolean touchDragged(int x, int y, int pointer) {
-        return false;
-    }
-
-    public boolean mouseMoved(int screenX, int screenY) {
-        return false;
-    }
-
-    public boolean scrolled(float amountX, float amountY) {
-        return false;
     }
 }

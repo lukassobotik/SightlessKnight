@@ -15,9 +15,6 @@ public class Board {
     BoardLocation lastDoublePawnMoveWithWhitePieces;
     BoardLocation lastDoublePawnMoveWithBlackPieces;
     FenUtils fenUtils;
-
-    public static final String STARTING_FEN_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
     public Board(int size, Piece[] pieces, FenUtils fenUtils) {
         this.size = size;
         this.pieces = pieces;
@@ -33,8 +30,9 @@ public class Board {
         printBoardInConsole();
 
     }
-    public void resetBoardPosition() {
-        pieces = fenUtils.generatePositionFromFEN(STARTING_FEN_POSITION);
+    public void resetBoardPosition(String startPosition) {
+        pieces = fenUtils.generatePositionFromFEN(startPosition);
+        GameState.currentTurn = fenUtils.getStartingTeam();
 
         System.out.println(fenUtils.generateFenFromCurrentPosition());
         printBoardInConsole();
