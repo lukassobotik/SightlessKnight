@@ -11,7 +11,7 @@ public class GameState {
     BoardLocation selectedPieceLocation;
     static int moveNumber = 0;
     static final Team playerTeam = Team.WHITE;
-    static boolean isPawnPromotionPending = false;
+    public static boolean isPawnPromotionPending = false;
     static BoardLocation promotionLocation;
     static PieceType selectedPromotionPieceType;
 
@@ -48,7 +48,7 @@ public class GameState {
         if (piece == null) return;
         if (piece.team == currentTurn) {
             selectedPieceLocation = from;
-            validMoves.addAll(Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board));
+            Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board);
         }
         validMoves.forEach(loc -> System.out.println("valid: " + loc.getStringLocation()));
 
@@ -82,7 +82,8 @@ public class GameState {
     private void showPawnPromotionDialog() {
 
     }
-    private void promotePawn(PieceType selectedPieceType) {
+    public void promotePawn(PieceType selectedPieceType) {
+        System.out.println("PROMOTING to " + selectedPieceType.name());
         board.promotePawn(promotionLocation, selectedPieceType);
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
         isPawnPromotionPending = false;

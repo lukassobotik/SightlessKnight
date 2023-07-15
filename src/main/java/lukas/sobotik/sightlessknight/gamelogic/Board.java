@@ -18,12 +18,12 @@ public class Board {
 
     public static final String STARTING_FEN_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    public Board(int size, Piece[] pieces) {
+    public Board(int size, Piece[] pieces, FenUtils fenUtils) {
         this.size = size;
         this.pieces = pieces;
+        this.fenUtils = fenUtils;
         squareSize = size / 8;
 
-        fenUtils = new FenUtils(pieces, null, null, null, null, null);
         whiteKingLocation = getPointFromArrayIndex(fenUtils.getWhiteKingIndex());
         blackKingLocation = getPointFromArrayIndex(fenUtils.getBlackKingIndex());
         fenUtils.whiteKingPosition = whiteKingLocation;

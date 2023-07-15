@@ -2,6 +2,7 @@ package lukas.sobotik.sightlessknight.views.play;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.notification.Notification;
@@ -17,7 +18,7 @@ import lukas.sobotik.sightlessknight.views.MainLayout;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-@ PageTitle("Play")
+@PageTitle("Play")
 @Route(value = "play", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
 public class PlayView extends VerticalLayout {
@@ -31,7 +32,7 @@ public class PlayView extends VerticalLayout {
         Piece[] pieces = new Piece[64];
         fenUtils = new FenUtils(pieces, null, null, null, null, null);
         pieces = fenUtils.generatePositionFromFEN(STARTING_POSITION);
-        board = new Board(64, pieces);
+        board = new Board(64, pieces, fenUtils);
         gameState = new GameState(board, fenUtils.getStartingTeam());
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();

@@ -1,14 +1,6 @@
 package lukas.sobotik.sightlessknight.gamelogic;
 
 
-
-
-enum Team {
-	WHITE,
-	BLACK
-}
-
-
 public class Piece {
 	public Team team;
 	public PieceType type;
