@@ -20,12 +20,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @PageTitle("Play")
 @Route(value = "play", layout = MainLayout.class)
-@RouteAlias(value = "", layout = MainLayout.class)
 public class PlayView extends VerticalLayout {
     FenUtils fenUtils;
     GameState gameState;
     Board board;
-    public static final String STARTING_POSITION = "rnbqkbnr/pppnpppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1";
+    public static final String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     public PlayView() {
         setAlignItems(Alignment.CENTER);
 
@@ -65,6 +64,37 @@ public class PlayView extends VerticalLayout {
         System.out.println(gameState.hasGameEnded);
         if (gameState.hasGameEnded) {
             Notification.show("Game Over!");
+        }
+        if (GameState.isPawnPromotionPending) {
+            Dialog dialog = new Dialog();
+            dialog.setHeaderTitle("Pawn Promotion");
+            Image queenButton = new Image("images/sprites/" + (gameState.currentTurn == Team.WHITE ? "b" : "w" + "_queen.svg"), "Queen");
+            queenButton.addClickListener(view -> {
+                gameState.promotePawn(PieceType.QUEEN);
+                dialog.close();
+                createBoard(board.pieces);
+            });
+            Image rookButton = new Image("images/sprites/" + (gameState.currentTurn == Team.WHITE ? "b" : "w" + "_rook.svg"), "Rook");
+            rookButton.addClickListener(view -> {
+                gameState.promotePawn(PieceType.ROOK);
+                dialog.close();
+                createBoard(board.pieces);
+            });
+            Image knightButton = new Image("images/sprites/" + (gameState.currentTurn == Team.WHITE ? "b" : "w" + "_knight.svg"), "Knight");
+            knightButton.addClickListener(view -> {
+                gameState.promotePawn(PieceType.KNIGHT);
+                dialog.close();
+                createBoard(board.pieces);
+            });
+            Image bishopButton = new Image("images/sprites/" + (gameState.currentTurn == Team.WHITE ? "b" : "w" + "_bishop.svg"), "Bishop");
+            bishopButton.addClickListener(view -> {
+                gameState.promotePawn(PieceType.BISHOP);
+                dialog.close();
+                createBoard(board.pieces);
+            });
+            dialog.add(queenButton, rookButton, knightButton, bishopButton);
+            dialog.open();
+            add(dialog);
         }
     }
 
