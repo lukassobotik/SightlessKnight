@@ -35,4 +35,21 @@ public class BoardLocation {
     public String getStringLocation() {
         return x + "," + y;
     }
+    public String getAlgebraicNotationLocation() {
+        char file = (char) ('a' + x);
+        int rank = y + 1;
+        return file + String.valueOf(rank);
+    }
+    public boolean isOnSameDiagonalAs(BoardLocation other) {
+        int deltaX = Math.abs(this.getX() - other.getX());
+        int deltaY = Math.abs(this.getY() - other.getY());
+        return deltaX == deltaY;
+    }
+    public boolean isOnSameFileAs(BoardLocation other) {
+        return this.getX() == other.getX();
+    }
+
+    public boolean isOnSameRankAs(BoardLocation other) {
+        return this.getY() == other.getY();
+    }
 }

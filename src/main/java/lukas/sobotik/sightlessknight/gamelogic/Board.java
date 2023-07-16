@@ -6,7 +6,6 @@ public class Board {
     public Piece[] pieces;
     int size;
     int squareSize;
-    HashMap<String, Integer> spriteIndexMap;
     BoardLocation whiteKingLocation;
     BoardLocation blackKingLocation;
     BoardLocation lastFromLocation;
@@ -82,6 +81,7 @@ public class Board {
                         movedPiece.team == Team.WHITE
                             ? new BoardLocation(3, 0)
                             : new BoardLocation(3, 7));
+                movedPiece.castling = "0-0-0";
             } // Kingside Castling
             else {
                 movePieceWithoutSpecialMovesAndSave(
@@ -91,6 +91,7 @@ public class Board {
                         movedPiece.team == Team.WHITE
                             ? new BoardLocation(5, 0)
                             : new BoardLocation(5, 7));
+                movedPiece.castling = "0-0";
             }
         }
 
@@ -104,6 +105,7 @@ public class Board {
         // Handle en passant capture
         BoardLocation enPassantCapture = new BoardLocation(to.getX(), from.getY());
         if (getPiece(enPassantCapture) != null && from.getX() != to.getX() && getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1) {
+            movedPiece.enPassant = true;
             removePiece(enPassantCapture);
         }
 
@@ -159,20 +161,16 @@ public class Board {
         return new BoardLocation(x, y);
     }
 
+    public int getArrayIndexFromLocation(BoardLocation location) {
+        return location.getX() + location.getY() * 8;
+    }
+
     public void promotePawn(BoardLocation pawnLocation, PieceType selectedPiece) {
         Team team;
         if (pawnLocation.getY() == 7) team = Team.WHITE;
         else team = Team.BLACK;
         Piece piece = new Piece(team, selectedPiece);
         pieces[pawnLocation.getX() + pawnLocation.getY() * 8] = piece;
-    }
-
-    public BoardLocation getPoint(int x, int y) {
-        return new BoardLocation(x / squareSize, 7 - y / squareSize);
-    }
-
-    public Rectangle getRectangle(BoardLocation point) {
-        return new Rectangle(point.getX() * squareSize, (point.getY()) * squareSize, squareSize, squareSize);
     }
 
     public boolean isInBounds(BoardLocation boardLocation) {

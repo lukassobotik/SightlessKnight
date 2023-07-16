@@ -14,6 +14,7 @@ import com.vaadin.flow.router.*;
 import lukas.sobotik.sightlessknight.gamelogic.*;
 import lukas.sobotik.sightlessknight.views.MainLayout;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
@@ -22,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Route(value = "play", layout = MainLayout.class)
 public class PlayView extends VerticalLayout implements HasUrlParameter<String> {
     FenUtils fenUtils;
+    AlgebraicNotationUtils algebraicNotationUtils;
     GameState gameState;
     Board board;
     BoardLocation targetSquare = null;
@@ -58,6 +60,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         setAlignItems(Alignment.CENTER);
 
         gameState = new GameState(board, fenUtils.getStartingTeam(), kinglessGame);
+        algebraicNotationUtils = new AlgebraicNotationUtils(fenUtils, gameState, board);
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         TextField textField = new TextField();
@@ -87,10 +90,11 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
     }
 
     private void playMove(BoardLocation from, BoardLocation to) {
+        Piece movedPiece = board.getPiece(from);
+        Piece capturedPiece = board.getPiece(to);
         gameState.play(from, to);
         printBoard(board.pieces);
         createBoard(board.pieces);
-        System.out.println(gameState.hasGameEnded);
         if (gameState.hasGameEnded) {
             Notification.show("Game Over!");
             if (Rules.isStalemate(GameState.currentTurn, board)) {
@@ -111,36 +115,52 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
             Image queenButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_queen.svg"), "Queen");
             queenButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.QUEEN);
+                movedPiece.promotion = PieceType.QUEEN;
+                getAlgebraicNotation(from, to, movedPiece, capturedPiece);
                 dialog.close();
                 createBoard(board.pieces);
             });
             Image rookButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_rook.svg"), "Rook");
             rookButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.ROOK);
+                movedPiece.promotion = PieceType.ROOK;
+                getAlgebraicNotation(from, to, movedPiece, capturedPiece);
                 dialog.close();
                 createBoard(board.pieces);
             });
             Image knightButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_knight.svg"), "Knight");
             knightButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.KNIGHT);
+                movedPiece.promotion = PieceType.KNIGHT;
+                getAlgebraicNotation(from, to, movedPiece, capturedPiece);
                 dialog.close();
                 createBoard(board.pieces);
             });
             Image bishopButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_bishop.svg"), "Bishop");
             bishopButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.BISHOP);
+                movedPiece.promotion = PieceType.BISHOP;
+                getAlgebraicNotation(from, to, movedPiece, capturedPiece);
                 dialog.close();
                 createBoard(board.pieces);
             });
             dialog.add(queenButton, rookButton, knightButton, bishopButton);
             dialog.open();
             add(dialog);
+        } else {
+            getAlgebraicNotation(from, to, movedPiece, capturedPiece);
         }
+
         // Piece Move Drills
         if (targetSquare != null && Rules.isPieceOnTargetSquare(pieceForKinglessGames, targetSquare, board)) {
             generateKnightGame();
             createBoard(board.pieces);
         }
+    }
+
+    private void getAlgebraicNotation(BoardLocation from, BoardLocation to, Piece movedPiece, Piece capturedPiece) {
+        System.out.println(algebraicNotationUtils.getParsedMove(new Move(from, to, movedPiece, capturedPiece)));
+        if (gameState.hasGameEnded) System.out.println(GameState.currentTurn == Team.BLACK ? "1-0" : "0-1");
     }
 
     private void createGameOverDialog(VerticalLayout dialogLayout, Text dialogText) {
@@ -219,7 +239,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
                     }
 
                     // Remove all previously selected squares
-                    if (piece != null && (piece.team == GameState.currentTurn || gameState.kinglessGame)) {
+                    if (piece != null && (piece.team == GameState.currentTurn || GameState.kinglessGame)) {
                         boardLayout.getChildren().forEach(component -> component.getChildren()
                                 .forEach(componentRow -> componentRow.getClassNames().remove("selected")));
                     } else {

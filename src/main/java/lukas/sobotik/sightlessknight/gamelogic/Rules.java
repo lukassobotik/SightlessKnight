@@ -17,20 +17,28 @@ public class Rules {
 
     }
 
-    static List<BoardLocation> getValidMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks) {
+    public static List<BoardLocation> getValidMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks) {
         return getValidMoves(legalMoves, selectedPieceLocation, piece, board, checkForChecks, true);
     }
     static List<BoardLocation> getValidMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks, boolean checkCastlingMoves) {
         switch (piece.type) {
             case PAWN -> legalMoves.addAll(Objects.requireNonNull(getValidPawnMoves(legalMoves, selectedPieceLocation, piece.team, board)));
             case BISHOP -> legalMoves.addAll(getValidBishopMoves(legalMoves, selectedPieceLocation, piece.team, board));
-            case KNIGHT -> legalMoves.addAll(getValidKnightMoves(legalMoves, selectedPieceLocation, piece.team, board));
-            case ROOK -> legalMoves.addAll(getValidRookMoves(legalMoves, selectedPieceLocation, piece.team, board));
+            case KNIGHT -> legalMoves.addAll(getValidKnightMoves(legalMoves, selectedPieceLocation, piece.team, board, false));
+            case ROOK -> legalMoves.addAll(getValidRookMoves(legalMoves, selectedPieceLocation, piece.team, board, false));
             case KING -> legalMoves.addAll(getValidKingMoves(legalMoves, selectedPieceLocation, piece.team, board, checkCastlingMoves));
-            case QUEEN -> legalMoves.addAll(getValidQueenMoves(legalMoves, selectedPieceLocation, piece.team, board));
+            case QUEEN -> legalMoves.addAll(getValidQueenMoves(legalMoves, selectedPieceLocation, piece.team, board, false));
         }
         if (checkForChecks) {
             legalMoves = checkForChecks(legalMoves, selectedPieceLocation, piece.team, board);
+        }
+        return legalMoves;
+    }
+    static List<BoardLocation> getAllMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board) {
+        switch (piece.type) {
+            case KNIGHT -> legalMoves.addAll(getValidKnightMoves(legalMoves, selectedPieceLocation, piece.team, board, true));
+            case ROOK -> legalMoves.addAll(getValidRookMoves(legalMoves, selectedPieceLocation, piece.team, board, true));
+            case QUEEN -> legalMoves.addAll(getValidQueenMoves(legalMoves, selectedPieceLocation, piece.team, board, true));
         }
         return legalMoves;
     }
@@ -108,25 +116,25 @@ public class Rules {
         }
         return CheckState.NONE;
     }
-    private static List<BoardLocation> getValidQueenMoves(List<BoardLocation> legalQueenMoves, BoardLocation selectedPieceLocation, Team team, Board board) {
+    private static List<BoardLocation> getValidQueenMoves(List<BoardLocation> legalQueenMoves, BoardLocation selectedPieceLocation, Team team, Board board, boolean ignoreFriendlyPieces) {
         for (int xDir = -1; xDir <= 1; xDir++) {
             for (int yDir = -1; yDir <= 1; yDir++) {
                 if (xDir == 0 && yDir == 0) {
                     continue;
                 }
-                pieceDirections(legalQueenMoves, selectedPieceLocation, team, board, xDir, yDir);
+                pieceDirections(legalQueenMoves, selectedPieceLocation, team, board, xDir, yDir, ignoreFriendlyPieces);
             }
         }
         return legalQueenMoves;
     }
 
-    private static void pieceDirections(List<BoardLocation> boardLocations, BoardLocation selectedPieceLocation, Team team, Board board, int xDir, int yDir) {
+    private static void pieceDirections(List<BoardLocation> boardLocations, BoardLocation selectedPieceLocation, Team team, Board board, int xDir, int yDir, boolean ignoreFriendlyPieces) {
         BoardLocation move = selectedPieceLocation;
         do {
             move = move.transpose(xDir, yDir);
-        } while (checkIfInBounds(boardLocations, team, board, move));
+        } while (checkIfInBounds(boardLocations, team, board, move, ignoreFriendlyPieces));
     }
-    private static List<BoardLocation> getValidKnightMoves(List<BoardLocation> legalKnightMoves, BoardLocation selectedPieceLocation, Team team, Board board) {
+    private static List<BoardLocation> getValidKnightMoves(List<BoardLocation> legalKnightMoves, BoardLocation selectedPieceLocation, Team team, Board board, boolean ignoreFriendlyPieces) {
         for (int direction = 0; direction < 2; direction++) {
             for (int longDir = -2; longDir <= 2; longDir += 4) {
                 for (int shortDir = -1; shortDir <= 1; shortDir += 2) {
@@ -137,7 +145,7 @@ public class Rules {
                         move = selectedPieceLocation.transpose(shortDir, longDir);
                     }
                     Piece target = board.getPiece(move);
-                    if (board.isInBounds(move) && (target == null || target.team != team)) {
+                    if (board.isInBounds(move) && ((target == null || target.team != team) || ignoreFriendlyPieces)) {
                         legalKnightMoves.add(move);
                     }
                 }
@@ -221,7 +229,7 @@ public class Rules {
         return null;
     }
 
-    private static List<BoardLocation> getValidRookMoves(List<BoardLocation> legalRookMoves, BoardLocation selection, Team team, Board board) {
+    private static List<BoardLocation> getValidRookMoves(List<BoardLocation> legalRookMoves, BoardLocation selection, Team team, Board board, boolean ignoreFriendlyPieces) {
         for (int direction = 0; direction < 2; direction++) {
             for (int direction2 = -1; direction2 <= 1; direction2 += 2) {
                 BoardLocation move = selection;
@@ -232,12 +240,12 @@ public class Rules {
                         move = move.transpose(0, direction2);
                     }
 
-                } while (checkIfInBounds(legalRookMoves, team, board, move));
+                } while (checkIfInBounds(legalRookMoves, team, board, move, ignoreFriendlyPieces));
             }
         }
         return legalRookMoves;
     }
-    private static boolean checkIfInBounds(List<BoardLocation> list, Team team, Board board, BoardLocation move) {
+    private static boolean checkIfInBounds(List<BoardLocation> list, Team team, Board board, BoardLocation move, boolean ignoreFriendlyPieces) {
         if (!board.isInBounds(move)) {
             return false;
         }
@@ -245,7 +253,7 @@ public class Rules {
         Piece target = board.getPiece(move);
 
         if (target != null) {
-            if (target.team != team) {
+            if (target.team != team || ignoreFriendlyPieces) {
                 list.add(move);
             }
             return false;
@@ -259,7 +267,7 @@ public class Rules {
     private static List<BoardLocation> getValidBishopMoves(List<BoardLocation> legalBishopMoves, BoardLocation selection, Team team, Board board) {
         for (int xDir = -1; xDir <= 1; xDir += 2) {
             for (int yDir = -1; yDir <= 1; yDir += 2) {
-                pieceDirections(legalBishopMoves, selection, team, board, xDir, yDir);
+                pieceDirections(legalBishopMoves, selection, team, board, xDir, yDir, false);
             }
         }
         return legalBishopMoves;

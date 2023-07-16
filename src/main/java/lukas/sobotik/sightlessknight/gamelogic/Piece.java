@@ -6,6 +6,9 @@ public class Piece {
 	public PieceType type;
 	int doublePawnMoveOnMoveNumber = -10;
 	boolean hasMoved = false;
+	boolean enPassant = false;
+	String castling = null;
+	public PieceType promotion = null;
 	public Piece(Team team, PieceType type) {
 		super();
 		this.team = team;

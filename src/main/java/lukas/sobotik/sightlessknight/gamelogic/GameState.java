@@ -15,7 +15,7 @@ public class GameState {
     public static int moveNumber = 0;
     static final Team playerTeam = Team.WHITE;
     public static boolean isPawnPromotionPending = false;
-    static BoardLocation promotionLocation;
+    public static BoardLocation promotionLocation;
     static PieceType selectedPromotionPieceType;
     public static boolean kinglessGame = false;
     public GameState(Board board, Team startingTeam, boolean kinglessGame) {
@@ -39,9 +39,6 @@ public class GameState {
             selectedPieceLocation = from;
             Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board, !kinglessGame);
         }
-        validMoves.forEach(loc -> System.out.println("valid: " + loc.getStringLocation()));
-
-        System.out.println("validMoves: " + validMoves.size());
 
         if (!validMoves.isEmpty()) {
             for (BoardLocation move : validMoves) {
@@ -49,8 +46,6 @@ public class GameState {
                     moveNumber++;
                     System.err.println("moveNumber: " + moveNumber);
                     movePieceAndEndTurn(to);
-                    System.out.println("isCheckmate: " + Rules.isCheckmate(currentTurn, board));
-                    System.out.println("isStalemate: " + Rules.isStalemate(currentTurn, board));
                     hasGameEnded = Rules.isCheckmate(currentTurn, board) || Rules.isStalemate(currentTurn, board);
                     break;
                 }
