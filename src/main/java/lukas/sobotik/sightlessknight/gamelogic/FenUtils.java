@@ -22,6 +22,10 @@ public class FenUtils {
         this.lastDoublePawnMoveWithBlack = lastDoublePawnMoveWithBlack;
     }
 
+    public FenUtils(Piece[] pieces) {
+        this.pieces = pieces;
+    }
+
     public Piece[] generatePositionFromFEN(String fen) {
         pieces = new Piece[8 * 8];
 
@@ -65,7 +69,7 @@ public class FenUtils {
     public int getBlackKingIndex() {
         return blackKingIndex;
     }
-    public String generateFenFromCurrentPosition() {
+    public String generateFenFromPosition(Piece[] pieces) {
         StringBuilder fenBuilder = new StringBuilder();
 
         for (int rank = 7; rank >= 0; rank--) {

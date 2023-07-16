@@ -17,8 +17,8 @@ public class Rules {
 
     }
 
-    static List<BoardLocation> getValidMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board) {
-        return getValidMoves(legalMoves, selectedPieceLocation, piece, board, true, true);
+    static List<BoardLocation> getValidMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks) {
+        return getValidMoves(legalMoves, selectedPieceLocation, piece, board, checkForChecks, true);
     }
     static List<BoardLocation> getValidMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks, boolean checkCastlingMoves) {
         switch (piece.type) {
@@ -52,6 +52,8 @@ public class Rules {
     }
     public static String isCastlingPossible(Team team, Piece[] pieces, BoardLocation whiteKing, BoardLocation blackKing, boolean returnBothTeams) {
         StringBuilder castlingAvailability = new StringBuilder();
+        if (whiteKing == null || blackKing == null) return "";
+
         if (whiteKing.equals(new BoardLocation(4, 0)) && pieces[4] != null && pieces[4].type == PieceType.KING && !pieces[4].hasMoved) {
             if (pieces[7] != null && pieces[7].type == PieceType.ROOK && !pieces[7].hasMoved) {
                 castlingAvailability.append("K");
@@ -339,7 +341,7 @@ public class Rules {
     }
 
     public static boolean isCheckmate(Team team, Board board) {
-        if (!isKingInCheck(team, board)) {
+        if (!isKingInCheck(team, board) || GameState.kinglessGame) {
             return false;
         }
         List<BoardLocation> validMoves = new ArrayList<>();
@@ -359,35 +361,10 @@ public class Rules {
             }
         }
         return true;
-
-//        List<BoardLocation> validMoves = new ArrayList<>();
-//        for (int i = 0; i < board.pieces.length; i++) {
-//            BoardLocation point = board.getPointFromArrayIndex(i);
-//            Piece piece = board.pieces[i];
-//            if (piece != null && piece.team == team) {
-//                getValidMoves(validMoves, point, piece, board, false, false);
-//                for (BoardLocation move : validMoves) {
-//                    board.movePieceWithoutSpecialMovesAndSave(point, move);
-//                    if (!checkForChecks(team, board).equals(CheckState.CHECK)) {
-//                        board.undoMove();
-//                        board.printBoardInConsole();
-//                        return false;
-//                    }
-//                    board.undoMove();
-//                }
-//            }
-//        }
-//        System.out.println("CHCHCHCHHCHHC");
-//        validMoves.forEach(item -> System.err.println(item.getX() + ":" + item.getY()));
-//        System.err.println(checkForChecks(team, board));
-//                if (validMoves.isEmpty() && checkForChecks(team == Team.WHITE ? Team.BLACK : Team.WHITE, board).equals(CheckState.CHECK)) {
-//                    return true;
-//                }
-//                return false;
     }
 
     public static boolean isStalemate(Team team, Board board) {
-        if (isKingInCheck(team, board)) {
+        if (isKingInCheck(team, board) || GameState.kinglessGame) {
             return false;
         }
         List<BoardLocation> validMoves = new ArrayList<>();
@@ -395,12 +372,18 @@ public class Rules {
             BoardLocation point = board.getPointFromArrayIndex(i);
             Piece piece = board.pieces[i];
             if (piece != null && piece.team == team) {
-                getValidMoves(validMoves, point, piece, board);
+                getValidMoves(validMoves, point, piece, board, true);
                 if (!validMoves.isEmpty()) {
                     return false;
                 }
             }
         }
         return true;
+    }
+
+    // For Piece Move Drills
+    public static boolean isPieceOnTargetSquare(Piece piece, BoardLocation target, Board board) {
+        if (board.getPiece(target) == null) return false;
+        return board.getPiece(target).equals(piece);
     }
 }

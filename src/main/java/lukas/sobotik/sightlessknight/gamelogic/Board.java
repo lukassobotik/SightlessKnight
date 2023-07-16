@@ -26,7 +26,7 @@ public class Board {
         fenUtils.whiteKingPosition = whiteKingLocation;
         fenUtils.blackKingPosition = blackKingLocation;
 
-        System.out.println(fenUtils.generateFenFromCurrentPosition());
+        System.out.println(fenUtils.generateFenFromPosition(fenUtils.pieces));
         printBoardInConsole();
 
     }
@@ -34,7 +34,7 @@ public class Board {
         pieces = fenUtils.generatePositionFromFEN(startPosition);
         GameState.currentTurn = fenUtils.getStartingTeam();
 
-        System.out.println(fenUtils.generateFenFromCurrentPosition());
+        System.out.println(fenUtils.generateFenFromPosition(fenUtils.pieces));
         printBoardInConsole();
     }
     public void printBoardInConsole() {

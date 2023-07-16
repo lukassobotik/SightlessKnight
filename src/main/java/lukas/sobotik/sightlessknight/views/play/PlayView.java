@@ -10,30 +10,54 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouteAlias;
+import com.vaadin.flow.router.*;
 import lukas.sobotik.sightlessknight.gamelogic.*;
 import lukas.sobotik.sightlessknight.views.MainLayout;
 
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
 @PageTitle("Play")
 @Route(value = "play", layout = MainLayout.class)
-public class PlayView extends VerticalLayout {
+public class PlayView extends VerticalLayout implements HasUrlParameter<String> {
     FenUtils fenUtils;
     GameState gameState;
     Board board;
-    public static final String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    BoardLocation targetSquare = null;
+    Piece pieceForKinglessGames = null;
+    HorizontalLayout gameContentLayout;
+    public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    @Override
+    public void setParameter(BeforeEvent beforeEvent, @OptionalParameter String s) {
+        System.out.println(s);
+        if (s == null) {
+            initialize();
+        } else {
+            Piece[] pieces = new Piece[64];
+            switch (s) {
+                case "knight" -> {
+                    pieces = generateKnightGame();
+                }
+            }
+            initialize(pieces, true);
+        }
+    }
     public PlayView() {
-        setAlignItems(Alignment.CENTER);
 
+    }
+
+    private void initialize() {
         Piece[] pieces = new Piece[64];
-        fenUtils = new FenUtils(pieces, null, null, null, null, null);
+        fenUtils = new FenUtils(pieces);
         pieces = fenUtils.generatePositionFromFEN(STARTING_POSITION);
         board = new Board(64, pieces, fenUtils);
-        gameState = new GameState(board, fenUtils.getStartingTeam());
+        initialize(pieces, false);
+    }
+    private void initialize(Piece[] pieces, boolean kinglessGame) {
+        setAlignItems(Alignment.CENTER);
+
+        gameState = new GameState(board, fenUtils.getStartingTeam(), kinglessGame);
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         TextField textField = new TextField();
@@ -52,10 +76,14 @@ public class PlayView extends VerticalLayout {
             playMove(fromLoc, toLoc);
         });
 
+        gameContentLayout = new HorizontalLayout();
+        add(gameContentLayout);
+
         horizontalLayout.add(textField, button);
         add(horizontalLayout);
         printBoard(pieces);
         createBoard(pieces);
+
     }
 
     private void playMove(BoardLocation from, BoardLocation to) {
@@ -86,19 +114,19 @@ public class PlayView extends VerticalLayout {
                 dialog.close();
                 createBoard(board.pieces);
             });
-            Image rookButton = new Image("images/sprites/" + (gameState.currentTurn == Team.WHITE ? "b" : "w" + "_rook.svg"), "Rook");
+            Image rookButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_rook.svg"), "Rook");
             rookButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.ROOK);
                 dialog.close();
                 createBoard(board.pieces);
             });
-            Image knightButton = new Image("images/sprites/" + (gameState.currentTurn == Team.WHITE ? "b" : "w" + "_knight.svg"), "Knight");
+            Image knightButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_knight.svg"), "Knight");
             knightButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.KNIGHT);
                 dialog.close();
                 createBoard(board.pieces);
             });
-            Image bishopButton = new Image("images/sprites/" + (gameState.currentTurn == Team.WHITE ? "b" : "w" + "_bishop.svg"), "Bishop");
+            Image bishopButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_bishop.svg"), "Bishop");
             bishopButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.BISHOP);
                 dialog.close();
@@ -107,6 +135,11 @@ public class PlayView extends VerticalLayout {
             dialog.add(queenButton, rookButton, knightButton, bishopButton);
             dialog.open();
             add(dialog);
+        }
+        // Piece Move Drills
+        if (targetSquare != null && Rules.isPieceOnTargetSquare(pieceForKinglessGames, targetSquare, board)) {
+            generateKnightGame();
+            createBoard(board.pieces);
         }
     }
 
@@ -131,10 +164,10 @@ public class PlayView extends VerticalLayout {
 
     private void createBoard(Piece[] pieces) {
         // Remove old rows
-        List<Component> componentsToRemove = getChildren().toList();
+        List<Component> componentsToRemove = gameContentLayout.getChildren().toList();
         for (Component component : componentsToRemove) {
             if (component.getClassNames().contains("board")) {
-                remove(component);
+                gameContentLayout.remove(component);
             }
         }
 
@@ -174,7 +207,7 @@ public class PlayView extends VerticalLayout {
                     }));
 
                     AtomicReference<BoardLocation> toLocation = new AtomicReference<>(null);
-                    if ((piece == null || piece.team != gameState.currentTurn) && selectedSquare.get() != null) {
+                    if ((piece == null || piece.team != GameState.currentTurn) && selectedSquare.get() != null) {
                         square.getClassNames().forEach(className -> {
                             if (className.contains("-")) {
                                 var coordinates = className.split("-");
@@ -186,7 +219,7 @@ public class PlayView extends VerticalLayout {
                     }
 
                     // Remove all previously selected squares
-                    if (piece != null && piece.team == gameState.currentTurn) {
+                    if (piece != null && (piece.team == GameState.currentTurn || gameState.kinglessGame)) {
                         boardLayout.getChildren().forEach(component -> component.getChildren()
                                 .forEach(componentRow -> componentRow.getClassNames().remove("selected")));
                     } else {
@@ -213,7 +246,7 @@ public class PlayView extends VerticalLayout {
         boardLayout.setClassName("board");
         boardLayout.setWidth(boardLayout.getHeight());
 
-        add(boardLayout);
+        gameContentLayout.add(boardLayout);
     }
 
     private String getChessPieceUrl(String s) {
@@ -291,8 +324,51 @@ public class PlayView extends VerticalLayout {
             rankParagraph.setText(builder.toString());
             rankParagraph.setId(String.valueOf(rank));
             rankParagraph.addClassName("board");
-            add(rankParagraph);
         }
         System.out.println("-----------------------------");
+    }
+
+    private Piece[] generateKnightGame() {
+        Piece piece = new Piece(Team.WHITE, PieceType.KNIGHT);
+        pieceForKinglessGames = piece;
+
+        Piece[] pieces = new Piece[64];
+        fenUtils = new FenUtils(pieces);
+
+        int knightPos = new Random().nextInt(64);
+        pieces[knightPos] = piece;
+
+        board = new Board(64, pieces, fenUtils);
+        gameState = new GameState(board, fenUtils.getStartingTeam(), true);
+        targetSquare = board.getPointFromArrayIndex(getRandomSquareWithinDistance(knightPos, 3));
+
+        System.out.println(fenUtils.generateFenFromPosition(pieces));
+        System.out.println(targetSquare.getStringLocation());
+
+        Notification notification = new Notification(targetSquare.getStringLocation());
+        notification.setPosition(Notification.Position.MIDDLE);
+        notification.setDuration(1000);
+        notification.open();
+        return pieces;
+    }
+    public static int getRandomSquareWithinDistance(int square, int distance) {
+        Random random = new Random();
+        int targetSquare;
+        do {
+            int file = square % 8;
+            int rank = square / 8;
+
+            int minFile = Math.max(0, file - distance);
+            int maxFile = Math.min(7, file + distance);
+            int minRank = Math.max(0, rank - distance);
+            int maxRank = Math.min(7, rank + distance);
+
+            int randomFile = random.nextInt(maxFile - minFile + 1) + minFile;
+            int randomRank = random.nextInt(maxRank - minRank + 1) + minRank;
+
+            targetSquare = randomRank * 8 + randomFile;
+        } while (targetSquare == square);
+
+        return targetSquare;
     }
 }

@@ -1,5 +1,8 @@
 package lukas.sobotik.sightlessknight.gamelogic;
 
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,15 +17,16 @@ public class GameState {
     public static boolean isPawnPromotionPending = false;
     static BoardLocation promotionLocation;
     static PieceType selectedPromotionPieceType;
-
-    public GameState(Board board, Team startingTeam) {
+    public static boolean kinglessGame = false;
+    public GameState(Board board, Team startingTeam, boolean kinglessGame) {
         validMoves = new ArrayList<>();
         currentTurn = startingTeam;
         moveNumber = 0;
+        this.kinglessGame = kinglessGame;
         this.board = board;
     }
     public void play(BoardLocation from, BoardLocation to) {
-        if (hasGameEnded) {
+        if (hasGameEnded && !kinglessGame) {
             return;
         }
         if (isPawnPromotionPending) {
@@ -31,9 +35,9 @@ public class GameState {
 
         Piece piece = board.getPiece(from);
         if (piece == null) return;
-        if (piece.team == currentTurn) {
+        if (piece.team == currentTurn || kinglessGame) {
             selectedPieceLocation = from;
-            Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board);
+            Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board, !kinglessGame);
         }
         validMoves.forEach(loc -> System.out.println("valid: " + loc.getStringLocation()));
 
@@ -55,7 +59,7 @@ public class GameState {
             selectedPieceLocation = null;
 
             FenUtils fenUtils = new FenUtils(board.pieces, board.whiteKingLocation, board.blackKingLocation, board.lastToLocation, board.lastDoublePawnMoveWithWhitePieces, board.lastDoublePawnMoveWithBlackPieces);
-            System.out.println(fenUtils.generateFenFromCurrentPosition());
+            System.out.println(fenUtils.generateFenFromPosition(fenUtils.pieces));
         }
     }
     private void movePieceAndEndTurn(BoardLocation destination) {
