@@ -29,6 +29,8 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
     BoardLocation targetSquare = null;
     Piece pieceForKinglessGames = null;
     HorizontalLayout gameContentLayout;
+    VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout;
+    public List<String> algebraicNotationHistory;
     public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     @Override
     public void setParameter(BeforeEvent beforeEvent, @OptionalParameter String s) {
@@ -58,6 +60,8 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
     }
     private void initialize(Piece[] pieces, boolean kinglessGame) {
         setAlignItems(Alignment.CENTER);
+        setHeight("100%");
+        algebraicNotationHistory = new ArrayList<>();
 
         gameState = new GameState(board, fenUtils.getStartingTeam(), kinglessGame);
         algebraicNotationUtils = new AlgebraicNotationUtils(fenUtils, gameState, board);
@@ -80,6 +84,13 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         });
 
         gameContentLayout = new HorizontalLayout();
+        gameContentLayout.addClassName("game_content_layout");
+        algebraicNotationHistoryLayout = new VerticalLayout();
+        algebraicNotationHistoryLayout.addClassName("move_history");
+        algebraicNotationHistoryLayout.addClassName("game_content_layout_child");
+        gameContentLayout.add(algebraicNotationHistoryLayout);
+        gameContentLayout.setHeightFull();
+        gameContentLayout.setWidthFull();
         add(gameContentLayout);
 
         horizontalLayout.add(textField, button);
@@ -87,11 +98,13 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         printBoard(pieces);
         createBoard(pieces);
 
+        gameInfoLayout = new VerticalLayout();
+        gameInfoLayout.setClassName("game_content_layout_child");
+        gameContentLayout.add(gameInfoLayout);
     }
 
     private void playMove(BoardLocation from, BoardLocation to) {
-        Piece movedPiece = board.getPiece(from);
-        Piece capturedPiece = board.getPiece(to);
+        Move move = new Move(from, to, board.getPiece(from), board.getPiece(to));
         gameState.play(from, to);
         printBoard(board.pieces);
         createBoard(board.pieces);
@@ -102,7 +115,6 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
                 Text dialogText = new Text("Game Drawn by Stalemate");
                 createGameOverDialog(dialogLayout, dialogText);
             }
-            System.out.println(Rules.isStalemate(GameState.currentTurn, board));
             if (Rules.isCheckmate(GameState.currentTurn, board)) {
                 VerticalLayout dialogLayout = new VerticalLayout();
                 Text dialogText = new Text((GameState.currentTurn == Team.WHITE ? "Black" : "White") + " Won by Checkmate");
@@ -115,32 +127,32 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
             Image queenButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_queen.svg"), "Queen");
             queenButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.QUEEN);
-                movedPiece.promotion = PieceType.QUEEN;
-                getAlgebraicNotation(from, to, movedPiece, capturedPiece);
+                move.getMovedPiece().promotion = PieceType.QUEEN;
+                getAlgebraicNotation();
                 dialog.close();
                 createBoard(board.pieces);
             });
             Image rookButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_rook.svg"), "Rook");
             rookButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.ROOK);
-                movedPiece.promotion = PieceType.ROOK;
-                getAlgebraicNotation(from, to, movedPiece, capturedPiece);
+                move.getMovedPiece().promotion = PieceType.ROOK;
+                getAlgebraicNotation();
                 dialog.close();
                 createBoard(board.pieces);
             });
             Image knightButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_knight.svg"), "Knight");
             knightButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.KNIGHT);
-                movedPiece.promotion = PieceType.KNIGHT;
-                getAlgebraicNotation(from, to, movedPiece, capturedPiece);
+                move.getMovedPiece().promotion = PieceType.KNIGHT;
+                getAlgebraicNotation();
                 dialog.close();
                 createBoard(board.pieces);
             });
             Image bishopButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_bishop.svg"), "Bishop");
             bishopButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.BISHOP);
-                movedPiece.promotion = PieceType.BISHOP;
-                getAlgebraicNotation(from, to, movedPiece, capturedPiece);
+                move.getMovedPiece().promotion = PieceType.BISHOP;
+                getAlgebraicNotation();
                 dialog.close();
                 createBoard(board.pieces);
             });
@@ -148,7 +160,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
             dialog.open();
             add(dialog);
         } else {
-            getAlgebraicNotation(from, to, movedPiece, capturedPiece);
+            getAlgebraicNotation();
         }
 
         // Piece Move Drills
@@ -158,9 +170,41 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         }
     }
 
-    private void getAlgebraicNotation(BoardLocation from, BoardLocation to, Piece movedPiece, Piece capturedPiece) {
-        System.out.println(algebraicNotationUtils.getParsedMove(new Move(from, to, movedPiece, capturedPiece)));
-        if (gameState.hasGameEnded) System.out.println(GameState.currentTurn == Team.BLACK ? "1-0" : "0-1");
+    private void getAlgebraicNotation() {
+        showAlgebraicNotationHistory();
+        System.out.println("moveHistory: " + gameState.moveHistory);
+        System.out.println("parsedMoveHistory: " + gameState.parsedMoveHistory);
+        System.out.println("fenMoveHistory: " + gameState.fenMoveHistory);
+    }
+
+    private void showAlgebraicNotationHistory() {
+        // Remove old items
+        List<Component> componentsToRemove = algebraicNotationHistoryLayout.getChildren().toList();
+        for (Component component : componentsToRemove) {
+            algebraicNotationHistoryLayout.remove(component);
+        }
+
+        for (int i = ((int) algebraicNotationHistoryLayout.getChildren().count()); i < gameState.parsedMoveHistory.size(); i += 2) {
+            String parsedMove = gameState.parsedMoveHistory.get(i);
+
+            Paragraph whiteMove = new Paragraph(parsedMove);
+            whiteMove.addClassName("algebraic_history_item");
+            Paragraph blackMove;
+            if (!(i + 1 >= gameState.moveHistory.size())) {
+                Move nextMove = gameState.moveHistory.get(i + 1);
+                String nextParsedMove = algebraicNotationUtils.getParsedMove(nextMove);
+                blackMove = new Paragraph(nextParsedMove);
+            } else {
+                blackMove = new Paragraph("");
+            }
+            blackMove.addClassName("algebraic_history_item");
+
+            HorizontalLayout moveLayout = new HorizontalLayout();
+            moveLayout.add(whiteMove, blackMove);
+            moveLayout.setWidth("auto");
+
+            algebraicNotationHistoryLayout.add(moveLayout);
+        }
     }
 
     private void createGameOverDialog(VerticalLayout dialogLayout, Text dialogText) {
@@ -183,15 +227,16 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
     }
 
     private void createBoard(Piece[] pieces) {
-        // Remove old rows
-        List<Component> componentsToRemove = gameContentLayout.getChildren().toList();
-        for (Component component : componentsToRemove) {
-            if (component.getClassNames().contains("board")) {
-                gameContentLayout.remove(component);
-            }
+        VerticalLayout boardLayout = findBoardLayout();
+        if (boardLayout == null) {
+            boardLayout = new VerticalLayout();
+            boardLayout.setAlignItems(Alignment.CENTER);
+            boardLayout.setClassName("board");
+            gameContentLayout.add(boardLayout);
+        } else {
+            boardLayout.removeAll();
         }
 
-        VerticalLayout boardLayout = new VerticalLayout();
         for (int rank = 7; rank >= 0; rank--) {
             HorizontalLayout rowLayout = new HorizontalLayout();
             rowLayout.addClassName("board_row");
@@ -210,12 +255,13 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
                     square.addClassName("light_square");
                 }
                 square.addClassName(board.getPointFromArrayIndex(index).getX() + "-" + board.getPointFromArrayIndex(index).getY());
+                VerticalLayout finalBoardLayout = boardLayout;
                 square.addClickListener(view -> {
                     if (gameState.hasGameEnded) return;
                     gameState.play(board.getPointFromArrayIndex(index), new BoardLocation(-1, -1));
 
                     AtomicReference<BoardLocation> selectedSquare = new AtomicReference<>(null);
-                    boardLayout.getChildren().forEach(component -> component.getChildren().forEach(componentRow -> {
+                    finalBoardLayout.getChildren().forEach(component -> component.getChildren().forEach(componentRow -> {
                         if (componentRow.getClassNames().contains("selected")) {
                             componentRow.getClassNames().forEach(className -> {
                                 if (className.contains("-")) {
@@ -240,7 +286,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
 
                     // Remove all previously selected squares
                     if (piece != null && (piece.team == GameState.currentTurn || GameState.kinglessGame)) {
-                        boardLayout.getChildren().forEach(component -> component.getChildren()
+                        finalBoardLayout.getChildren().forEach(component -> component.getChildren()
                                 .forEach(componentRow -> componentRow.getClassNames().remove("selected")));
                     } else {
                         return;
@@ -262,12 +308,18 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
             }
             boardLayout.add(rowLayout);
         }
-        boardLayout.setAlignItems(Alignment.CENTER);
-        boardLayout.setClassName("board");
-        boardLayout.setWidth(boardLayout.getHeight());
-
-        gameContentLayout.add(boardLayout);
     }
+
+    private VerticalLayout findBoardLayout() {
+        AtomicReference<VerticalLayout> layout = new AtomicReference<>();
+        gameContentLayout.getChildren().forEach(component -> {
+            if (component instanceof VerticalLayout && component.getClassNames().contains("board")) {
+                layout.set((VerticalLayout) component);
+            }
+        });
+        return layout.get();
+    }
+
 
     private String getChessPieceUrl(String s) {
         if (s == null) {

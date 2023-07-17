@@ -18,7 +18,7 @@
 }
 
 .board_row {
-    width: 100%;
+    width: 80vh;
     position: relative;
 }
 
@@ -56,4 +56,28 @@
 
 .selected {
     background: gold;
+}
+
+.game_content_layout {
+    height: 80vh;
+    width: 80vh;
+}
+
+.game_content_layout_child {
+    height: auto;
+}
+
+.move_history {
+    height: 80vh;
+    overflow: scroll;
+}
+
+@media (max-aspect-ratio: 1/1) and (min-aspect-ratio: 0/1) {
+    .game_content_layout {
+        height: 75vw;
+        width: 75vw;
+    }
+    .game_content_layout_child {
+        width: 20vw;
+    }
 }

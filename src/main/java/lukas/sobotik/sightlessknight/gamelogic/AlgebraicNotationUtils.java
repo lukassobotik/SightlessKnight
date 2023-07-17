@@ -33,7 +33,9 @@ public class AlgebraicNotationUtils {
             case PAWN -> {
                 if (movedPiece.enPassant) {
                     algebraicNotationMove = from.getAlgebraicNotationLocation().charAt(0) + "x" + to.getAlgebraicNotationLocation() + " e.p.";
+                    System.out.println(to.getAlgebraicNotationLocation());
                     board.getPiece(to).enPassant = false;
+                    break;
                 } else if (capturedPiece == null) {
                     algebraicNotationMove = to.getAlgebraicNotationLocation();
                 } else {

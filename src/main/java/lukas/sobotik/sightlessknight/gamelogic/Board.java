@@ -76,22 +76,22 @@ public class Board {
             if (from.getX() > to.getX()) {
                 movePieceWithoutSpecialMovesAndSave(
                         movedPiece.team == Team.WHITE
-                            ? new BoardLocation(0, 0)
-                            : new BoardLocation(0, 7),
+                            ? new BoardLocation(0, 0) // White Rook From
+                            : new BoardLocation(0, 7), // Black Rook From
                         movedPiece.team == Team.WHITE
-                            ? new BoardLocation(3, 0)
-                            : new BoardLocation(3, 7));
-                movedPiece.castling = "0-0-0";
+                            ? new BoardLocation(3, 0) // White Rook To
+                            : new BoardLocation(3, 7)); // Black Rook To
+                movedPiece.castling = "O-O-O";
             } // Kingside Castling
             else {
                 movePieceWithoutSpecialMovesAndSave(
                         movedPiece.team == Team.WHITE
-                            ? new BoardLocation(7, 0)
-                            : new BoardLocation(7, 7),
+                            ? new BoardLocation(7, 0) // White Rook From
+                            : new BoardLocation(7, 7), // Black Rook From
                         movedPiece.team == Team.WHITE
-                            ? new BoardLocation(5, 0)
-                            : new BoardLocation(5, 7));
-                movedPiece.castling = "0-0";
+                            ? new BoardLocation(5, 0) // White Rook To
+                            : new BoardLocation(5, 7)); //Black Rook To
+                movedPiece.castling = "O-O";
             }
         }
 
