@@ -31,7 +31,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
     HorizontalLayout gameContentLayout;
     VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout;
     public List<String> algebraicNotationHistory;
-    public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    public static String STARTING_POSITION = "8/K7/7k/1q6/1qq5/8/7p/6q1 w - - 0 1";
     @Override
     public void setParameter(BeforeEvent beforeEvent, @OptionalParameter String s) {
         System.out.println(s);
@@ -108,53 +108,53 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         gameState.play(from, to);
         printBoard(board.pieces);
         createBoard(board.pieces);
-        if (gameState.hasGameEnded) {
-            Notification.show("Game Over!");
-            if (Rules.isStalemate(GameState.currentTurn, board)) {
-                VerticalLayout dialogLayout = new VerticalLayout();
-                Text dialogText = new Text("Game Drawn by Stalemate");
-                createGameOverDialog(dialogLayout, dialogText);
-            }
-            if (Rules.isCheckmate(GameState.currentTurn, board)) {
-                VerticalLayout dialogLayout = new VerticalLayout();
-                Text dialogText = new Text((GameState.currentTurn == Team.WHITE ? "Black" : "White") + " Won by Checkmate");
-                createGameOverDialog(dialogLayout, dialogText);
-            }
-        }
+        checkIfGameEnded();
         if (GameState.isPawnPromotionPending) {
             Dialog dialog = new Dialog();
             dialog.setHeaderTitle("Pawn Promotion");
-            Image queenButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_queen.svg"), "Queen");
+            Image queenButton = new Image("images/sprites/" + ((GameState.currentTurn == Team.WHITE ? "b" : "w") + "_queen.svg"), "Queen");
             queenButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.QUEEN);
                 move.getMovedPiece().promotion = PieceType.QUEEN;
+                board.getPiece(move.getTo()).promotion = PieceType.QUEEN;
+                gameState.createParsedMoveHistory(move);
                 getAlgebraicNotation();
                 dialog.close();
                 createBoard(board.pieces);
+                checkIfGameEnded();
             });
-            Image rookButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_rook.svg"), "Rook");
+            Image rookButton = new Image("images/sprites/" + ((GameState.currentTurn == Team.WHITE ? "b" : "w") + "_rook.svg"), "Rook");
             rookButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.ROOK);
                 move.getMovedPiece().promotion = PieceType.ROOK;
+                board.getPiece(move.getTo()).promotion = PieceType.ROOK;
+                gameState.createParsedMoveHistory(move);
                 getAlgebraicNotation();
                 dialog.close();
                 createBoard(board.pieces);
+                checkIfGameEnded();
             });
-            Image knightButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_knight.svg"), "Knight");
+            Image knightButton = new Image("images/sprites/" + ((GameState.currentTurn == Team.WHITE ? "b" : "w") + "_knight.svg"), "Knight");
             knightButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.KNIGHT);
                 move.getMovedPiece().promotion = PieceType.KNIGHT;
+                board.getPiece(move.getTo()).promotion = PieceType.KNIGHT;
+                gameState.createParsedMoveHistory(move);
                 getAlgebraicNotation();
                 dialog.close();
                 createBoard(board.pieces);
+                checkIfGameEnded();
             });
-            Image bishopButton = new Image("images/sprites/" + (GameState.currentTurn == Team.WHITE ? "b" : "w" + "_bishop.svg"), "Bishop");
+            Image bishopButton = new Image("images/sprites/" + ((GameState.currentTurn == Team.WHITE ? "b" : "w") + "_bishop.svg"), "Bishop");
             bishopButton.addClickListener(view -> {
                 gameState.promotePawn(PieceType.BISHOP);
                 move.getMovedPiece().promotion = PieceType.BISHOP;
+                board.getPiece(move.getTo()).promotion = PieceType.BISHOP;
+                gameState.createParsedMoveHistory(move);
                 getAlgebraicNotation();
                 dialog.close();
                 createBoard(board.pieces);
+                checkIfGameEnded();
             });
             dialog.add(queenButton, rookButton, knightButton, bishopButton);
             dialog.open();
@@ -191,8 +191,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
             whiteMove.addClassName("algebraic_history_item");
             Paragraph blackMove;
             if (!(i + 1 >= gameState.moveHistory.size())) {
-                Move nextMove = gameState.moveHistory.get(i + 1);
-                String nextParsedMove = algebraicNotationUtils.getParsedMove(nextMove);
+                String nextParsedMove = gameState.parsedMoveHistory.get(i + 1);
                 blackMove = new Paragraph(nextParsedMove);
             } else {
                 blackMove = new Paragraph("");
@@ -207,6 +206,23 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         }
     }
 
+    private void checkIfGameEnded() {
+        if (gameState.hasGameEnded) {
+            if (Rules.isStalemate(GameState.currentTurn, board) && !GameState.isPawnPromotionPending) {
+                Notification.show("Game Over!");
+                VerticalLayout dialogLayout = new VerticalLayout();
+                Text dialogText = new Text("Game Drawn by Stalemate");
+                createGameOverDialog(dialogLayout, dialogText);
+            }
+            if (Rules.isCheckmate(GameState.currentTurn, board)) {
+                Notification.show("Game Over!");
+                VerticalLayout dialogLayout = new VerticalLayout();
+                Text dialogText = new Text((GameState.currentTurn == Team.WHITE ? "Black" : "White") + " Won by Checkmate");
+                createGameOverDialog(dialogLayout, dialogText);
+            }
+        }
+    }
+
     private void createGameOverDialog(VerticalLayout dialogLayout, Text dialogText) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle("Game Over!");
@@ -215,6 +231,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         Button newGameButton = new Button("New Game");
         newGameButton.addClickListener(view -> {
             board.resetBoardPosition(STARTING_POSITION);
+            gameState.resetHistory();
             GameState.moveNumber = 0;
             gameState.hasGameEnded = false;
             dialog.close();

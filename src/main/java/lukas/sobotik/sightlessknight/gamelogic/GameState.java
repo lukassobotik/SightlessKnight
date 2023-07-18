@@ -71,13 +71,21 @@ public class GameState {
         }
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
-    private void createParsedMoveHistory(Move move) {
+    public void createParsedMoveHistory(Move move) {
+        boolean isPromotionSquare = (move.getTo().getY() == 0 && move.getMovedPiece().team == Team.BLACK) || (move.getTo().getY() == 7 && move.getMovedPiece().team == Team.WHITE);
+        if (move.getMovedPiece().type.equals(PieceType.PAWN) && isPromotionSquare && move.getMovedPiece().promotion == null) return;
+
         moveHistory.add(new Move(move.getFrom(), move.getTo(), board.getPiece(move.getTo()), move.getCapturedPiece()));
         String parsedMove = new AlgebraicNotationUtils(new FenUtils(board.pieces), this, board).getParsedMove(move);
         parsedMoveHistory.add(parsedMove);
 
         FenUtils fenUtils = new FenUtils(board.pieces, board.whiteKingLocation, board.blackKingLocation, board.lastToLocation, board.lastDoublePawnMoveWithWhitePieces, board.lastDoublePawnMoveWithBlackPieces);
         fenMoveHistory.add(fenUtils.generateFenFromPosition(fenUtils.pieces));
+    }
+    public void resetHistory() {
+        moveHistory = new ArrayList<>();
+        parsedMoveHistory = new ArrayList<>();
+        fenMoveHistory = new ArrayList<>();
     }
     public void promotePawn(PieceType selectedPieceType) {
         board.promotePawn(promotionLocation, selectedPieceType);

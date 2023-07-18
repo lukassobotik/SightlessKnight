@@ -110,13 +110,25 @@ public class AlgebraicNotationUtils {
         List<BoardLocation> otherPieceMoves = new ArrayList<>();
         Rules.getAllMoves(otherPieceMoves, board.getPointFromArrayIndex(otherPieceIndex), otherPiece, board);
         if (otherPieceMoves.contains(to)) {
-            if (board.getPointFromArrayIndex(otherPieceIndex).isOnSameDiagonalAs(from)) {
-                return pieceSymbol + from.getAlgebraicNotationLocation() + to.getAlgebraicNotationLocation();
-            } else if (board.getPointFromArrayIndex(otherPieceIndex).isOnSameFileAs(from)) {
-                return pieceSymbol + from.getAlgebraicNotationLocation().charAt(1) + to.getAlgebraicNotationLocation();
-            } else if (board.getPointFromArrayIndex(otherPieceIndex).isOnSameRankAs(from)) {
-                return pieceSymbol + from.getAlgebraicNotationLocation().charAt(0) + to.getAlgebraicNotationLocation();
+            var otherPiecePoint = board.getPointFromArrayIndex(otherPieceIndex);
+            var fromAlgebraicNotation = from.getAlgebraicNotationLocation();
+            var toAlgebraicNotation = to.getAlgebraicNotationLocation();
+            var moveBuilder = new StringBuilder();
+
+            if (otherPiecePoint.isOnSameDiagonalAs(from)) {
+                moveBuilder.append(fromAlgebraicNotation);
+            } else if (otherPiecePoint.isOnSameFileAs(from)) {
+                moveBuilder.append(fromAlgebraicNotation.charAt(1));
+            } else if (otherPiecePoint.isOnSameRankAs(from)) {
+                moveBuilder.append(fromAlgebraicNotation.charAt(0));
             }
+
+            if (capturedPiece != null) {
+                moveBuilder.append("x");
+            }
+
+            moveBuilder.append(toAlgebraicNotation);
+            normalMove = pieceSymbol + moveBuilder;
         }
         return normalMove;
     }
