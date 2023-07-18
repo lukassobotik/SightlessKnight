@@ -312,9 +312,6 @@ public class Rules {
     private static boolean addPawnCaptureMoves(List<BoardLocation> legalPawnMoves, BoardLocation pawnLocation, Team team, Board board, BoardLocation captureLocation) {
         if (board.isInBounds(captureLocation)) {
             Piece rightCapturePiece = board.getPiece(captureLocation);
-            if (board.lastDoublePawnMoveWithWhitePieces == null || board.lastDoublePawnMoveWithBlackPieces == null) {
-                return true;
-            }
 
             if (rightCapturePiece != null && rightCapturePiece.team != team) {
                 legalPawnMoves.add(captureLocation);
