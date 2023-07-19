@@ -10,6 +10,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.*;
 import lukas.sobotik.sightlessknight.gamelogic.*;
 import lukas.sobotik.sightlessknight.views.MainLayout;
@@ -26,12 +27,16 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
     AlgebraicNotationUtils algebraicNotationUtils;
     GameState gameState;
     Board board;
+
+    // Knight Game
     BoardLocation targetSquare = null;
+    BoardLocation startSquare = null;
+
     Piece pieceForKinglessGames = null;
-    HorizontalLayout gameContentLayout;
+    HorizontalLayout gameContentLayout, targetSquareLayout;
     VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout;
     public List<String> algebraicNotationHistory;
-    public static String STARTING_POSITION = "8/K7/7k/1q6/1qq5/8/7p/6q1 w - - 0 1";
+    public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     @Override
     public void setParameter(BeforeEvent beforeEvent, @OptionalParameter String s) {
         System.out.println(s);
@@ -45,6 +50,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
                 }
             }
             initialize(pieces, true);
+            showTargetSquare();
         }
     }
     public PlayView() {
@@ -85,10 +91,11 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
 
         gameContentLayout = new HorizontalLayout();
         gameContentLayout.addClassName("game_content_layout");
-        algebraicNotationHistoryLayout = new VerticalLayout();
-        algebraicNotationHistoryLayout.addClassName("move_history");
-        algebraicNotationHistoryLayout.addClassName("game_content_layout_child");
-        gameContentLayout.add(algebraicNotationHistoryLayout);
+
+        var quickSettingsLayout = new VerticalLayout();
+        quickSettingsLayout.addClassName("game_content_layout_child");
+        gameContentLayout.add(quickSettingsLayout);
+
         gameContentLayout.setHeightFull();
         gameContentLayout.setWidthFull();
         add(gameContentLayout);
@@ -100,6 +107,17 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
 
         gameInfoLayout = new VerticalLayout();
         gameInfoLayout.setClassName("game_content_layout_child");
+
+        targetSquareLayout = new HorizontalLayout();
+        targetSquareLayout.setVisible(false);
+        targetSquareLayout.setWidthFull();
+        targetSquareLayout.setAlignItems(Alignment.CENTER);
+        gameInfoLayout.add(targetSquareLayout);
+
+        algebraicNotationHistoryLayout = new VerticalLayout();
+        algebraicNotationHistoryLayout.addClassName("move_history");
+
+        gameInfoLayout.add(algebraicNotationHistoryLayout);
         gameContentLayout.add(gameInfoLayout);
     }
 
@@ -167,6 +185,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         if (targetSquare != null && Rules.isPieceOnTargetSquare(pieceForKinglessGames, targetSquare, board)) {
             generateKnightGame();
             createBoard(board.pieces);
+            showTargetSquare();
         }
     }
 
@@ -203,6 +222,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
             moveLayout.setWidth("auto");
 
             algebraicNotationHistoryLayout.add(moveLayout);
+            algebraicNotationHistoryLayout.getElement().executeJs("this.scrollTop = this.scrollHeight");
         }
     }
 
@@ -429,16 +449,21 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
 
         board = new Board(64, pieces, fenUtils);
         gameState = new GameState(board, fenUtils.getStartingTeam(), true);
+        startSquare = board.getPointFromArrayIndex(knightPos);
         targetSquare = board.getPointFromArrayIndex(getRandomSquareWithinDistance(knightPos, 3));
 
         System.out.println(fenUtils.generateFenFromPosition(pieces));
-        System.out.println(targetSquare.getStringLocation());
-
-        Notification notification = new Notification(targetSquare.getStringLocation());
-        notification.setPosition(Notification.Position.MIDDLE);
-        notification.setDuration(1000);
-        notification.open();
+        System.out.println(targetSquare.getAlgebraicNotationLocation());
         return pieces;
+    }
+    public void showTargetSquare() {
+        targetSquareLayout.removeAll();
+        targetSquareLayout.setVisible(true);
+        var paragraph = new Paragraph(startSquare.getAlgebraicNotationLocation() + " → " + targetSquare.getAlgebraicNotationLocation());
+        paragraph.setWidthFull();
+        paragraph.addClassName("target_square");
+        targetSquareLayout.setHeight("auto");
+        targetSquareLayout.add(paragraph);
     }
     public static int getRandomSquareWithinDistance(int square, int distance) {
         Random random = new Random();

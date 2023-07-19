@@ -67,9 +67,24 @@
     height: auto;
 }
 
+.target_square {
+    text-align: center;
+    padding: 1rem;
+    margin-top: -.5rem;
+    color: #90bdf9;
+    background: #1a2a41;
+    border-radius: .5rem;
+    font-weight: bold;
+    font-size: 2rem;
+}
+
 .move_history {
-    height: 80vh;
+    height: 50vh;
     overflow: scroll;
+}
+
+.settings_nav_item {
+    width: 100%;
 }
 
 @media (max-aspect-ratio: 1/1) and (min-aspect-ratio: 0/1) {
