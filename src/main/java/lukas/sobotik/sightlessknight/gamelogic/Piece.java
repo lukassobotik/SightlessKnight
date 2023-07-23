@@ -4,7 +4,7 @@ package lukas.sobotik.sightlessknight.gamelogic;
 public class Piece {
 	public Team team;
 	public PieceType type;
-	int doublePawnMoveOnMoveNumber = -10;
+	public int doublePawnMoveOnMoveNumber = -10;
 	boolean hasMoved = false;
 	boolean enPassant = false;
 	String castling = null;

@@ -10,14 +10,15 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.dom.Style;
 import com.vaadin.flow.router.*;
+import lukas.sobotik.sightlessknight.ai.PerftFunction;
 import lukas.sobotik.sightlessknight.gamelogic.*;
 import lukas.sobotik.sightlessknight.views.MainLayout;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 @PageTitle("Play")
@@ -35,7 +36,6 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
     Piece pieceForKinglessGames = null;
     HorizontalLayout gameContentLayout, targetSquareLayout;
     VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout;
-    public List<String> algebraicNotationHistory;
     public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     @Override
     public void setParameter(BeforeEvent beforeEvent, @OptionalParameter String s) {
@@ -67,7 +67,6 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
     private void initialize(Piece[] pieces, boolean kinglessGame) {
         setAlignItems(Alignment.CENTER);
         setHeight("100%");
-        algebraicNotationHistory = new ArrayList<>();
 
         gameState = new GameState(board, fenUtils.getStartingTeam(), kinglessGame);
         algebraicNotationUtils = new AlgebraicNotationUtils(fenUtils, gameState, board);
@@ -102,7 +101,6 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
 
         horizontalLayout.add(textField, button);
         add(horizontalLayout);
-        printBoard(pieces);
         createBoard(pieces);
 
         gameInfoLayout = new VerticalLayout();
@@ -119,62 +117,31 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
 
         gameInfoLayout.add(algebraicNotationHistoryLayout);
         gameContentLayout.add(gameInfoLayout);
+
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> System.out.println("number of pos 2: " + new PerftFunction(board, gameState, this).playMoves(2, Team.WHITE, false)));
+        executorService.execute(() -> System.out.println("number of pos 3: " + new PerftFunction(board, gameState, this).playMoves(3, Team.BLACK, false)));
+        executorService.execute(() -> System.out.println("number of pos 4: " + new PerftFunction(board, gameState, this).playMoves(4, Team.WHITE, false)));
+        executorService.execute(() -> System.out.println("number of pos 5: " + new PerftFunction(board, gameState, this).playMoves(5, Team.WHITE, false)));
+        executorService.shutdown();
     }
 
     private void playMove(BoardLocation from, BoardLocation to) {
         Move move = new Move(from, to, board.getPiece(from), board.getPiece(to));
-        gameState.play(from, to);
+        gameState.play(new Move(from, to));
+        board = gameState.getBoard();
         printBoard(board.pieces);
         createBoard(board.pieces);
         checkIfGameEnded();
         if (GameState.isPawnPromotionPending) {
             Dialog dialog = new Dialog();
             dialog.setHeaderTitle("Pawn Promotion");
-            Image queenButton = new Image("images/sprites/" + ((GameState.currentTurn == Team.WHITE ? "b" : "w") + "_queen.svg"), "Queen");
-            queenButton.addClickListener(view -> {
-                gameState.promotePawn(PieceType.QUEEN);
-                move.getMovedPiece().promotion = PieceType.QUEEN;
-                board.getPiece(move.getTo()).promotion = PieceType.QUEEN;
-                gameState.createParsedMoveHistory(move);
-                getAlgebraicNotation();
-                dialog.close();
-                createBoard(board.pieces);
-                checkIfGameEnded();
-            });
-            Image rookButton = new Image("images/sprites/" + ((GameState.currentTurn == Team.WHITE ? "b" : "w") + "_rook.svg"), "Rook");
-            rookButton.addClickListener(view -> {
-                gameState.promotePawn(PieceType.ROOK);
-                move.getMovedPiece().promotion = PieceType.ROOK;
-                board.getPiece(move.getTo()).promotion = PieceType.ROOK;
-                gameState.createParsedMoveHistory(move);
-                getAlgebraicNotation();
-                dialog.close();
-                createBoard(board.pieces);
-                checkIfGameEnded();
-            });
-            Image knightButton = new Image("images/sprites/" + ((GameState.currentTurn == Team.WHITE ? "b" : "w") + "_knight.svg"), "Knight");
-            knightButton.addClickListener(view -> {
-                gameState.promotePawn(PieceType.KNIGHT);
-                move.getMovedPiece().promotion = PieceType.KNIGHT;
-                board.getPiece(move.getTo()).promotion = PieceType.KNIGHT;
-                gameState.createParsedMoveHistory(move);
-                getAlgebraicNotation();
-                dialog.close();
-                createBoard(board.pieces);
-                checkIfGameEnded();
-            });
-            Image bishopButton = new Image("images/sprites/" + ((GameState.currentTurn == Team.WHITE ? "b" : "w") + "_bishop.svg"), "Bishop");
-            bishopButton.addClickListener(view -> {
-                gameState.promotePawn(PieceType.BISHOP);
-                move.getMovedPiece().promotion = PieceType.BISHOP;
-                board.getPiece(move.getTo()).promotion = PieceType.BISHOP;
-                gameState.createParsedMoveHistory(move);
-                getAlgebraicNotation();
-                dialog.close();
-                createBoard(board.pieces);
-                checkIfGameEnded();
-            });
+            Image queenButton = initializePawnPromotionButton("_queen.svg", "Queen", PieceType.QUEEN, move, dialog);
+            Image rookButton = initializePawnPromotionButton("_rook.svg", "Rook", PieceType.ROOK, move, dialog);
+            Image knightButton = initializePawnPromotionButton("_knight.svg", "Knight", PieceType.KNIGHT, move, dialog);
+            Image bishopButton = initializePawnPromotionButton("_bishop.svg", "Bishop", PieceType.BISHOP, move, dialog);
             dialog.add(queenButton, rookButton, knightButton, bishopButton);
+            dialog.setCloseOnOutsideClick(false);
             dialog.open();
             add(dialog);
         } else {
@@ -187,6 +154,22 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
             createBoard(board.pieces);
             showTargetSquare();
         }
+    }
+
+    private Image initializePawnPromotionButton(String imagePath, String pieceString, PieceType pieceType, Move move, Dialog dialog) {
+        Image button = new Image("images/sprites/" + ((GameState.currentTurn == Team.WHITE ? "w" : "b") + imagePath), pieceString);
+        button.addClickListener(view -> {
+            gameState.movePieceAndEndTurn(GameState.promotionLocation);
+            gameState.promotePawn(pieceType);
+            move.getMovedPiece().promotion = pieceType;
+            board.getPiece(move.getTo()).promotion = pieceType;
+            gameState.createParsedMoveHistory(move);
+            getAlgebraicNotation();
+            dialog.close();
+            createBoard(board.pieces);
+            checkIfGameEnded();
+        });
+        return button;
     }
 
     private void getAlgebraicNotation() {
@@ -263,7 +246,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         add(dialog);
     }
 
-    private void createBoard(Piece[] pieces) {
+    public void createBoard(Piece[] pieces) {
         VerticalLayout boardLayout = findBoardLayout();
         if (boardLayout == null) {
             boardLayout = new VerticalLayout();
@@ -295,7 +278,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
                 VerticalLayout finalBoardLayout = boardLayout;
                 square.addClickListener(view -> {
                     if (gameState.hasGameEnded) return;
-                    gameState.play(board.getPointFromArrayIndex(index), new BoardLocation(-1, -1));
+                    gameState.play(new Move(board.getPointFromArrayIndex(index), new BoardLocation(-1, -1)));
 
                     AtomicReference<BoardLocation> selectedSquare = new AtomicReference<>(null);
                     finalBoardLayout.getChildren().forEach(component -> component.getChildren().forEach(componentRow -> {

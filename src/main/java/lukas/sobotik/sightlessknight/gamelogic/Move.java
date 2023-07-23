@@ -3,6 +3,11 @@ package lukas.sobotik.sightlessknight.gamelogic;
 public class Move {
     private BoardLocation from, to;
     private Piece movedPiece, capturedPiece;
+    private PieceType promotionPiece;
+    public Move(BoardLocation from, BoardLocation to) {
+        this.from = from;
+        this.to = to;
+    }
     public Move(BoardLocation from, BoardLocation to, Piece movedPiece) {
         this.from = from;
         this.to = to;
@@ -37,5 +42,11 @@ public class Move {
     }
     public void setCapturedPiece(Piece capturedPiece) {
         this.capturedPiece = capturedPiece;
+    }
+    public PieceType getPromotionPiece() {
+        return promotionPiece;
+    }
+    public void setPromotionPiece(PieceType promotionPiece) {
+        this.promotionPiece = promotionPiece;
     }
 }

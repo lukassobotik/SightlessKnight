@@ -194,7 +194,6 @@ public class Rules {
             if (board.getPiece(selectedPieceLocation.transpose(xDir, yDir)) != null
                     || board.getPiece(selectedPieceLocation.transpose(xDir - 1, yDir)) != null
                     || board.getPiece(selectedPieceLocation.transpose(xDir - 2, yDir)) != null) {
-                System.out.println((board.getPiece(selectedPieceLocation.transpose(xDir, yDir)) != null ? board.getPiece(selectedPieceLocation.transpose(xDir, yDir)).type : "null") + " " + (board.getPiece(selectedPieceLocation.transpose(xDir - 1, yDir)) != null ? board.getPiece(selectedPieceLocation.transpose(xDir - 1, yDir)).type : "null") + " " + (board.getPiece(selectedPieceLocation.transpose(xDir - 2, yDir)) != null ? board.getPiece(selectedPieceLocation.transpose(xDir - 2, yDir)).type : "null"));
                 return new ArrayList<>();
             }
 
@@ -297,7 +296,7 @@ public class Rules {
         if (addPawnCaptureMoves(legalPawnMoves, pawnLocation, team, board, rightCapture)) return new ArrayList<>();
 
         // Check for promotion moves
-        if (legalPawnMoves.size() > 0 && (forwardPoint.getY() == 7 || forwardPoint.getY() == 0)) {
+        if (!legalPawnMoves.isEmpty() && (forwardPoint.getY() == 7 || forwardPoint.getY() == 0)) {
             List<BoardLocation> promotionMoves = new ArrayList<>();
 
             for (BoardLocation move : legalPawnMoves) {
@@ -330,13 +329,24 @@ public class Rules {
     }
 
     private static void addLegalEnPassant(List<BoardLocation> legalPawnMoves, Team team, Board board, BoardLocation captureMove, BoardLocation pawnLocation, BoardLocation pieceLocationNextToPawn, boolean isDifferentFile) {
-        if (board.getPiece(pieceLocationNextToPawn) != null
-                && board.getPiece(pieceLocationNextToPawn).type.equals(PieceType.PAWN)
-                && board.getPiece(pieceLocationNextToPawn).team != team
+        Piece pieceNextToPawn = board.getPiece(pieceLocationNextToPawn);
+        if (pieceNextToPawn != null
+                && pieceNextToPawn.type.equals(PieceType.PAWN)
+                && pieceNextToPawn.team != team
                 && (team == playerTeam ? pawnLocation.getY() == 4 : pawnLocation.getY() == 3)
-                && board.getPiece(pieceLocationNextToPawn).doublePawnMoveOnMoveNumber == GameState.moveNumber
+                && pieceNextToPawn.doublePawnMoveOnMoveNumber == GameState.moveNumber
                 && isDifferentFile) {
+
+//            // Perform the en passant capture move and check if the king is in check
+//            board.movePiece(pawnLocation, captureMove);
+//            board.printBoardInConsole();
+//            boolean isKingInCheck = isKingInCheck(team, board);
+//            board.undoMove();
+//
+//            // If the king is not in check after the en passant capture, add it to the legal moves
+//            if (!isKingInCheck) {
             legalPawnMoves.add(captureMove);
+//            }
         }
     }
 
@@ -377,7 +387,7 @@ public class Rules {
             BoardLocation point = board.getPointFromArrayIndex(i);
             Piece piece = board.pieces[i];
             if (piece != null && piece.team == team) {
-                getValidMoves(validMoves, point, piece, board, true);
+                getValidMoves(validMoves, point, piece, board, false);
                 if (!validMoves.isEmpty()) {
                     return false;
                 }

@@ -1,5 +1,6 @@
 package lukas.sobotik.sightlessknight.gamelogic;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 public class Board {
@@ -11,6 +12,8 @@ public class Board {
     BoardLocation lastFromLocation;
     BoardLocation lastToLocation;
     Piece lastRemovedPiece;
+    public BoardLocation lastCapturedPieceLocation;
+    public Piece lastCapturedPiece;
     BoardLocation lastDoublePawnMoveWithWhitePieces;
     BoardLocation lastDoublePawnMoveWithBlackPieces;
     FenUtils fenUtils;
@@ -24,10 +27,6 @@ public class Board {
         blackKingLocation = getPointFromArrayIndex(fenUtils.getBlackKingIndex());
         fenUtils.whiteKingPosition = whiteKingLocation;
         fenUtils.blackKingPosition = blackKingLocation;
-
-        System.out.println(fenUtils.generateFenFromPosition(fenUtils.pieces));
-        printBoardInConsole();
-
     }
     public void resetBoardPosition(String startPosition) {
         pieces = fenUtils.generatePositionFromFEN(startPosition);
@@ -104,7 +103,9 @@ public class Board {
 
         // Handle en passant capture
         BoardLocation enPassantCapture = new BoardLocation(to.getX(), from.getY());
-        if (getPiece(enPassantCapture) != null && from.getX() != to.getX() && getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1) {
+        if (getPiece(enPassantCapture) != null
+                && from.getX() != to.getX()
+                && getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1) {
             movedPiece.enPassant = true;
             removePiece(enPassantCapture);
         }
@@ -143,7 +144,10 @@ public class Board {
         if (!isInBounds(boardLocation)) {
             return;
         }
-        pieces[boardLocation.getX() + boardLocation.getY() * 8] = null;
+        lastCapturedPiece = getPiece(boardLocation);
+        lastCapturedPieceLocation = boardLocation;
+        int index = getArrayIndexFromLocation(boardLocation);
+        pieces[index] = null;
     }
 
     public void undoMove() {
