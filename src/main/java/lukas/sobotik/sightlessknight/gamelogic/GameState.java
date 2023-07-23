@@ -1,16 +1,10 @@
 package lukas.sobotik.sightlessknight.gamelogic;
 
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class GameState {
-    Board board;
+    public Board board;
     public static Team currentTurn;
     public boolean hasGameEnded = false;
     final List<BoardLocation> validMoves;
@@ -34,7 +28,9 @@ public class GameState {
         GameState.kinglessGame = kinglessGame;
         this.board = board;
     }
-    public void play(BoardLocation from, BoardLocation to) {
+    public void play(Move move) {
+        BoardLocation from = move.getFrom(), to = move.getTo();
+
         if (hasGameEnded && !kinglessGame) {
             return;
         }
@@ -51,10 +47,17 @@ public class GameState {
         }
 
         if (!validMoves.isEmpty()) {
-            for (BoardLocation move : validMoves) {
-                if (to.equals(move)) {
+            for (BoardLocation moveLoc : validMoves) {
+                if (to.equals(moveLoc)) {
                     moveNumber++;
                     System.err.println("moveNumber: " + moveNumber);
+
+                    if ((moveLoc.getY() == 0 || moveLoc.getY() == 7) && piece.type == PieceType.PAWN && piece.promotion == null) {
+                        promotionLocation = to;
+                        isPawnPromotionPending = true;
+                        return;
+                    }
+
                     movePieceAndEndTurn(to);
                     createParsedMoveHistory(new Move(from, to, board.getPiece(to), capturedPiece));
                     hasGameEnded = Rules.isCheckmate(currentTurn, board) || Rules.isStalemate(currentTurn, board);
@@ -65,9 +68,49 @@ public class GameState {
             selectedPieceLocation = null;
         }
     }
-    private void movePieceAndEndTurn(BoardLocation destination) {
+    public Board getBoard() {
+        return board;
+    }
+    public void movePieceAndEndTurn(BoardLocation destination) {
         if (destination != null) {
             board.movePiece(selectedPieceLocation, destination);
+        }
+        currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
+    }
+
+    /**
+     * Function used by tests like the Perft test, generally shouldn't be used to play user moves
+     * @param move which move should be played
+     */
+    public void testsPlayMove(Move move) {
+        Piece piece = move.getMovedPiece();
+        if (piece == null) return;
+        selectedPieceLocation = move.getFrom();
+        Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board, true);
+
+        if (!validMoves.isEmpty()) {
+            for (BoardLocation validMove : validMoves) {
+                if (move.getTo().equals(validMove)) {
+                    if ((move.getTo().getY() == 0 || move.getTo().getY() == 7) && piece.type == PieceType.PAWN && move.getPromotionPiece() != null ) {
+                        promotionLocation = move.getTo();
+                        movePieceAndEndTurn(move.getTo());
+                        promotePawn(move.getPromotionPiece());
+                        return;
+                    }
+                    movePieceAndEndTurn(move.getTo());
+                    break;
+                }
+            }
+            validMoves.clear();
+            selectedPieceLocation = null;
+        }
+    }
+    public int capturedPieces = 0;
+    public void undoMove(Move move) {
+        board.movePiece(move.getTo(), move.getFrom());
+        if (move.getCapturedPiece() != null) {
+            capturedPieces++;
+            board.pieces[board.getArrayIndexFromLocation(move.getTo())] = move.getCapturedPiece();
         }
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
