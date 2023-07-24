@@ -4,23 +4,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-enum CheckState {
-    NONE,
-    CHECK,
-    CHECKMATE,
-    STALEMATE
-}
-
 public class Rules {
     static final Team playerTeam = GameState.playerTeam;
     private Rules() {
 
     }
-
-    public static List<BoardLocation> getValidMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks) {
-        return getValidMoves(legalMoves, selectedPieceLocation, piece, board, checkForChecks, true);
+    /**
+     * Method with default settings for getting valid moves of a piece
+     * @param legalMoves list that will be updated with the legal moves
+     * @param selectedPieceLocation where the piece is located on the board
+     * @param piece what piece are the moves generated for
+     * @param board the board where the moves take place
+     * @param checkForChecks whether the method should check for checks and piece pins
+     */
+    public static void getValidMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks) {
+        getValidMoves(legalMoves, selectedPieceLocation, piece, board, checkForChecks, true);
     }
-    static List<BoardLocation> getValidMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks, boolean checkCastlingMoves) {
+
+    /**
+     * Method with manual settings for getting valid moves of a piece
+     * @param legalMoves list that will be updated with the legal moves
+     * @param selectedPieceLocation where the piece is located on the board
+     * @param piece what piece are the moves generated for
+     * @param board the board where the moves take place
+     * @param checkForChecks whether the method should check for checks and piece pins
+     * @param checkCastlingMoves whether the method should add castling moves
+     */
+    static void getValidMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks, boolean checkCastlingMoves) {
         switch (piece.type) {
             case PAWN -> legalMoves.addAll(Objects.requireNonNull(getValidPawnMoves(legalMoves, selectedPieceLocation, piece.team, board)));
             case BISHOP -> legalMoves.addAll(getValidBishopMoves(legalMoves, selectedPieceLocation, piece.team, board));
@@ -30,18 +40,32 @@ public class Rules {
             case QUEEN -> legalMoves.addAll(getValidQueenMoves(legalMoves, selectedPieceLocation, piece.team, board, false));
         }
         if (checkForChecks) {
-            legalMoves = checkForChecks(legalMoves, selectedPieceLocation, piece.team, board);
+            checkForChecks(legalMoves, selectedPieceLocation, piece.team, board);
         }
-        return legalMoves;
     }
-    static List<BoardLocation> getAllMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board) {
+
+    /**
+     * Used for disambiguating friendly moves, it will return all possible moves including friendly piece captures, so it shouldn't be used for normal applications
+     * @param legalMoves list of the legal moves that will be updated
+     * @param selectedPieceLocation location of the piece that the method will generate legal moves for
+     * @param piece piece that the method will generate moves for
+     * @param board the board where the moves take place
+     */
+    static void getAllMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board) {
         switch (piece.type) {
             case KNIGHT -> legalMoves.addAll(getValidKnightMoves(legalMoves, selectedPieceLocation, piece.team, board, true));
             case ROOK -> legalMoves.addAll(getValidRookMoves(legalMoves, selectedPieceLocation, piece.team, board, true));
             case QUEEN -> legalMoves.addAll(getValidQueenMoves(legalMoves, selectedPieceLocation, piece.team, board, true));
         }
-        return legalMoves;
     }
+
+    /**
+     * Method that returns whether enemy is attacking a certain square on the board
+     * @param square what square the method should search for
+     * @param friendlyTeam friendly team
+     * @param board board where the pieces move
+     * @return true or false depending on whether enemy attacks the given square
+     */
     public static boolean isSquareAttackedByEnemy(BoardLocation square, Team friendlyTeam, Board board) {
         ArrayList<BoardLocation> list = new ArrayList<>();
 
@@ -58,6 +82,16 @@ public class Rules {
         }
         return false;
     }
+
+    /**
+     * Method that returns whether a king can castle
+     * @param team what team's king castling rights the method should return
+     * @param pieces array of pieces on the board
+     * @param whiteKing location of the white king
+     * @param blackKing location of the black king
+     * @param returnBothTeams whether the method should return both teams' castling rights
+     * @return the FEN notation of castling rights ["K" for white's kingside castling rights, "Q" for white's queenside castling rights, "k" for black's kingside castling rights, "q" for black's queenside castling rights], e.g. "KQkq" or "Kkq"
+     */
     public static String isCastlingPossible(Team team, Piece[] pieces, BoardLocation whiteKing, BoardLocation blackKing, boolean returnBothTeams) {
         StringBuilder castlingAvailability = new StringBuilder();
         if (whiteKing == null || blackKing == null) return "";
@@ -84,38 +118,38 @@ public class Rules {
         }
         return castlingAvailability.toString();
     }
-    private static List<BoardLocation> checkForChecks(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Team team, Board board) {
+
+    /**
+     * Method that removes pseudo-legal moves (e.g. moves through pins to the king)
+     * @param legalMoves piece's legal moves
+     * @param selectedPieceLocation where the piece for generating legal moves is located on the board
+     * @param team which team the piece is
+     * @param board the board where the pieces move
+     */
+    private static void checkForChecks(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Team team, Board board) {
         for (int i = 0; i < legalMoves.size(); i++) {
             BoardLocation move = legalMoves.get(i);
 
             board.movePieceWithoutSpecialMovesAndSave(selectedPieceLocation, move);
 
-            if (checkForChecks(team, board) == CheckState.CHECK) {
+            if (isKingInCheck(team, board)) {
                 legalMoves.remove(i);
                 i--;
             }
 
             board.undoMove();
         }
-        return legalMoves;
     }
-    public static CheckState checkForChecks(Team team, Board board) {
-        ArrayList<BoardLocation> list = new ArrayList<>();
-        BoardLocation king = board.getKing(team);
 
-        for (PieceType type : PieceType.values()) {
-            Piece info = new Piece(team, type);
-            getValidMoves(list, king, info, board, false, false);
-            for (BoardLocation move : list) {
-                Piece target = board.getPiece(move);
-                if (target != null && target.type == type) {
-                    return CheckState.CHECK;
-                }
-            }
-            list.clear();
-        }
-        return CheckState.NONE;
-    }
+    /**
+     * Method that returns legal moves for a given queen
+     * @param legalQueenMoves list that the method will update
+     * @param selectedPieceLocation where the piece for generating legal moves is located on the board
+     * @param team what team the queen is
+     * @param board the board where the pieces move
+     * @param ignoreFriendlyPieces whether the queen can move through and capture friendly pieces
+     * @return list of legal queen moves
+     */
     private static List<BoardLocation> getValidQueenMoves(List<BoardLocation> legalQueenMoves, BoardLocation selectedPieceLocation, Team team, Board board, boolean ignoreFriendlyPieces) {
         for (int xDir = -1; xDir <= 1; xDir++) {
             for (int yDir = -1; yDir <= 1; yDir++) {
@@ -128,12 +162,34 @@ public class Rules {
         return legalQueenMoves;
     }
 
+    /**
+     * Transposes the selected piece's location on the board along the specified direction (xDir, yDir).
+     * The transposition is repeated until it encounters the boundary of the board or a blocking piece.
+     *
+     * @param boardLocations the list of all valid board locations
+     * @param selectedPieceLocation to location of the piece on the board
+     * @param team what team the piece is
+     * @param board the board where the piece move
+     * @param xDir The direction to move along the x-axis (horizontal direction).
+     * @param yDir The direction to move along the y-axis (vertical direction).
+     * @param ignoreFriendlyPieces If true, ignore friendly pieces while transposing; otherwise, consider them as blocking pieces.
+     */
     private static void pieceDirections(List<BoardLocation> boardLocations, BoardLocation selectedPieceLocation, Team team, Board board, int xDir, int yDir, boolean ignoreFriendlyPieces) {
         BoardLocation move = selectedPieceLocation;
         do {
             move = move.transpose(xDir, yDir);
         } while (checkIfInBounds(boardLocations, team, board, move, ignoreFriendlyPieces));
     }
+
+    /**
+     * Returns valid moves for a given knight
+     * @param legalKnightMoves list that the method will update
+     * @param selectedPieceLocation where the piece for generating legal moves is located on the board
+     * @param team what team the knight is
+     * @param board the board where the pieces move
+     * @param ignoreFriendlyPieces whether the knight can move through and capture friendly pieces
+     * @return list of legal knight moves
+     */
     private static List<BoardLocation> getValidKnightMoves(List<BoardLocation> legalKnightMoves, BoardLocation selectedPieceLocation, Team team, Board board, boolean ignoreFriendlyPieces) {
         for (int direction = 0; direction < 2; direction++) {
             for (int longDir = -2; longDir <= 2; longDir += 4) {
@@ -153,6 +209,16 @@ public class Rules {
         }
         return legalKnightMoves;
     }
+
+    /**
+     * Returns valid moves for a given king
+     * @param legalKingMoves list the method will update
+     * @param selectedPieceLocation where the piece for generating legal moves is located on the board
+     * @param team what team the king is
+     * @param board the board where the pieces move
+     * @param checkCastlingMoves whether it should check for castling moves
+     * @return list of legal king moves
+     */
     private static List<BoardLocation> getValidKingMoves(List<BoardLocation> legalKingMoves, BoardLocation selectedPieceLocation, Team team, Board board, boolean checkCastlingMoves) {
         for (int xDir = -1; xDir <= 1; xDir++) {
             for (int yDir = -1; yDir <= 1; yDir++) {
@@ -173,6 +239,16 @@ public class Rules {
         }
         return legalKingMoves;
     }
+
+    /**
+     * Method returning all valid castling moves for a team
+     * @param selectedPieceLocation where the piece for generating legal moves is located on the board
+     * @param team what team the method will check castling for
+     * @param board the board where the pieces move
+     * @param xDir The direction to move along the x-axis (horizontal direction).
+     * @param yDir The direction to move along the y-axis (vertical direction).
+     * @return list of valid castling moves for the given team
+     */
     public static List<BoardLocation> getValidCastlingMoves(BoardLocation selectedPieceLocation, Team team, Board board, int xDir, int yDir) {
         List<BoardLocation> legalKingMoves = new ArrayList<>();
         String teamCastle = isCastlingPossible(team, board.pieces, board.whiteKingLocation, board.blackKingLocation, false);
@@ -185,6 +261,17 @@ public class Rules {
         return legalKingMoves;
     }
 
+    /**
+     * Method that will add queenside castling moves if it's legal
+     * @param selectedPieceLocation where the piece for generating legal moves is located on the board
+     * @param team what team the king is
+     * @param board the board where the pieces move
+     * @param xDir The direction to move along the x-axis (horizontal direction).
+     * @param yDir The direction to move along the y-axis (vertical direction).
+     * @param legalKingMoves list the method will add the castling moves to
+     * @param fen the FEN string used to determine whether castling is legal
+     * @return returns all king moves that include queenside castling if it's legal
+     */
     private static ArrayList<BoardLocation> checkQueensideCastling(BoardLocation selectedPieceLocation, Team team, Board board, int xDir, int yDir, List<BoardLocation> legalKingMoves, String fen) {
         if (xDir == -1 && yDir == 0 && selectedPieceLocation.equals(team == Team.WHITE ? new BoardLocation(4, 0) : new BoardLocation(4, 7)))  {
             if (isSquareAttackedByEnemy(selectedPieceLocation.transpose(xDir, yDir), team, board)
@@ -208,6 +295,17 @@ public class Rules {
         return null;
     }
 
+    /**
+     * Method that will add kingside castling moves if it's legal
+     * @param selectedPieceLocation where the piece for generating legal moves is located on the board
+     * @param team what team the king is
+     * @param board the board where the pieces move
+     * @param xDir The direction to move along the x-axis (horizontal direction).
+     * @param yDir The direction to move along the y-axis (vertical direction).
+     * @param legalKingMoves list the method will add the castling moves to
+     * @param fen the FEN string used to determine whether castling is legal
+     * @return returns all king moves that include kingside castling if it's legal
+     */
     private static ArrayList<BoardLocation> checkKingsideCastling(BoardLocation selectedPieceLocation, Team team, Board board, int xDir, int yDir, List<BoardLocation> legalKingMoves, String fen) {
         if (xDir == 1 && yDir == 0 && selectedPieceLocation.equals(team == Team.WHITE ? board.whiteKingLocation : board.blackKingLocation))  {
             if (isSquareAttackedByEnemy(selectedPieceLocation.transpose(xDir, yDir), team, board)
@@ -228,6 +326,15 @@ public class Rules {
         return null;
     }
 
+    /**
+     * Method returning all legal moves for a given rook
+     * @param legalRookMoves list the method will update
+     * @param selection where the rook is located on the board
+     * @param team what team the rook is
+     * @param board the board where the pieces move
+     * @param ignoreFriendlyPieces whether the rook can move through and capture friendly pieces
+     * @return returns list of all legal moves for a given rook
+     */
     private static List<BoardLocation> getValidRookMoves(List<BoardLocation> legalRookMoves, BoardLocation selection, Team team, Board board, boolean ignoreFriendlyPieces) {
         for (int direction = 0; direction < 2; direction++) {
             for (int direction2 = -1; direction2 <= 1; direction2 += 2) {
@@ -244,7 +351,17 @@ public class Rules {
         }
         return legalRookMoves;
     }
-    private static boolean checkIfInBounds(List<BoardLocation> list, Team team, Board board, BoardLocation move, boolean ignoreFriendlyPieces) {
+
+    /**
+     * Method that checks if a move is in bounds
+     * @param legalMoves list of legal moves
+     * @param team what team the pieces are
+     * @param board the board where the pieces move
+     * @param move what move the method should check whether it's in bounds
+     * @param ignoreFriendlyPieces whether the method should allow going through or capturing friendly pieces
+     * @return true of false whether the move is in bounds.
+     */
+    private static boolean checkIfInBounds(List<BoardLocation> legalMoves, Team team, Board board, BoardLocation move, boolean ignoreFriendlyPieces) {
         if (!board.isInBounds(move)) {
             return false;
         }
@@ -253,26 +370,41 @@ public class Rules {
 
         if (target != null) {
             if (target.team != team || ignoreFriendlyPieces) {
-                list.add(move);
+                legalMoves.add(move);
             }
             return false;
         }
 
-        list.add(move);
+        legalMoves.add(move);
         return true;
     }
 
 
-    private static List<BoardLocation> getValidBishopMoves(List<BoardLocation> legalBishopMoves, BoardLocation selection, Team team, Board board) {
+    /**
+     * Method returning all legal moves for a given bishop
+     * @param legalBishopMoves list the method will update
+     * @param selectedPieceLocation where the piece for generating legal moves is located on the board
+     * @param team what team the bishop is
+     * @param board the board where the pieces move
+     * @return returns a list of all legal moves for a given bishop
+     */
+    private static List<BoardLocation> getValidBishopMoves(List<BoardLocation> legalBishopMoves, BoardLocation selectedPieceLocation, Team team, Board board) {
         for (int xDir = -1; xDir <= 1; xDir += 2) {
             for (int yDir = -1; yDir <= 1; yDir += 2) {
-                pieceDirections(legalBishopMoves, selection, team, board, xDir, yDir, false);
+                pieceDirections(legalBishopMoves, selectedPieceLocation, team, board, xDir, yDir, false);
             }
         }
         return legalBishopMoves;
     }
 
-
+    /**
+     * Method returning all legal moves for a given pawn
+     * @param legalPawnMoves list the method will update
+     * @param pawnLocation where the pawn is located on the board
+     * @param team what team the pawn is
+     * @param board the board where the pieces move
+     * @return returns a list of legal moves for a given pawn
+     */
     public static List<BoardLocation> getValidPawnMoves(List<BoardLocation> legalPawnMoves, BoardLocation pawnLocation, Team team, Board board) {
         int forwardDirection = (team == playerTeam) ? 1 : -1;
         BoardLocation forwardPoint = new BoardLocation(pawnLocation.getX(), (pawnLocation.getY() + (forwardDirection)));
@@ -308,6 +440,15 @@ public class Rules {
         return legalPawnMoves;
     }
 
+    /**
+     * Method that will add capture moves for a given pawn
+     * @param legalPawnMoves list the method will add the moves to
+     * @param pawnLocation where the pawn is located on the board
+     * @param team what team the pawn is
+     * @param board the board where the pieces move
+     * @param captureLocation where the pawn can capture a piece
+     * @return a boolean whether the parent method should return nothing
+     */
     private static boolean addPawnCaptureMoves(List<BoardLocation> legalPawnMoves, BoardLocation pawnLocation, Team team, Board board, BoardLocation captureLocation) {
         if (board.isInBounds(captureLocation)) {
             Piece rightCapturePiece = board.getPiece(captureLocation);
@@ -320,6 +461,14 @@ public class Rules {
         return false;
     }
 
+    /**
+     * Method that tries adding En Passant moves
+     * @param legalPawnMoves list the method will add the moves to
+     * @param team what team the pawn is
+     * @param board the board where the pieces move
+     * @param captureMove location where the pawn can capture a piece
+     * @param pawnLocation where the pawn is located on the board
+     */
     private static void checkEnPassant(List<BoardLocation> legalPawnMoves, Team team, Board board, BoardLocation captureMove, BoardLocation pawnLocation) {
         BoardLocation leftLocation = new BoardLocation(pawnLocation.getX() - 1, pawnLocation.getY());
         BoardLocation rightLocation = new BoardLocation(pawnLocation.getX() + 1, pawnLocation.getY());
@@ -328,6 +477,16 @@ public class Rules {
         addLegalEnPassant(legalPawnMoves, team, board, captureMove, pawnLocation, leftLocation, pawnLocation.getX() > captureMove.getX());
     }
 
+    /**
+     * Method that will add En Passant moves if it's legal
+     * @param legalPawnMoves list the method will add the moves to
+     * @param team what team the pawn is
+     * @param board the board where the pieces move
+     * @param captureMove location where the pawn can capture a piece
+     * @param pawnLocation where the pawn is located on the board
+     * @param pieceLocationNextToPawn location of the piece next to the pawn
+     * @param isDifferentFile whether the pawn location is on the same file as the location where the pawn can capture a piece
+     */
     private static void addLegalEnPassant(List<BoardLocation> legalPawnMoves, Team team, Board board, BoardLocation captureMove, BoardLocation pawnLocation, BoardLocation pieceLocationNextToPawn, boolean isDifferentFile) {
         Piece pieceNextToPawn = board.getPiece(pieceLocationNextToPawn);
         if (pieceNextToPawn != null
@@ -350,11 +509,23 @@ public class Rules {
         }
     }
 
+    /**
+     * Method that checks whether the king of a given team is in check
+     * @param team what team the king is
+     * @param board the board where the pieces move
+     * @return true or false whether the king is in check
+     */
     public static boolean isKingInCheck(Team team, Board board) {
         BoardLocation kingPosition = team == Team.WHITE ? board.whiteKingLocation : board.blackKingLocation;
         return isSquareAttackedByEnemy(kingPosition, team, board);
     }
 
+    /**
+     * Method that checks if a team is in checkmate.
+     * @param team the team to check for.
+     * @param board the board where the pieces move.
+     * @return true or false whether the team is in checkmate.
+     */
     public static boolean isCheckmate(Team team, Board board) {
         if (!isKingInCheck(team, board) || GameState.kinglessGame) {
             return false;
@@ -378,6 +549,12 @@ public class Rules {
         return true;
     }
 
+    /**
+     * Method that checks if a team is in stalemate.
+     * @param team the team to check for.
+     * @param board the board where the pieces move.
+     * @return true or false whether the team is in stalemate.
+     */
     public static boolean isStalemate(Team team, Board board) {
         if (isKingInCheck(team, board) || GameState.kinglessGame) {
             return false;
@@ -396,9 +573,15 @@ public class Rules {
         return true;
     }
 
-    // For Piece Move Drills
-    public static boolean isPieceOnTargetSquare(Piece piece, BoardLocation target, Board board) {
-        if (board.getPiece(target) == null) return false;
-        return board.getPiece(target).equals(piece);
+    /**
+     * Method that returns whether a piece is on a given square.
+     * @param piece what piece should be on the square.
+     * @param square location of the square.
+     * @param board the board where the pieces move.
+     * @return true or false whether a piece is on the given square.
+     */
+    public static boolean isPieceOnSquare(Piece piece, BoardLocation square, Board board) {
+        if (board.getPiece(square) == null) return false;
+        return board.getPiece(square).equals(piece);
     }
 }

@@ -36,7 +36,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
     Piece pieceForKinglessGames = null;
     HorizontalLayout gameContentLayout, targetSquareLayout;
     VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout;
-    public static String STARTING_POSITION = "8/2p5/8/1P6/8/8/8/K1k5 b - - 0 1";
+    public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     @Override
     public void setParameter(BeforeEvent beforeEvent, @OptionalParameter String s) {
         System.out.println(s);
@@ -149,7 +149,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         }
 
         // Piece Move Drills
-        if (targetSquare != null && Rules.isPieceOnTargetSquare(pieceForKinglessGames, targetSquare, board)) {
+        if (targetSquare != null && Rules.isPieceOnSquare(pieceForKinglessGames, targetSquare, board)) {
             generateKnightGame();
             createBoard(board.pieces);
             showTargetSquare();
