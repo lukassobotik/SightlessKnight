@@ -82,7 +82,7 @@ public class GameState {
      * Function used by tests like the Perft test, generally shouldn't be used to play user moves
      * @param move which move should be played
      */
-    public void testsPlayMove(Move move) {
+    public void playTestMove(Move move) {
         Piece piece = move.getMovedPiece();
         if (piece == null) return;
         selectedPieceLocation = move.getFrom();

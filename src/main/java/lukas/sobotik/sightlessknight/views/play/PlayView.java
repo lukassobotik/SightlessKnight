@@ -36,7 +36,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
     Piece pieceForKinglessGames = null;
     HorizontalLayout gameContentLayout, targetSquareLayout;
     VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout;
-    public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    public static String STARTING_POSITION = "8/2p5/8/1P6/8/8/8/K1k5 b - - 0 1";
     @Override
     public void setParameter(BeforeEvent beforeEvent, @OptionalParameter String s) {
         System.out.println(s);
@@ -119,10 +119,10 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         gameContentLayout.add(gameInfoLayout);
 
         ExecutorService executorService = Executors.newSingleThreadExecutor();
-        executorService.execute(() -> System.out.println("number of pos 2: " + new PerftFunction(board, gameState, this).playMoves(2, Team.WHITE, false)));
-        executorService.execute(() -> System.out.println("number of pos 3: " + new PerftFunction(board, gameState, this).playMoves(3, Team.BLACK, false)));
-        executorService.execute(() -> System.out.println("number of pos 4: " + new PerftFunction(board, gameState, this).playMoves(4, Team.WHITE, false)));
-        executorService.execute(() -> System.out.println("number of pos 5: " + new PerftFunction(board, gameState, this).playMoves(5, Team.WHITE, false)));
+        executorService.execute(() -> System.out.println("number of pos 2: " + new PerftFunction(board, gameState, this).playMoves(2, fenUtils.getStartingTeam(), false)));
+        executorService.execute(() -> System.out.println("number of pos 3: " + new PerftFunction(board, gameState, this).playMoves(3, fenUtils.getStartingTeam(), false)));
+        executorService.execute(() -> System.out.println("number of pos 4: " + new PerftFunction(board, gameState, this).playMoves(4, fenUtils.getStartingTeam(), false)));
+        executorService.execute(() -> System.out.println("number of pos 5: " + new PerftFunction(board, gameState, this).playMoves(5, fenUtils.getStartingTeam(), false)));
         executorService.shutdown();
     }
 

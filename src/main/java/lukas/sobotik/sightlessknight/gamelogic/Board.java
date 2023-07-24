@@ -105,9 +105,12 @@ public class Board {
         BoardLocation enPassantCapture = new BoardLocation(to.getX(), from.getY());
         if (getPiece(enPassantCapture) != null
                 && from.getX() != to.getX()
-                && getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1) {
+                && (getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1)) {
             movedPiece.enPassant = true;
             removePiece(enPassantCapture);
+        } else {
+            lastCapturedPiece = null;
+            lastCapturedPieceLocation = null;
         }
 
         // Check for promotion moves
