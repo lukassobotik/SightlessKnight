@@ -1,4 +1,4 @@
-package lukas.sobotik.sightlessknight.gamelogic;
+package lukas.sobotik.sightlessknight.gamelogic.entity;
 
 public enum CheckState {
     NONE,

@@ -1,7 +1,7 @@
 package lukas.sobotik.sightlessknight.gamelogic;
 
-import java.io.IOException;
-import java.util.HashMap;
+import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
+import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 
 public class Board {
     public Piece[] pieces;

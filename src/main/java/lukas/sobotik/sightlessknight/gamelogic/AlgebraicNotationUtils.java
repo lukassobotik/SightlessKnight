@@ -1,5 +1,8 @@
 package lukas.sobotik.sightlessknight.gamelogic;
 
+import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
+import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
+
 import java.util.ArrayList;
 import java.util.List;
 

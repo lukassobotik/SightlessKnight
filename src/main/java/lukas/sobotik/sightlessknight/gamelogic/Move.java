@@ -1,9 +1,13 @@
 package lukas.sobotik.sightlessknight.gamelogic;
 
+import lukas.sobotik.sightlessknight.gamelogic.entity.MoveFlag;
+import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
+
 public class Move {
     private BoardLocation from, to;
     private Piece movedPiece, capturedPiece;
     private PieceType promotionPiece;
+    private MoveFlag moveFlag = MoveFlag.none;
     public Move(BoardLocation from, BoardLocation to) {
         this.from = from;
         this.to = to;
@@ -48,5 +52,11 @@ public class Move {
     }
     public void setPromotionPiece(PieceType promotionPiece) {
         this.promotionPiece = promotionPiece;
+    }
+    public MoveFlag getMoveFlag() {
+        return moveFlag;
+    }
+    public void setMoveFlag(MoveFlag moveFlag) {
+        this.moveFlag = moveFlag;
     }
 }

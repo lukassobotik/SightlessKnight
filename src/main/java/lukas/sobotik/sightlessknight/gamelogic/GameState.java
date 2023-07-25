@@ -1,5 +1,9 @@
 package lukas.sobotik.sightlessknight.gamelogic;
 
+import lukas.sobotik.sightlessknight.gamelogic.entity.MoveFlag;
+import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
+import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,11 +95,23 @@ public class GameState {
         if (!validMoves.isEmpty()) {
             for (BoardLocation validMove : validMoves) {
                 if (move.getTo().equals(validMove)) {
+                    moveNumber++;
+                    // Pawn Promotion
                     if ((move.getTo().getY() == 0 || move.getTo().getY() == 7) && piece.type == PieceType.PAWN && move.getPromotionPiece() != null ) {
                         promotionLocation = move.getTo();
                         movePieceAndEndTurn(move.getTo());
                         promotePawn(move.getPromotionPiece());
-                        return;
+                        break;
+                    }
+
+                    BoardLocation enPassantCapture = new BoardLocation(move.getTo().getX(), move.getFrom().getY());
+                    if (board.getPiece(enPassantCapture) != null
+                            && move.getFrom().getX() != move.getTo().getX()
+                            && (board.getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1)) {
+                        move.setCapturedPiece(board.getPiece(enPassantCapture));
+                        move.setMoveFlag(MoveFlag.enPassant);
+                    } else {
+                        move.setMoveFlag(MoveFlag.none);
                     }
                     movePieceAndEndTurn(move.getTo());
                     break;
@@ -107,10 +123,16 @@ public class GameState {
     }
     public int capturedPieces = 0;
     public void undoMove(Move move) {
+        moveNumber -= 1;
         board.movePiece(move.getTo(), move.getFrom());
         if (move.getCapturedPiece() != null) {
             capturedPieces++;
-            board.pieces[board.getArrayIndexFromLocation(move.getTo())] = move.getCapturedPiece();
+            int pieceIndex = board.getArrayIndexFromLocation(move.getTo());
+            if (move.getMoveFlag().equals(MoveFlag.enPassant)) {
+                pieceIndex = board.getArrayIndexFromLocation(move.getTo().transpose(0, (move.getMovedPiece().team == Team.WHITE ? -1 : 1)));
+                if (!board.isInBounds(move.getTo().transpose(0, (move.getMovedPiece().team == Team.WHITE ? -1 : 1)))) return;
+            }
+            board.pieces[pieceIndex] = move.getCapturedPiece();
         }
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }

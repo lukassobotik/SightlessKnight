@@ -1,12 +1,15 @@
 package lukas.sobotik.sightlessknight.gamelogic;
 
 
+import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
+import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
+
 public class Piece {
 	public Team team;
 	public PieceType type;
 	public int doublePawnMoveOnMoveNumber = -10;
 	boolean hasMoved = false;
-	boolean enPassant = false;
+	public boolean enPassant = false;
 	String castling = null;
 	public PieceType promotion = null;
 	public Piece(Team team, PieceType type) {

@@ -13,6 +13,8 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.*;
 import lukas.sobotik.sightlessknight.ai.PerftFunction;
 import lukas.sobotik.sightlessknight.gamelogic.*;
+import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
+import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 import lukas.sobotik.sightlessknight.views.MainLayout;
 
 import java.util.List;
@@ -50,7 +52,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
                 }
             }
             initialize(pieces, true);
-            showTargetSquare();
+            showTargetSquare(startSquare.getAlgebraicNotationLocation() + " → " + targetSquare.getAlgebraicNotationLocation());
         }
     }
     public PlayView() {
@@ -152,7 +154,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         if (targetSquare != null && Rules.isPieceOnSquare(pieceForKinglessGames, targetSquare, board)) {
             generateKnightGame();
             createBoard(board.pieces);
-            showTargetSquare();
+            showTargetSquare(startSquare.getAlgebraicNotationLocation() + " → " + targetSquare.getAlgebraicNotationLocation());
         }
     }
 
@@ -439,10 +441,10 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         System.out.println(targetSquare.getAlgebraicNotationLocation());
         return pieces;
     }
-    public void showTargetSquare() {
+    public void showTargetSquare(String s) {
         targetSquareLayout.removeAll();
         targetSquareLayout.setVisible(true);
-        var paragraph = new Paragraph(startSquare.getAlgebraicNotationLocation() + " → " + targetSquare.getAlgebraicNotationLocation());
+        var paragraph = new Paragraph(s);
         paragraph.setWidthFull();
         paragraph.addClassName("target_square");
         targetSquareLayout.setHeight("auto");
