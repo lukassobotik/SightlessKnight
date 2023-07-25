@@ -12,8 +12,6 @@ public class Board {
     BoardLocation lastFromLocation;
     BoardLocation lastToLocation;
     Piece lastRemovedPiece;
-    public BoardLocation lastCapturedPieceLocation;
-    public Piece lastCapturedPiece;
     BoardLocation lastDoublePawnMoveWithWhitePieces;
     BoardLocation lastDoublePawnMoveWithBlackPieces;
     FenUtils fenUtils;
@@ -104,13 +102,14 @@ public class Board {
         // Handle en passant capture
         BoardLocation enPassantCapture = new BoardLocation(to.getX(), from.getY());
         if (getPiece(enPassantCapture) != null
+                && getPiece(enPassantCapture).type == PieceType.PAWN
+                && getPiece(enPassantCapture).team != movedPiece.team
+                && movedPiece.type == PieceType.PAWN
                 && from.getX() != to.getX()
                 && (getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1)) {
             movedPiece.enPassant = true;
             removePiece(enPassantCapture);
-        } else {
-            lastCapturedPiece = null;
-            lastCapturedPieceLocation = null;
+            GameState.enPassantCaptures++;
         }
 
         // Check for promotion moves
@@ -147,8 +146,6 @@ public class Board {
         if (!isInBounds(boardLocation)) {
             return;
         }
-        lastCapturedPiece = getPiece(boardLocation);
-        lastCapturedPieceLocation = boardLocation;
         int index = getArrayIndexFromLocation(boardLocation);
         pieces[index] = null;
     }

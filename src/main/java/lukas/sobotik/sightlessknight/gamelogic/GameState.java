@@ -13,7 +13,7 @@ public class GameState {
     public boolean hasGameEnded = false;
     final List<BoardLocation> validMoves;
     BoardLocation selectedPieceLocation;
-    public static int moveNumber = 0;
+    public static int moveNumber = 0, enPassantCaptures = 0;
     static final Team playerTeam = Team.WHITE;
     public static boolean isPawnPromotionPending = false;
     public static BoardLocation promotionLocation;
@@ -106,6 +106,9 @@ public class GameState {
 
                     BoardLocation enPassantCapture = new BoardLocation(move.getTo().getX(), move.getFrom().getY());
                     if (board.getPiece(enPassantCapture) != null
+                            && board.getPiece(enPassantCapture).type == PieceType.PAWN
+                            && board.getPiece(enPassantCapture).team != move.getMovedPiece().team
+                            && move.getMovedPiece().type == PieceType.PAWN
                             && move.getFrom().getX() != move.getTo().getX()
                             && (board.getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1)) {
                         move.setCapturedPiece(board.getPiece(enPassantCapture));
@@ -121,7 +124,7 @@ public class GameState {
             selectedPieceLocation = null;
         }
     }
-    public int capturedPieces = 0;
+    public int capturedPieces = 0, enPassantCapturesReturned = 0;
     public void undoMove(Move move) {
         moveNumber -= 1;
         board.movePiece(move.getTo(), move.getFrom());
@@ -131,6 +134,7 @@ public class GameState {
             if (move.getMoveFlag().equals(MoveFlag.enPassant)) {
                 pieceIndex = board.getArrayIndexFromLocation(move.getTo().transpose(0, (move.getMovedPiece().team == Team.WHITE ? -1 : 1)));
                 if (!board.isInBounds(move.getTo().transpose(0, (move.getMovedPiece().team == Team.WHITE ? -1 : 1)))) return;
+                enPassantCapturesReturned++;
             }
             board.pieces[pieceIndex] = move.getCapturedPiece();
         }
