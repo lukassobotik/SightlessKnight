@@ -22,5 +22,8 @@ jobs:
       - name: Install Maven
         run: sudo apt-get update && sudo apt-get install -y maven
 
-      - name: Build and Test
+      - name: Build
+        run: mvn package
+
+      - name: Test
         run: mvn test
