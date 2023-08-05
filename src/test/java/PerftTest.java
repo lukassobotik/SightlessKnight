@@ -3,20 +3,40 @@ import lukas.sobotik.sightlessknight.gamelogic.Board;
 import lukas.sobotik.sightlessknight.gamelogic.FenUtils;
 import lukas.sobotik.sightlessknight.gamelogic.GameState;
 import lukas.sobotik.sightlessknight.gamelogic.Piece;
+import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
+import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PerftTest {
+    private static final HashMap<String, String> positionMap = new HashMap<>();
 
     @BeforeEach
     public void setUp() {
 
+    }
+
+    @BeforeAll
+    public static void setUpBeforeAll() {
+        positionMap.put("enPassantWhite", "8/2p5/8/1P6/8/8/8/K1k5 b - - 0 1");
+        positionMap.put("enPassantBlack", "K1k5/8/8/8/2p5/8/1P6/8 w - - 0 1");
+        positionMap.put("castling", "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1");
+        positionMap.put("startingPosition", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        positionMap.put("testPos2", "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+        positionMap.put("testPos3", "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - ");
+        positionMap.put("testPos4", "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+        positionMap.put("testPos5", "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+        positionMap.put("testPos6", "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
     }
 
     @ParameterizedTest
@@ -31,22 +51,24 @@ public class PerftTest {
         PerftFunction perftFunction = new PerftFunction(board, gameState, null);
 
         int actualPositions = perftFunction.playMoves(depth, fenUtils.getStartingTeam(), false);
-        assertEquals(expectedPositions, actualPositions, "FEN: " + fen
-                + ", Move " + GameState.moveNumber
-                + ", Pieces Captured " + gameState.capturedPieces
-                + ", Depth " + depth + " positions mismatch.");
+        assertEquals(expectedPositions, actualPositions,
+                "Name: " + getPositionNameFromFen(fen)
+                        + ", FEN: " + fen
+                        + ", Move " + GameState.moveNumber
+                        + ", Pieces Captured: " + gameState.capturedPieces
+                        + ", Depth " + depth + " positions mismatch.");
     }
 
     private static Stream<Arguments> fenPositionsProvider() {
-        var enPassantWhite = "8/2p5/8/1P6/8/8/8/K1k5 b - - 0 1";
-        var enPassantBlack = "K1k5/8/8/8/2p5/8/1P6/8 w - - 0 1";
-        var castling = "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1";
-        var startingPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        var testPos2 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ";
-        var testPos3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - ";
-        var testPos4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
-        var testPos5 = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
-        var testPos6 = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
+        var enPassantWhite = positionMap.get("enPassantWhite");
+        var enPassantBlack = positionMap.get("enPassantBlack");
+        var castling = positionMap.get("castling");
+        var startingPosition = positionMap.get("startingPosition");
+        var testPos2 = positionMap.get("testPos2");
+        var testPos3 = positionMap.get("testPos3");
+        var testPos4 = positionMap.get("testPos4");
+        var testPos5 = positionMap.get("testPos5");
+        var testPos6 = positionMap.get("testPos6");
         // Add FENs and their corresponding expected positions for each depth
         return Stream.of(
                 Arguments.of(enPassantWhite, 1, 5),
@@ -111,5 +133,14 @@ public class PerftTest {
 //                Arguments.of(testPos6, 5, 164075551),
 //                Arguments.of(testPos6, 6, 6923051137)
         );
+    }
+
+    public String getPositionNameFromFen(String fen) {
+        for (var entry : positionMap.entrySet()) {
+            if (Objects.equals(entry.getValue(), fen)) {
+                return entry.getKey();
+            }
+        }
+        throw new IllegalArgumentException("Invalid FEN: " + fen);
     }
 }
