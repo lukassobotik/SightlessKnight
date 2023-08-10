@@ -69,7 +69,7 @@ public class PerftTest {
         var testPos4 = positionMap.get("testPos4");
         var testPos5 = positionMap.get("testPos5");
         var testPos6 = positionMap.get("testPos6");
-        // Add FENs and their corresponding expected positions for each depth
+
         return Stream.of(
                 Arguments.of(enPassantWhite, 1, 5),
                 Arguments.of(enPassantWhite, 2, 16),

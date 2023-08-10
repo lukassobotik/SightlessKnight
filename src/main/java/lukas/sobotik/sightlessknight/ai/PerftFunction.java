@@ -30,6 +30,7 @@ public class PerftFunction {
             Rules.getValidMoves(moves, board.getPointFromArrayIndex(i), piece, board, true);
             validMoves.addAll(new HashSet<>(moves).stream().map(moveLocation -> {
                 Move move = new Move(location, moveLocation, piece, board.getPiece(moveLocation));
+                // Pawn Promotion
                 if ((moveLocation.getY() == 0 || moveLocation.getY() == 7) && piece.type == PieceType.PAWN) {
                     // Add four promotion options: bishop, knight, rook, queen
                     List<PieceType> promotionPieces = Arrays.asList(PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN);
@@ -39,6 +40,7 @@ public class PerftFunction {
                         validMoves.add(promotionMove);
                     }
                 }
+                // En Passant
                 BoardLocation enPassantCapture = new BoardLocation(moveLocation.getX(), location.getY());
                 if (board.getPiece(enPassantCapture) != null
                         && location.getX() != moveLocation.getX()) {
@@ -57,33 +59,13 @@ public class PerftFunction {
         Map<String, Integer> numberOfPositionsOnMove = new HashMap<>();
 
         for (Move move : moves) {
-            boolean pause = false;
-            if (move.getFrom().getAlgebraicNotationLocation().equals("c7") && move.getTo().getAlgebraicNotationLocation().equals("c6") && depth == 3) {
-                pause = true;
-            }
-            if (move.getFrom().getAlgebraicNotationLocation().equals("b5") && move.getTo().getAlgebraicNotationLocation().equals("c6")) {
-                pause = true;
-            }
-            pause=false;
-
-            if (pause) {
-                view.getUI().ifPresent(value -> value.access(() -> view.createBoard(board.pieces)));
-                view.getUI().ifPresent(value -> value.access(() -> view.showTargetSquare(String.valueOf(GameState.moveNumber))));
-                sleep();
-            }
-
+            debugPause(numberOfPositions, move);
             gameState.playTestMove(move);
-
 
             int positions = playMoves(depth - 1, turn == Team.BLACK ? Team.WHITE : Team.BLACK, log);
             numberOfPositions += positions;
             numberOfPositionsOnMove.put(move.getFrom().getAlgebraicNotationLocation() + move.getTo().getAlgebraicNotationLocation(), positions);
-
-            if (pause) {
-                view.getUI().ifPresent(value -> value.access(() -> view.createBoard(board.pieces)));
-                view.getUI().ifPresent(value -> value.access(() -> view.showTargetSquare(String.valueOf(GameState.moveNumber))));
-                sleep();
-            }
+            debugPause(numberOfPositions, move);
 
             gameState.undoMove(move);
         }
@@ -98,6 +80,33 @@ public class PerftFunction {
         }
 
         return numberOfPositions;
+    }
+
+    /***
+     * Helpful method for debugging
+     * @param numberOfPositions number of positions for the Perft Function generated so far
+     * @param move what move the Perft Function is currently processing
+     */
+    private void debugPause(int numberOfPositions, Move move) {
+        boolean pause = false;
+        if (move.getFrom().getAlgebraicNotationLocation().equals("c7") && move.getTo().getAlgebraicNotationLocation().equals("c6")) pause = true;
+        if (move.getMovedPiece().type.equals(PieceType.PAWN)) pause = true;
+
+        // Manual Override
+        pause = false;
+
+        if (pause && view != null) {
+            view.getUI().ifPresent(value -> value.access(() -> view.createBoard(board.pieces)));
+            view.getUI().ifPresent(value -> value.access(() -> view.showTargetSquare(String.valueOf(GameState.moveNumber))));
+            board.printBoardInConsole(true);
+            sleep();
+        } else if (pause) {
+            System.out.println("-------------------");
+            System.out.println(numberOfPositions);
+            if (move.getFrom() == move.getTo()) System.out.println("EXPECTED ERROR");
+            board.printBoardInConsole(true);
+            sleep();
+        }
     }
 
     private void sleep() {

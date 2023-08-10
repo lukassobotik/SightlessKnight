@@ -31,9 +31,9 @@ public class Board {
         GameState.currentTurn = fenUtils.getStartingTeam();
 
         System.out.println(fenUtils.generateFenFromPosition(fenUtils.pieces));
-        printBoardInConsole();
+        printBoardInConsole(false);
     }
-    public void printBoardInConsole() {
+    public void printBoardInConsole(boolean specialCharacters) {
         for (int rank = 7; rank >= 0; rank--) {
             for (int file = 0; file < 8; file++) {
                 int index = rank * 8 + file;
@@ -42,11 +42,36 @@ public class Board {
                 if (piece == null) {
                     System.out.print(". "); // Empty square
                 } else {
-                    System.out.print(fenUtils.getSymbolFromPieceType(piece.type, piece.team) + " "); // Piece character
+                    System.out.print((specialCharacters ? getPieceSymbol(piece.type, piece.team) : fenUtils.getSymbolFromPieceType(piece.type, piece.team)) + " "); // Piece character
                 }
             }
             System.out.println(); // Move to the next line for the next rank
         }
+    }
+
+    private String getPieceSymbol(PieceType type, Team team) {
+        String s = "";
+        if (team == Team.WHITE) {
+            switch (type) {
+                case PAWN -> s = "♟";
+                case KNIGHT-> s = "♞";
+                case BISHOP -> s = "♝";
+                case ROOK -> s = "♜";
+                case QUEEN -> s = "♛";
+                case KING -> s = "♚";
+            }
+        } else {
+            switch (type) {
+                case PAWN -> s = "♙";
+                case KNIGHT-> s = "♘";
+                case BISHOP -> s = "♗";
+                case ROOK -> s = "♖";
+                case QUEEN -> s = "♕";
+                case KING -> s = "♔";
+            }
+        }
+
+        return s;
     }
 
     BoardLocation getKing(Team team) {
@@ -93,11 +118,7 @@ public class Board {
         }
 
         // Save the last move that was a double pawn move
-        if (movedPiece.type == PieceType.PAWN && Math.abs(from.getY() - to.getY()) == 2) {
-            if (movedPiece.team == Team.WHITE) lastDoublePawnMoveWithWhitePieces = to;
-            if (movedPiece.team == Team.BLACK) lastDoublePawnMoveWithBlackPieces = to;
-            movedPiece.doublePawnMoveOnMoveNumber = GameState.moveNumber;
-        }
+        saveDoublePawnMove(from, to, movedPiece);
 
         // Handle en passant capture
         BoardLocation enPassantCapture = new BoardLocation(to.getX(), from.getY());
@@ -123,8 +144,22 @@ public class Board {
         lastFromLocation = from;
         lastToLocation = to;
     }
+
+    private void saveDoublePawnMove(BoardLocation from, BoardLocation to, Piece movedPiece) {
+        if (movedPiece == null) return;
+        if (movedPiece.type == PieceType.PAWN && Math.abs(from.getY() - to.getY()) == 2) {
+            if (movedPiece.team == Team.WHITE) lastDoublePawnMoveWithWhitePieces = to;
+            if (movedPiece.team == Team.BLACK) lastDoublePawnMoveWithBlackPieces = to;
+            movedPiece.doublePawnMoveOnMoveNumber = GameState.moveNumber;
+        }
+    }
+
     public void movePieceWithoutSpecialMovesAndSave(BoardLocation from, BoardLocation to) {
+        var movedPiece = getPiece(from);
         movePieceWithoutSpecialMoves(from, to);
+
+        // Save the last move that was a double pawn move
+        saveDoublePawnMove(from, to, movedPiece);
 
         lastFromLocation = from;
         lastToLocation = to;

@@ -62,7 +62,7 @@ public class GameState {
                         return;
                     }
 
-                    movePieceAndEndTurn(to);
+                    movePieceAndEndTurn(move);
                     createParsedMoveHistory(new Move(from, to, board.getPiece(to), capturedPiece));
                     hasGameEnded = Rules.isCheckmate(currentTurn, board) || Rules.isStalemate(currentTurn, board);
                     break;
@@ -78,6 +78,12 @@ public class GameState {
     public void movePieceAndEndTurn(BoardLocation destination) {
         if (destination != null) {
             board.movePiece(selectedPieceLocation, destination);
+        }
+        currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
+    }
+    public void movePieceAndEndTurn(Move move) {
+        if (move.getFrom() != null && move.getTo() != null) {
+            board.movePiece(move.getFrom(), move.getTo());
         }
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
@@ -99,11 +105,11 @@ public class GameState {
                     // Pawn Promotion
                     if ((move.getTo().getY() == 0 || move.getTo().getY() == 7) && piece.type == PieceType.PAWN && move.getPromotionPiece() != null ) {
                         promotionLocation = move.getTo();
-                        movePieceAndEndTurn(move.getTo());
+                        movePieceAndEndTurn(move);
                         promotePawn(move.getPromotionPiece());
                         break;
                     }
-
+                    // En Passant
                     BoardLocation enPassantCapture = new BoardLocation(move.getTo().getX(), move.getFrom().getY());
                     if (board.getPiece(enPassantCapture) != null
                             && board.getPiece(enPassantCapture).type == PieceType.PAWN
@@ -113,10 +119,12 @@ public class GameState {
                             && (board.getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1)) {
                         move.setCapturedPiece(board.getPiece(enPassantCapture));
                         move.setMoveFlag(MoveFlag.enPassant);
+                    } else if (move.getMovedPiece().type == PieceType.KING && Math.abs(move.getFrom().getX() - move.getTo().getX()) == 2) {
+                        move.setMoveFlag(MoveFlag.castling);
                     } else {
                         move.setMoveFlag(MoveFlag.none);
                     }
-                    movePieceAndEndTurn(move.getTo());
+                    movePieceAndEndTurn(move);
                     break;
                 }
             }
@@ -126,8 +134,10 @@ public class GameState {
     }
     public int capturedPieces = 0, enPassantCapturesReturned = 0;
     public void undoMove(Move move) {
-        moveNumber -= 1;
-        board.movePiece(move.getTo(), move.getFrom());
+        if (moveNumber - 1 >= 0) moveNumber -= 1;
+        else return;
+
+        board.movePieceWithoutSpecialMovesAndSave(move.getTo(), move.getFrom());
         if (move.getCapturedPiece() != null) {
             capturedPieces++;
             int pieceIndex = board.getArrayIndexFromLocation(move.getTo());
@@ -138,6 +148,7 @@ public class GameState {
             }
             board.pieces[pieceIndex] = move.getCapturedPiece();
         }
+        
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
     public void createParsedMoveHistory(Move move) {
@@ -162,6 +173,6 @@ public class GameState {
         isPawnPromotionPending = false;
         promotionLocation = null;
         selectedPromotionPieceType = null;
-        movePieceAndEndTurn(null);
+        movePieceAndEndTurn((BoardLocation) null);
     }
 }
