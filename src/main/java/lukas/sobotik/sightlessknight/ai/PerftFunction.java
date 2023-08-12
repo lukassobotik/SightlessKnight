@@ -1,7 +1,6 @@
 package lukas.sobotik.sightlessknight.ai;
 
 import lukas.sobotik.sightlessknight.gamelogic.*;
-import lukas.sobotik.sightlessknight.gamelogic.entity.MoveFlag;
 import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
 import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 import lukas.sobotik.sightlessknight.views.play.PlayView;
@@ -18,6 +17,9 @@ public class PerftFunction {
         this.view = view;
 
         GameState.moveNumber = 0;
+        GameState.capturedPieces = 0;
+        GameState.enPassantCaptures = 0;
+        GameState.enPassantCapturesReturned = 0;
     }
     public List<Move> getAllValidMoves(Team team) {
         List<Move> validMoves = new ArrayList<>();

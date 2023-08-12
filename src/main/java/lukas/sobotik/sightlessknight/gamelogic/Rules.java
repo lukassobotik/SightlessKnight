@@ -140,7 +140,7 @@ public class Rules {
                 i--;
             }
 
-            board.undoMove();
+            board.undoLastMove();
         }
     }
 
@@ -542,10 +542,10 @@ public class Rules {
                 for (BoardLocation move : validMoves) {
                     board.movePieceWithoutSpecialMovesAndSave(point, move);
                     if (!isKingInCheck(team, board)) {
-                        board.undoMove();
+                        board.undoLastMove();
                         return false;
                     }
-                    board.undoMove();
+                    board.undoLastMove();
                 }
             }
         }

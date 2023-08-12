@@ -1,5 +1,6 @@
 package lukas.sobotik.sightlessknight.gamelogic;
 
+import lukas.sobotik.sightlessknight.gamelogic.entity.MoveFlag;
 import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
 import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 
@@ -144,7 +145,6 @@ public class Board {
         lastFromLocation = from;
         lastToLocation = to;
     }
-
     private void saveDoublePawnMove(BoardLocation from, BoardLocation to, Piece movedPiece) {
         if (movedPiece == null) return;
         if (movedPiece.type == PieceType.PAWN && Math.abs(from.getY() - to.getY()) == 2) {
@@ -153,7 +153,6 @@ public class Board {
             movedPiece.doublePawnMoveOnMoveNumber = GameState.moveNumber;
         }
     }
-
     public void movePieceWithoutSpecialMovesAndSave(BoardLocation from, BoardLocation to) {
         var movedPiece = getPiece(from);
         movePieceWithoutSpecialMoves(from, to);
@@ -185,13 +184,59 @@ public class Board {
         pieces[index] = null;
     }
 
-    public void undoMove() {
+    public void undoLastMove() {
         if (lastFromLocation == null || lastToLocation == null) return;
         Piece temp = lastRemovedPiece;
 
         movePieceWithoutSpecialMovesAndSave(lastToLocation, lastFromLocation);
 
         pieces[lastFromLocation.getX() + lastFromLocation.getY() * 8] = temp;
+    }
+
+    public void undoMove(Move move) {
+        var from = move.getFrom();
+        var to = move.getTo();
+        var movedPiece = move.getMovedPiece();
+        var capturedPiece = move.getCapturedPiece();
+        var moveFlag = move.getMoveFlag();
+
+        movePieceWithoutSpecialMovesAndSave(to, from);
+
+        if (capturedPiece != null) {
+            GameState.capturedPieces++;
+            int pieceIndex = getArrayIndexFromLocation(to);
+            // En Passant
+            if (moveFlag.equals(MoveFlag.enPassant)) {
+                pieceIndex = getArrayIndexFromLocation(to.transpose(0, (movedPiece.team == Team.WHITE ? -1 : 1)));
+                if (!isInBounds(to.transpose(0, (movedPiece.team == Team.WHITE ? -1 : 1)))) return;
+                GameState.enPassantCapturesReturned++;
+            }
+            pieces[pieceIndex] = capturedPiece;
+        }
+
+        // Move the rooks back to the original position when castled
+        if (move.getMoveFlag().equals(MoveFlag.castling)
+                && move.getMovedPiece().type == PieceType.KING
+                && Math.abs(move.getFrom().getX() - move.getTo().getX()) == 2) {
+            var team = move.getMovedPiece().team;
+            var kingLocation = team == Team.WHITE ? new BoardLocation(4, 0) : new BoardLocation(4, 7);
+            // Kingside Castling
+            if (move.getTo().getX() > move.getFrom().getX()) {
+                var rookLocation = team == Team.WHITE ? new BoardLocation(5, 0) : new BoardLocation(5, 7);
+                var originalRookLocation = team == Team.WHITE ? new BoardLocation(7, 0) : new BoardLocation(7, 7);
+                movePiece(rookLocation, originalRookLocation);
+                pieces[getArrayIndexFromLocation(kingLocation)].hasMoved = false;
+                pieces[getArrayIndexFromLocation(originalRookLocation)].hasMoved = false;
+            }
+            // Queenside castling
+            else if (move.getTo().getX() < move.getFrom().getX()) {
+                var rookLocation = team == Team.WHITE ? new BoardLocation(3, 0) : new BoardLocation(3, 7);
+                var originalRookLocation = team == Team.WHITE ? new BoardLocation(0, 0) : new BoardLocation(3, 7);
+                movePiece(rookLocation, originalRookLocation);
+                pieces[getArrayIndexFromLocation(kingLocation)].hasMoved = false;
+                pieces[getArrayIndexFromLocation(originalRookLocation)].hasMoved = false;
+            }
+        }
     }
 
     public BoardLocation getPointFromArrayIndex(int index) {

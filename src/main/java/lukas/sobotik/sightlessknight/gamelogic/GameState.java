@@ -132,23 +132,13 @@ public class GameState {
             selectedPieceLocation = null;
         }
     }
-    public int capturedPieces = 0, enPassantCapturesReturned = 0;
+    public static int capturedPieces = 0, enPassantCapturesReturned = 0;
     public void undoMove(Move move) {
         if (moveNumber - 1 >= 0) moveNumber -= 1;
         else return;
 
-        board.movePieceWithoutSpecialMovesAndSave(move.getTo(), move.getFrom());
-        if (move.getCapturedPiece() != null) {
-            capturedPieces++;
-            int pieceIndex = board.getArrayIndexFromLocation(move.getTo());
-            if (move.getMoveFlag().equals(MoveFlag.enPassant)) {
-                pieceIndex = board.getArrayIndexFromLocation(move.getTo().transpose(0, (move.getMovedPiece().team == Team.WHITE ? -1 : 1)));
-                if (!board.isInBounds(move.getTo().transpose(0, (move.getMovedPiece().team == Team.WHITE ? -1 : 1)))) return;
-                enPassantCapturesReturned++;
-            }
-            board.pieces[pieceIndex] = move.getCapturedPiece();
-        }
-        
+        board.undoMove(move);
+
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
     public void createParsedMoveHistory(Move move) {
