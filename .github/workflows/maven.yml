@@ -23,4 +23,4 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y maven
 
       - name: Build and Test
-        run: mvn test
+        run: mvn test | grep -vE '(Progress \([0-9]+\):|Downloading from Vaadin Directory|Downloading from central|Downloaded from central)'

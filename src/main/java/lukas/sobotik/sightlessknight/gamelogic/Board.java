@@ -218,6 +218,11 @@ public class Board {
             pieces[pieceIndex] = capturedPiece;
         }
 
+        // Undo a promotion
+        if (move.getPromotionPiece() != null) {
+            pieces[getArrayIndexFromLocation(from)] = movedPiece;
+        }
+
         // Move the rooks back to the original position when castled
         if (move.getMoveFlag().equals(MoveFlag.castling)
                 && move.getMovedPiece().type == PieceType.KING
