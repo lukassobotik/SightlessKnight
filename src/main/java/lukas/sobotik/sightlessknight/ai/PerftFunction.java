@@ -33,12 +33,14 @@ public class PerftFunction {
             validMoves.addAll(new HashSet<>(moves).stream().map(moveLocation -> {
                 Move move = new Move(location, moveLocation, piece, board.getPiece(moveLocation));
                 // Pawn Promotion
-                if ((moveLocation.getY() == 0 || moveLocation.getY() == 7) && piece.type == PieceType.PAWN) {
+                if (((moveLocation.getY() == 0 && piece.team == Team.BLACK) || (moveLocation.getY() == 7 && piece.team == Team.WHITE))
+                        && piece.type == PieceType.PAWN) {
                     // Add four promotion options: bishop, knight, rook, queen
                     List<PieceType> promotionPieces = Arrays.asList(PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN);
                     for (PieceType promotionPiece : promotionPieces) {
                         Move promotionMove = new Move(location, moveLocation, piece, board.getPiece(moveLocation));
                         promotionMove.setPromotionPiece(promotionPiece);
+                        if (promotionPiece == PieceType.QUEEN) return promotionMove;
                         validMoves.add(promotionMove);
                     }
                 }

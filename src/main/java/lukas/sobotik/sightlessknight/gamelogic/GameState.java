@@ -103,7 +103,7 @@ public class GameState {
                 if (move.getTo().equals(validMove)) {
                     moveNumber++;
                     // Pawn Promotion
-                    if ((move.getTo().getY() == 0 || move.getTo().getY() == 7) && piece.type == PieceType.PAWN && move.getPromotionPiece() != null ) {
+                    if ((move.getTo().getY() == 0 || move.getTo().getY() == 7) && piece.type == PieceType.PAWN && move.getPromotionPiece() != null) {
                         promotionLocation = move.getTo();
                         movePieceAndEndTurn(move);
                         promotePawn(move.getPromotionPiece());

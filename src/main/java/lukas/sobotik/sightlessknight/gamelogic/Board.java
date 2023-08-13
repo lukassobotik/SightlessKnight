@@ -10,12 +10,11 @@ public class Board {
     int squareSize;
     BoardLocation whiteKingLocation;
     BoardLocation blackKingLocation;
-    BoardLocation lastFromLocation;
-    BoardLocation lastToLocation;
-    Piece lastRemovedPiece;
-    BoardLocation lastDoublePawnMoveWithWhitePieces;
-    BoardLocation lastDoublePawnMoveWithBlackPieces;
     FenUtils fenUtils;
+
+    Piece lastRemovedPiece, lastMovedPiece;
+    BoardLocation lastFromLocation, lastToLocation;
+    BoardLocation lastDoublePawnMoveWithWhitePieces, lastDoublePawnMoveWithBlackPieces;
     public Board(int size, Piece[] pieces, FenUtils fenUtils) {
         this.size = size;
         this.pieces = pieces;
@@ -92,6 +91,8 @@ public class Board {
 
         Piece movedPiece = pieces[to.getX() + to.getY() * 8];
         if (movedPiece == null) return;
+
+        lastMovedPiece = movedPiece;
 
         // Move the rook when the king castles
         if (movedPiece.type == PieceType.KING && Math.abs(from.getX() - to.getX()) == 2) {
@@ -201,6 +202,9 @@ public class Board {
         var moveFlag = move.getMoveFlag();
 
         movePieceWithoutSpecialMovesAndSave(to, from);
+        if (pieces[getArrayIndexFromLocation(from)] != null) {
+            pieces[getArrayIndexFromLocation(from)].hasMoved = lastMovedPiece.hasMoved;
+        }
 
         if (capturedPiece != null) {
             GameState.capturedPieces++;
