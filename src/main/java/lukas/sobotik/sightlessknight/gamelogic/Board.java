@@ -74,7 +74,7 @@ public class Board {
         return s;
     }
 
-    BoardLocation getKing(Team team) {
+    public BoardLocation getKing(Team team) {
         return (team == Team.WHITE) ? whiteKingLocation : blackKingLocation;
     }
 
@@ -246,6 +246,23 @@ public class Board {
                 pieces[getArrayIndexFromLocation(originalRookLocation)].hasMoved = false;
             }
         }
+    }
+
+    public void playEnPassant(Move move) {
+        var from = move.getFrom();
+        var to = move.getTo();
+
+        movePieceWithoutSpecialMoves(from, to);
+        removePiece(new BoardLocation(to.getX(), from.getY()));
+    }
+
+    public void undoEnPassant(Move move) {
+        var from = move.getFrom();
+        var to = move.getTo();
+        var enPassantCapture = new BoardLocation(to.getX(), from.getY());
+
+        movePieceWithoutSpecialMoves(to, from);
+        pieces[getArrayIndexFromLocation(enPassantCapture)] = move.getCapturedPiece();
     }
 
     public BoardLocation getPointFromArrayIndex(int index) {

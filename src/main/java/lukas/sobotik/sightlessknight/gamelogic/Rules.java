@@ -4,6 +4,7 @@ import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
 import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -499,16 +500,18 @@ public class Rules {
                 && pieceNextToPawn.doublePawnMoveOnMoveNumber == GameState.moveNumber
                 && isDifferentFile) {
 
-//            // Perform the en passant capture move and check if the king is in check
-//            board.movePiece(pawnLocation, captureMove);
-//            board.printBoardInConsole();
-//            boolean isKingInCheck = isKingInCheck(team, board);
-//            board.undoMove();
-//
-//            // If the king is not in check after the en passant capture, add it to the legal moves
-//            if (!isKingInCheck) {
+
+            // Perform the en passant capture move and check if the king is in check
+            var move = new Move(pawnLocation, captureMove, board.getPiece(pawnLocation), board.getPiece(pieceLocationNextToPawn));
+            board.playEnPassant(move);
+            board.printBoardInConsole(true);
+            boolean isKingInCheck = isKingInCheck(team, board);
+            board.undoEnPassant(move);
+
+            // If the king is not in check after the en passant capture, add it to the legal moves
+            if (!isKingInCheck) {
             legalPawnMoves.add(captureMove);
-//            }
+            }
         }
     }
 
@@ -519,7 +522,7 @@ public class Rules {
      * @return true or false whether the king is in check
      */
     public static boolean isKingInCheck(Team team, Board board) {
-        BoardLocation kingPosition = team == Team.WHITE ? board.whiteKingLocation : board.blackKingLocation;
+        BoardLocation kingPosition = team == Team.WHITE ? board.getKing(Team.WHITE) : board.getKing(Team.BLACK);
         return isSquareAttackedByEnemy(kingPosition, team, board);
     }
 
