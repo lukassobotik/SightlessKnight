@@ -1,3 +1,6 @@
+<p align="center">
+<img style="align:center;" src="./src/main/resources/SightlessKnight.png" alt="" width="100" />
+</p>
 <h1 align="center">SightlessKnight</h1>
 <h3 align="center">Learn blindfolded chess easily!</h3>
 <p align="center">
