@@ -59,4 +59,7 @@ public class Move {
     public void setMoveFlag(MoveFlag moveFlag) {
         this.moveFlag = moveFlag;
     }
+    public String getMoveNotation(Piece[] pieces, GameState gameState, Board board) {
+        return new AlgebraicNotationUtils(this, new FenUtils(pieces), gameState, board).getParsedMove(this);
+    }
 }

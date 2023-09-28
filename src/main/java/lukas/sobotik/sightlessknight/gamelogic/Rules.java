@@ -4,7 +4,7 @@ import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
 import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -15,37 +15,39 @@ public class Rules {
     }
     /**
      * Method with default settings for getting valid moves of a piece
-     * @param legalMoves list that will be updated with the legal moves
      * @param selectedPieceLocation where the piece is located on the board
      * @param piece what piece are the moves generated for
      * @param board the board where the moves take place
      * @param checkForChecks whether the method should check for checks and piece pins
+     * @return list of valid moves for a given piece
      */
-    public static void getValidMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks) {
-        getValidMoves(legalMoves, selectedPieceLocation, piece, board, checkForChecks, true);
+    public static List<BoardLocation> getValidMoves(BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks) {
+        return getValidMoves(selectedPieceLocation, piece, board, checkForChecks, true);
     }
 
     /**
      * Method with manual settings for getting valid moves of a piece
-     * @param legalMoves list that will be updated with the legal moves
      * @param selectedPieceLocation where the piece is located on the board
      * @param piece what piece are the moves generated for
      * @param board the board where the moves take place
      * @param checkForChecks whether the method should check for checks and piece pins
      * @param checkCastlingMoves whether the method should add castling moves
+     * @return list of valid moves for a given piece
      */
-    static void getValidMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks, boolean checkCastlingMoves) {
+    static List<BoardLocation> getValidMoves(BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks, boolean checkCastlingMoves) {
+        List<BoardLocation> legalMoves = new ArrayList<>();
         switch (piece.type) {
-            case PAWN -> legalMoves.addAll(Objects.requireNonNull(getValidPawnMoves(legalMoves, selectedPieceLocation, piece.team, board)));
+            case PAWN -> legalMoves.addAll(Objects.requireNonNull(getValidPawnMoves(selectedPieceLocation, piece.team, board)));
             case BISHOP -> legalMoves.addAll(getValidBishopMoves(legalMoves, selectedPieceLocation, piece.team, board));
-            case KNIGHT -> legalMoves.addAll(getValidKnightMoves(legalMoves, selectedPieceLocation, piece.team, board, false));
-            case ROOK -> legalMoves.addAll(getValidRookMoves(legalMoves, selectedPieceLocation, piece.team, board, false));
+            case KNIGHT -> legalMoves.addAll(getValidKnightMoves(selectedPieceLocation, piece.team, board, false));
+            case ROOK -> legalMoves.addAll(getValidRookMoves(selectedPieceLocation, piece.team, board, false));
             case KING -> legalMoves.addAll(getValidKingMoves(legalMoves, selectedPieceLocation, piece.team, board, checkCastlingMoves));
             case QUEEN -> legalMoves.addAll(getValidQueenMoves(legalMoves, selectedPieceLocation, piece.team, board, false));
         }
         if (checkForChecks) {
             checkForChecks(legalMoves, selectedPieceLocation, piece.team, board);
         }
+        return legalMoves;
     }
 
     /**
@@ -57,8 +59,8 @@ public class Rules {
      */
     static void getAllMoves(List<BoardLocation> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board) {
         switch (piece.type) {
-            case KNIGHT -> legalMoves.addAll(getValidKnightMoves(legalMoves, selectedPieceLocation, piece.team, board, true));
-            case ROOK -> legalMoves.addAll(getValidRookMoves(legalMoves, selectedPieceLocation, piece.team, board, true));
+            case KNIGHT -> legalMoves.addAll(getValidKnightMoves(selectedPieceLocation, piece.team, board, true));
+            case ROOK -> legalMoves.addAll(getValidRookMoves(selectedPieceLocation, piece.team, board, true));
             case QUEEN -> legalMoves.addAll(getValidQueenMoves(legalMoves, selectedPieceLocation, piece.team, board, true));
         }
     }
@@ -71,11 +73,11 @@ public class Rules {
      * @return true or false depending on whether enemy attacks the given square
      */
     public static boolean isSquareAttackedByEnemy(BoardLocation square, Team friendlyTeam, Board board) {
-        ArrayList<BoardLocation> list = new ArrayList<>();
+        List<BoardLocation> list;
 
         for (PieceType type : PieceType.values()) {
             Piece info = new Piece(friendlyTeam, type);
-            getValidMoves(list, square, info, board, false, false);
+            list = getValidMoves(square, info, board, false, false);
             for (BoardLocation move : list) {
                 Piece target = board.getPiece(move);
                 if (target != null && target.type == type) {
@@ -187,14 +189,14 @@ public class Rules {
 
     /**
      * Returns valid moves for a given knight
-     * @param legalKnightMoves list that the method will update
      * @param selectedPieceLocation where the piece for generating legal moves is located on the board
      * @param team what team the knight is
      * @param board the board where the pieces move
      * @param ignoreFriendlyPieces whether the knight can move through and capture friendly pieces
      * @return list of legal knight moves
      */
-    private static List<BoardLocation> getValidKnightMoves(List<BoardLocation> legalKnightMoves, BoardLocation selectedPieceLocation, Team team, Board board, boolean ignoreFriendlyPieces) {
+    private static List<BoardLocation> getValidKnightMoves(BoardLocation selectedPieceLocation, Team team, Board board, boolean ignoreFriendlyPieces) {
+        List<BoardLocation> legalKnightMoves = new ArrayList<>();
         for (int direction = 0; direction < 2; direction++) {
             for (int longDir = -2; longDir <= 2; longDir += 4) {
                 for (int shortDir = -1; shortDir <= 1; shortDir += 2) {
@@ -332,14 +334,14 @@ public class Rules {
 
     /**
      * Method returning all legal moves for a given rook
-     * @param legalRookMoves list the method will update
      * @param selection where the rook is located on the board
      * @param team what team the rook is
      * @param board the board where the pieces move
      * @param ignoreFriendlyPieces whether the rook can move through and capture friendly pieces
      * @return returns list of all legal moves for a given rook
      */
-    private static List<BoardLocation> getValidRookMoves(List<BoardLocation> legalRookMoves, BoardLocation selection, Team team, Board board, boolean ignoreFriendlyPieces) {
+    private static List<BoardLocation> getValidRookMoves(BoardLocation selection, Team team, Board board, boolean ignoreFriendlyPieces) {
+        List<BoardLocation> legalRookMoves = new ArrayList<>();
         for (int direction = 0; direction < 2; direction++) {
             for (int direction2 = -1; direction2 <= 1; direction2 += 2) {
                 BoardLocation move = selection;
@@ -357,7 +359,7 @@ public class Rules {
     }
 
     /**
-     * Method that checks if a move is in bounds
+     * Method that checks if a move is in bounds and adds it to the list of legal moves if it is
      * @param legalMoves list of legal moves
      * @param team what team the pieces are
      * @param board the board where the pieces move
@@ -403,13 +405,14 @@ public class Rules {
 
     /**
      * Method returning all legal moves for a given pawn
-     * @param legalPawnMoves list the method will update
      * @param pawnLocation where the pawn is located on the board
      * @param team what team the pawn is
      * @param board the board where the pieces move
      * @return returns a list of legal moves for a given pawn
      */
-    public static List<BoardLocation> getValidPawnMoves(List<BoardLocation> legalPawnMoves, BoardLocation pawnLocation, Team team, Board board) {
+    public static List<BoardLocation> getValidPawnMoves(BoardLocation pawnLocation, Team team, Board board) {
+        List<BoardLocation> legalPawnMoves = new ArrayList<>();
+
         int forwardDirection = (team == playerTeam) ? 1 : -1;
         BoardLocation forwardPoint = new BoardLocation(pawnLocation.getX(), (pawnLocation.getY() + (forwardDirection)));
         BoardLocation doubleForwardPoint = new BoardLocation(pawnLocation.getX(), (pawnLocation.getY() + (2 * forwardDirection)));
@@ -428,70 +431,62 @@ public class Rules {
         // Check for capture moves
         BoardLocation leftCapture = new BoardLocation(pawnLocation.getX() - 1, pawnLocation.getY() + forwardDirection);
         BoardLocation rightCapture = new BoardLocation(pawnLocation.getX() + 1, pawnLocation.getY() + forwardDirection);
-        if (addPawnCaptureMoves(legalPawnMoves, pawnLocation, team, board, leftCapture)) return new ArrayList<>();
-        if (addPawnCaptureMoves(legalPawnMoves, pawnLocation, team, board, rightCapture)) return new ArrayList<>();
+        legalPawnMoves.addAll(addPawnCaptureMoves(pawnLocation, team, board, leftCapture));
+        legalPawnMoves.addAll(addPawnCaptureMoves(pawnLocation, team, board, rightCapture));
 
-        // Check for promotion moves
-        if (!legalPawnMoves.isEmpty() && (forwardPoint.getY() == 7 || forwardPoint.getY() == 0)) {
-            List<BoardLocation> promotionMoves = new ArrayList<>();
-
-            for (BoardLocation move : legalPawnMoves) {
-                if (move.getY() == 0 || move.getY() == 7) {
-                    promotionMoves.add(move);
-                }
-            }
-        }
         return legalPawnMoves;
     }
 
     /**
      * Method that will add capture moves for a given pawn
-     * @param legalPawnMoves list the method will add the moves to
      * @param pawnLocation where the pawn is located on the board
      * @param team what team the pawn is
      * @param board the board where the pieces move
      * @param captureLocation where the pawn can capture a piece
-     * @return a boolean whether the parent method should return nothing
+     * @return list of legal pawn capture moves
      */
-    private static boolean addPawnCaptureMoves(List<BoardLocation> legalPawnMoves, BoardLocation pawnLocation, Team team, Board board, BoardLocation captureLocation) {
+    private static List<BoardLocation> addPawnCaptureMoves(BoardLocation pawnLocation, Team team, Board board, BoardLocation captureLocation) {
+        List<BoardLocation> legalPawnMoves = new ArrayList<>();
         if (board.isInBounds(captureLocation)) {
             Piece rightCapturePiece = board.getPiece(captureLocation);
 
             if (rightCapturePiece != null && rightCapturePiece.team != team) {
                 legalPawnMoves.add(captureLocation);
             }
-            checkEnPassant(legalPawnMoves, team, board, captureLocation, pawnLocation);
+            legalPawnMoves.addAll(checkEnPassant(team, board, captureLocation, pawnLocation));
         }
-        return false;
+        return legalPawnMoves;
     }
 
     /**
      * Method that tries adding En Passant moves
-     * @param legalPawnMoves list the method will add the moves to
      * @param team what team the pawn is
      * @param board the board where the pieces move
      * @param captureMove location where the pawn can capture a piece
      * @param pawnLocation where the pawn is located on the board
+     * @return list of legal En Passant moves
      */
-    private static void checkEnPassant(List<BoardLocation> legalPawnMoves, Team team, Board board, BoardLocation captureMove, BoardLocation pawnLocation) {
+    private static List<BoardLocation> checkEnPassant(Team team, Board board, BoardLocation captureMove, BoardLocation pawnLocation) {
         BoardLocation leftLocation = new BoardLocation(pawnLocation.getX() - 1, pawnLocation.getY());
         BoardLocation rightLocation = new BoardLocation(pawnLocation.getX() + 1, pawnLocation.getY());
 
-        addLegalEnPassant(legalPawnMoves, team, board, captureMove, pawnLocation, rightLocation, pawnLocation.getX() < captureMove.getX());
-        addLegalEnPassant(legalPawnMoves, team, board, captureMove, pawnLocation, leftLocation, pawnLocation.getX() > captureMove.getX());
+        List<BoardLocation> legalPawnMoves = new ArrayList<>();
+        legalPawnMoves.addAll(addLegalEnPassant(team, board, captureMove, pawnLocation, rightLocation, pawnLocation.getX() < captureMove.getX()));
+        legalPawnMoves.addAll(addLegalEnPassant(team, board, captureMove, pawnLocation, leftLocation, pawnLocation.getX() > captureMove.getX()));
+        return legalPawnMoves;
     }
 
     /**
      * Method that will add En Passant moves if it's legal
-     * @param legalPawnMoves list the method will add the moves to
      * @param team what team the pawn is
      * @param board the board where the pieces move
      * @param captureMove location where the pawn can capture a piece
      * @param pawnLocation where the pawn is located on the board
      * @param pieceLocationNextToPawn location of the piece next to the pawn
      * @param isDifferentFile whether the pawn location is on the same file as the location where the pawn can capture a piece
+     * @return list of legal En Passant moves
      */
-    private static void addLegalEnPassant(List<BoardLocation> legalPawnMoves, Team team, Board board, BoardLocation captureMove, BoardLocation pawnLocation, BoardLocation pieceLocationNextToPawn, boolean isDifferentFile) {
+    private static List<BoardLocation> addLegalEnPassant(Team team, Board board, BoardLocation captureMove, BoardLocation pawnLocation, BoardLocation pieceLocationNextToPawn, boolean isDifferentFile) {
         Piece pieceNextToPawn = board.getPiece(pieceLocationNextToPawn);
         if (pieceNextToPawn != null
                 && pieceNextToPawn.type.equals(PieceType.PAWN)
@@ -510,9 +505,10 @@ public class Rules {
 
             // If the king is not in check after the en passant capture, add it to the legal moves
             if (!isKingInCheck) {
-            legalPawnMoves.add(captureMove);
+                return Collections.singletonList(captureMove);
             }
         }
+        return new ArrayList<>();
     }
 
     /**
@@ -536,12 +532,12 @@ public class Rules {
         if (!isKingInCheck(team, board) || GameState.kinglessGame) {
             return false;
         }
-        List<BoardLocation> validMoves = new ArrayList<>();
+        List<BoardLocation> validMoves;
         for (int i = 0; i < board.pieces.length; i++) {
             BoardLocation point = board.getPointFromArrayIndex(i);
             Piece piece = board.pieces[i];
             if (piece != null && piece.team == team) {
-                getValidMoves(validMoves, point, piece, board, true, false);
+                validMoves = getValidMoves(point, piece, board, true, false);
                 for (BoardLocation move : validMoves) {
                     board.movePieceWithoutSpecialMovesAndSave(point, move);
                     if (!isKingInCheck(team, board)) {
@@ -565,12 +561,12 @@ public class Rules {
         if (isKingInCheck(team, board) || GameState.kinglessGame) {
             return false;
         }
-        List<BoardLocation> validMoves = new ArrayList<>();
+        List<BoardLocation> validMoves;
         for (int i = 0; i < board.pieces.length; i++) {
             BoardLocation point = board.getPointFromArrayIndex(i);
             Piece piece = board.pieces[i];
             if (piece != null && piece.team == team) {
-                getValidMoves(validMoves, point, piece, board, false);
+                validMoves = getValidMoves(point, piece, board, false);
                 if (!validMoves.isEmpty()) {
                     return false;
                 }

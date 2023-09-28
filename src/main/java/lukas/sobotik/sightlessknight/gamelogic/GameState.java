@@ -11,7 +11,7 @@ public class GameState {
     public Board board;
     public static Team currentTurn;
     public boolean hasGameEnded = false;
-    final List<BoardLocation> validMoves;
+    List<BoardLocation> validMoves;
     BoardLocation selectedPieceLocation;
     public static int moveNumber = 0, enPassantCaptures = 0;
     static final Team playerTeam = Team.WHITE;
@@ -47,7 +47,7 @@ public class GameState {
         if (piece == null) return;
         if (piece.team == currentTurn || kinglessGame) {
             selectedPieceLocation = from;
-            Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board, !kinglessGame);
+            validMoves = Rules.getValidMoves(selectedPieceLocation, piece, board, !kinglessGame);
         }
 
         if (!validMoves.isEmpty()) {
@@ -96,7 +96,7 @@ public class GameState {
         Piece piece = move.getMovedPiece();
         if (piece == null) return;
         selectedPieceLocation = move.getFrom();
-        Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board, true);
+        validMoves = Rules.getValidMoves(selectedPieceLocation, piece, board, true);
 
         if (!validMoves.isEmpty()) {
             for (BoardLocation validMove : validMoves) {

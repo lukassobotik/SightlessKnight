@@ -13,12 +13,10 @@ public class Piece {
 	String castling = null;
 	public PieceType promotion = null;
 	public Piece(Team team, PieceType type) {
-		super();
 		this.team = team;
 		this.type = type;
 	}
 	public Piece(Team team, PieceType type, int doublePawnMoveOnMoveNumber) {
-		super();
 		this.team = team;
 		this.type = type;
 		this.doublePawnMoveOnMoveNumber = doublePawnMoveOnMoveNumber;

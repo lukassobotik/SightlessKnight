@@ -28,8 +28,7 @@ public class PerftFunction {
             var location = board.getPointFromArrayIndex(i);
             if (piece == null || piece.team != team) continue;
 
-            List<BoardLocation> moves = new ArrayList<>();
-            Rules.getValidMoves(moves, board.getPointFromArrayIndex(i), piece, board, true);
+            List<BoardLocation> moves = Rules.getValidMoves(board.getPointFromArrayIndex(i), piece, board, true);
             validMoves.addAll(new HashSet<>(moves).stream().map(moveLocation -> {
                 Move move = new Move(location, moveLocation, piece, board.getPiece(moveLocation));
                 // Pawn Promotion
@@ -63,13 +62,13 @@ public class PerftFunction {
         Map<String, Integer> numberOfPositionsOnMove = new HashMap<>();
 
         for (Move move : moves) {
-            debugPause(numberOfPositions, move);
+            debugPause(numberOfPositions, move, depth);
             gameState.playTestMove(move);
 
             int positions = playMoves(depth - 1, turn == Team.BLACK ? Team.WHITE : Team.BLACK, log);
             numberOfPositions += positions;
             numberOfPositionsOnMove.put(move.getFrom().getAlgebraicNotationLocation() + move.getTo().getAlgebraicNotationLocation(), positions);
-            debugPause(numberOfPositions, move);
+            debugPause(numberOfPositions, move, depth);
 
             gameState.undoMove(move);
         }
@@ -91,12 +90,22 @@ public class PerftFunction {
      * @param numberOfPositions number of positions for the Perft Function generated so far
      * @param move what move the Perft Function is currently processing
      */
-    private void debugPause(int numberOfPositions, Move move) {
+    private void debugPause(int numberOfPositions, Move move, int depth) {
         boolean pause = false;
-        if (move.getFrom().getAlgebraicNotationLocation().equals("c7") && move.getTo().getAlgebraicNotationLocation().equals("c6")) pause = true;
-        if (move.getMovedPiece().type.equals(PieceType.PAWN)) pause = true;
+        if (move.getMovedPiece().type.equals(PieceType.PAWN)
+                && board.getKing(Team.WHITE).getAlgebraicNotationLocation().equals("a5")
+                && board.getKing(Team.BLACK).getAlgebraicNotationLocation().equals("h1")
+                && board.pieces[39] != null && board.pieces[39].type.equals(PieceType.ROOK)
+//                && board.pieces[board.getArrayIndexFromLocation(new BoardLocation(7, 4))] != null
+//                && board.pieces[board.getArrayIndexFromLocation(new BoardLocation(7, 4))].type.equals(PieceType.ROOK)
+        ) pause = true;
+
+//        if (numberOfPositions >= 4000) pause = true;
+
+        if (depth == 1) pause = true;
 
         // Manual Override
+//        pause = pause;
         pause = false;
 
         if (pause && view != null) {
