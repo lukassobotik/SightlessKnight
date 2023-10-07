@@ -499,7 +499,7 @@ public class Rules {
             // Perform the en passant capture move and check if the king is in check
             var move = new Move(pawnLocation, captureMove, board.getPiece(pawnLocation), board.getPiece(pieceLocationNextToPawn));
             board.playEnPassant(move);
-            board.printBoardInConsole(true);
+//            board.printBoardInConsole(true);
             boolean isKingInCheck = isKingInCheck(team, board);
             board.undoEnPassant(move);
 

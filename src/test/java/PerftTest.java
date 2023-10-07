@@ -3,8 +3,6 @@ import lukas.sobotik.sightlessknight.gamelogic.Board;
 import lukas.sobotik.sightlessknight.gamelogic.FenUtils;
 import lukas.sobotik.sightlessknight.gamelogic.GameState;
 import lukas.sobotik.sightlessknight.gamelogic.Piece;
-import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
-import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -12,7 +10,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -50,12 +47,12 @@ public class PerftTest {
         GameState gameState = new GameState(board, fenUtils.getStartingTeam(), false);
         PerftFunction perftFunction = new PerftFunction(board, gameState, null);
 
-        int actualPositions = perftFunction.playMoves(depth, fenUtils.getStartingTeam(), false);
+        int actualPositions = perftFunction.playMoves(depth, fenUtils.getStartingTeam(), false, true);
         assertEquals(expectedPositions, actualPositions,
                 "Name: " + getPositionNameFromFen(fen)
                         + ", FEN: " + fen
                         + ", Move " + GameState.moveNumber
-                        + ", Pieces Captured: " + gameState.capturedPieces
+                        + ", Pieces Captured: " + GameState.capturedPieces
                         + ", Depth " + depth + " positions mismatch.");
     }
 
