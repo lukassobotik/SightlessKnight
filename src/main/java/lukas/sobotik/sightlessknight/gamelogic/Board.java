@@ -97,7 +97,11 @@ public class Board {
         lastMovedPiece = movedPiece;
 
         // Move the rook when the king castles
+        System.out.println("Moved piece: " + movedPiece.type + " " + movedPiece.team);
+        movedPiece.castling = "none " + movedPiece.type + " " + movedPiece.team + " " + from.getAlgebraicNotationLocation() + to.getAlgebraicNotationLocation();
         if (movedPiece.type == PieceType.KING && Math.abs(from.getX() - to.getX()) == 2) {
+            System.out.println("Castling");
+            movedPiece.castling = "castle!";
             // Queenside Castling
             if (from.getX() > to.getX()) {
                 movePieceWithoutSpecialMovesAndSave(
