@@ -34,6 +34,9 @@ public class Board {
         printBoardInConsole(false);
     }
     public void printBoardInConsole(boolean specialCharacters) {
+        printBoardInConsole(specialCharacters, pieces);
+    }
+    public void printBoardInConsole(boolean specialCharacters, Piece[] pieces) {
         for (int rank = 7; rank >= 0; rank--) {
             for (int file = 0; file < 8; file++) {
                 int index = rank * 8 + file;
@@ -48,7 +51,6 @@ public class Board {
             System.out.println(); // Move to the next line for the next rank
         }
     }
-
     private String getPieceSymbol(PieceType type, Team team) {
         String s = "";
         if (team == Team.WHITE) {
@@ -95,7 +97,11 @@ public class Board {
         lastMovedPiece = movedPiece;
 
         // Move the rook when the king castles
+        System.out.println("Moved piece: " + movedPiece.type + " " + movedPiece.team);
+        movedPiece.castling = "none " + movedPiece.type + " " + movedPiece.team + " " + from.getAlgebraicNotationLocation() + to.getAlgebraicNotationLocation();
         if (movedPiece.type == PieceType.KING && Math.abs(from.getX() - to.getX()) == 2) {
+            System.out.println("Castling");
+            movedPiece.castling = "castle!";
             // Queenside Castling
             if (from.getX() > to.getX()) {
                 movePieceWithoutSpecialMovesAndSave(
