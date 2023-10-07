@@ -47,7 +47,7 @@ public class PerftTest {
         GameState gameState = new GameState(board, fenUtils.getStartingTeam(), false);
         PerftFunction perftFunction = new PerftFunction(board, gameState, null);
 
-        int actualPositions = perftFunction.playMoves(depth, fenUtils.getStartingTeam(), false, true);
+        int actualPositions = perftFunction.playMoves(depth, fenUtils.getStartingTeam(), false, false);
         assertEquals(expectedPositions, actualPositions,
                 "Name: " + getPositionNameFromFen(fen)
                         + ", FEN: " + fen
