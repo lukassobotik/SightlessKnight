@@ -12,6 +12,7 @@ SightlessKnight is a free and open-source program that helps users learn blindfo
 
 ### Credits
 - Chess Sprites: [By Cburnett - Own work, CC BY-SA 3.0](https://commons.wikimedia.org/w/index.php?curid=1499809)
+- Parts of Chess Rules: [By Axlan - LibGDX-Chess](https://github.com/axlan/libgdx-chess/)
 
 ### License
 MIT License
