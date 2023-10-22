@@ -3,9 +3,6 @@ package lukas.sobotik.sightlessknight.gamelogic;
 import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
 import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class AlgebraicNotationUtils {
     Move move;
     FenUtils fenUtils;
@@ -110,29 +107,31 @@ public class AlgebraicNotationUtils {
         if (otherPieceIndex < 0) return normalMove;
         Piece otherPiece = board.pieces[otherPieceIndex];
 
-        List<BoardLocation> otherPieceMoves = new ArrayList<>();
-        Rules.getAllMoves(otherPieceMoves, board.getPointFromArrayIndex(otherPieceIndex), otherPiece, board);
-        if (otherPieceMoves.contains(to)) {
-            var otherPiecePoint = board.getPointFromArrayIndex(otherPieceIndex);
-            var fromAlgebraicNotation = from.getAlgebraicNotationLocation();
-            var toAlgebraicNotation = to.getAlgebraicNotationLocation();
-            var moveBuilder = new StringBuilder();
 
-            if (otherPiecePoint.isOnSameDiagonalAs(from)) {
-                moveBuilder.append(fromAlgebraicNotation);
-            } else if (otherPiecePoint.isOnSameFileAs(from)) {
-                moveBuilder.append(fromAlgebraicNotation.charAt(1));
-            } else if (otherPiecePoint.isOnSameRankAs(from)) {
-                moveBuilder.append(fromAlgebraicNotation.charAt(0));
-            }
-
-            if (capturedPiece != null) {
-                moveBuilder.append("x");
-            }
-
-            moveBuilder.append(toAlgebraicNotation);
-            normalMove = pieceSymbol + moveBuilder;
-        }
+        // TODO: Fix this
+//        List<BoardLocation> otherPieceMoves = new ArrayList<>();
+//        Rules.getPseudoLegalMoves(otherPieceMoves, board.getPointFromArrayIndex(otherPieceIndex), otherPiece, board);
+//        if (otherPieceMoves.contains(to)) {
+//            var otherPiecePoint = board.getPointFromArrayIndex(otherPieceIndex);
+//            var fromAlgebraicNotation = from.getAlgebraicNotationLocation();
+//            var toAlgebraicNotation = to.getAlgebraicNotationLocation();
+//            var moveBuilder = new StringBuilder();
+//
+//            if (otherPiecePoint.isOnSameDiagonalAs(from)) {
+//                moveBuilder.append(fromAlgebraicNotation);
+//            } else if (otherPiecePoint.isOnSameFileAs(from)) {
+//                moveBuilder.append(fromAlgebraicNotation.charAt(1));
+//            } else if (otherPiecePoint.isOnSameRankAs(from)) {
+//                moveBuilder.append(fromAlgebraicNotation.charAt(0));
+//            }
+//
+//            if (capturedPiece != null) {
+//                moveBuilder.append("x");
+//            }
+//
+//            moveBuilder.append(toAlgebraicNotation);
+//            normalMove = pieceSymbol + moveBuilder;
+//        }
         return normalMove;
     }
 }

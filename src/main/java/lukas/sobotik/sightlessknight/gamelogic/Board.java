@@ -87,42 +87,68 @@ public class Board {
         return pieces[boardLocation.getX() + boardLocation.getY() * 8];
     }
 
-    public void movePiece(BoardLocation from, BoardLocation to) {
+    public void movePiece(Move move) {
+        var from = move.getFrom();
+        var to = move.getTo();
         if (from == null || to == null) return;
         movePieceWithoutSpecialMoves(from, to);
 
-        Piece movedPiece = pieces[to.getX() + to.getY() * 8];
+        Piece movedPiece;
+        if (move.getMovedPiece() != null) {
+            movedPiece = move.getMovedPiece();
+        } else {
+            movedPiece = pieces[to.getX() + to.getY() * 8];
+        }
         if (movedPiece == null) return;
 
-        lastMovedPiece = movedPiece;
+        lastMovedPiece = movedPiece.toBuilder()
+                .build();
 
-        // Move the rook when the king castles
-        System.out.println("Moved piece: " + movedPiece.type + " " + movedPiece.team);
-        movedPiece.castling = "none " + movedPiece.type + " " + movedPiece.team + " " + from.getAlgebraicNotationLocation() + to.getAlgebraicNotationLocation();
-        if (movedPiece.type == PieceType.KING && Math.abs(from.getX() - to.getX()) == 2) {
-            System.out.println("Castling");
-            movedPiece.castling = "castle!";
-            // Queenside Castling
-            if (from.getX() > to.getX()) {
-                movePieceWithoutSpecialMovesAndSave(
-                        movedPiece.team == Team.WHITE
+//        // Move the rook when the king castles
+//        if (movedPiece.type == PieceType.KING && Math.abs(from.getX() - to.getX()) == 2) {
+//            // Queenside Castling
+//            if (from.getX() > to.getX()) {
+//                movePieceWithoutSpecialMovesAndSave(
+//                        movedPiece.team == Team.WHITE
+//                            ? new BoardLocation(0, 0) // White Rook From
+//                            : new BoardLocation(0, 7), // Black Rook From
+//                        movedPiece.team == Team.WHITE
+//                            ? new BoardLocation(3, 0) // White Rook To
+//                            : new BoardLocation(3, 7)); // Black Rook To
+//                movedPiece.setCastling("O-O-O");
+//            } // Kingside Castling
+//            else {
+//                movePieceWithoutSpecialMovesAndSave(
+//                        movedPiece.team == Team.WHITE
+//                            ? new BoardLocation(7, 0) // White Rook From
+//                            : new BoardLocation(7, 7), // Black Rook From
+//                        movedPiece.team == Team.WHITE
+//                            ? new BoardLocation(5, 0) // White Rook To
+//                            : new BoardLocation(5, 7)); //Black Rook To
+//                movedPiece.setCastling("O-O");
+//            }
+//        }
+
+        var isCastling = movedPiece.type == PieceType.KING && Math.abs(from.getX() - to.getX()) == 2;
+
+        // Queenside Castling
+        if (move.getMoveFlag().equals(MoveFlag.queensideCastling)) {
+            movePieceWithoutSpecialMovesAndSave(
+                    movedPiece.team == Team.WHITE
                             ? new BoardLocation(0, 0) // White Rook From
                             : new BoardLocation(0, 7), // Black Rook From
-                        movedPiece.team == Team.WHITE
+                    movedPiece.team == Team.WHITE
                             ? new BoardLocation(3, 0) // White Rook To
                             : new BoardLocation(3, 7)); // Black Rook To
-                movedPiece.castling = "O-O-O";
-            } // Kingside Castling
-            else {
-                movePieceWithoutSpecialMovesAndSave(
-                        movedPiece.team == Team.WHITE
+        } // Kingside Castling
+        else if (move.getMoveFlag().equals(MoveFlag.kingsideCastling)) {
+            movePieceWithoutSpecialMovesAndSave(
+                    movedPiece.team == Team.WHITE
                             ? new BoardLocation(7, 0) // White Rook From
                             : new BoardLocation(7, 7), // Black Rook From
-                        movedPiece.team == Team.WHITE
+                    movedPiece.team == Team.WHITE
                             ? new BoardLocation(5, 0) // White Rook To
                             : new BoardLocation(5, 7)); //Black Rook To
-                movedPiece.castling = "O-O";
-            }
         }
 
         // Save the last move that was a double pawn move
@@ -171,7 +197,7 @@ public class Board {
         lastToLocation = to;
     }
     public void movePieceWithoutSpecialMoves(BoardLocation from, BoardLocation to) {
-        if (from == null || to == null) return;
+        if (from == null || to == null || from.equals(to) || getPiece(from) == null) return;
         if (from.equals(whiteKingLocation)) {
             whiteKingLocation = to;
         } else if (from.equals(blackKingLocation)) {
@@ -180,8 +206,8 @@ public class Board {
 
         lastRemovedPiece = pieces[to.getX() + to.getY() * 8];
 
-        pieces[to.getX() + to.getY() * 8] = pieces[from.getX() + from.getY() * 8];
-        pieces[from.getX() + from.getY() * 8] = null;
+        pieces[getArrayIndexFromLocation(to)] = pieces[getArrayIndexFromLocation(from)];
+        removePiece(from);
     }
     public void removePiece(BoardLocation boardLocation) {
         if (!isInBounds(boardLocation)) {
@@ -207,7 +233,17 @@ public class Board {
         var capturedPiece = move.getCapturedPiece();
         var moveFlag = move.getMoveFlag();
 
+//        if (move.getMovedPiece().type == PieceType.KING
+//                && Math.abs(move.getFrom().getX() - move.getTo().getX()) == 2
+//                && move.getTo().getX() > move.getFrom().getX()) {
+//            printBoardInConsole(true);
+//        }
         movePieceWithoutSpecialMovesAndSave(to, from);
+//        if (move.getMovedPiece().type == PieceType.KING
+//                && Math.abs(move.getFrom().getX() - move.getTo().getX()) == 2
+//                && move.getTo().getX() > move.getFrom().getX()) {
+//            printBoardInConsole(true);
+//        }
         if (pieces[getArrayIndexFromLocation(from)] != null) {
             pieces[getArrayIndexFromLocation(from)].hasMoved = lastMovedPiece.hasMoved;
         }
@@ -230,8 +266,8 @@ public class Board {
         }
 
         // Move the rooks back to the original position when castled
-        if (move.getMoveFlag().equals(MoveFlag.castling)
-                && move.getMovedPiece().type == PieceType.KING
+        if (
+                move.getMovedPiece().type == PieceType.KING
                 && Math.abs(move.getFrom().getX() - move.getTo().getX()) == 2) {
             var team = move.getMovedPiece().team;
             var kingLocation = team == Team.WHITE ? new BoardLocation(4, 0) : new BoardLocation(4, 7);
@@ -239,7 +275,10 @@ public class Board {
             if (move.getTo().getX() > move.getFrom().getX()) {
                 var rookLocation = team == Team.WHITE ? new BoardLocation(5, 0) : new BoardLocation(5, 7);
                 var originalRookLocation = team == Team.WHITE ? new BoardLocation(7, 0) : new BoardLocation(7, 7);
-                movePiece(rookLocation, originalRookLocation);
+                var castleMove = new Move(rookLocation, originalRookLocation, new Piece(team, PieceType.ROOK));
+//                printBoardInConsole(true);
+                pieces[getArrayIndexFromLocation(kingLocation)].castling = null;
+                movePiece(castleMove);
                 pieces[getArrayIndexFromLocation(kingLocation)].hasMoved = false;
                 pieces[getArrayIndexFromLocation(originalRookLocation)].hasMoved = false;
             }
@@ -247,9 +286,11 @@ public class Board {
             else if (move.getTo().getX() < move.getFrom().getX()) {
                 var rookLocation = team == Team.WHITE ? new BoardLocation(3, 0) : new BoardLocation(3, 7);
                 var originalRookLocation = team == Team.WHITE ? new BoardLocation(0, 0) : new BoardLocation(3, 7);
-                movePiece(rookLocation, originalRookLocation);
-                pieces[getArrayIndexFromLocation(kingLocation)].hasMoved = false;
-                pieces[getArrayIndexFromLocation(originalRookLocation)].hasMoved = false;
+                var castleMove = new Move(rookLocation, originalRookLocation, new Piece(team, PieceType.ROOK));
+                if (getPiece(kingLocation) != null) pieces[getArrayIndexFromLocation(kingLocation)].castling = null;
+                movePiece(castleMove);
+                if (getPiece(kingLocation) != null) pieces[getArrayIndexFromLocation(kingLocation)].hasMoved = false;
+                if (getPiece(originalRookLocation) != null) pieces[getArrayIndexFromLocation(originalRookLocation)].hasMoved = false;
             }
         }
     }

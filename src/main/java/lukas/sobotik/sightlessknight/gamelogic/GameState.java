@@ -11,7 +11,7 @@ public class GameState {
     public Board board;
     public static Team currentTurn;
     public boolean hasGameEnded = false;
-    List<BoardLocation> validMoves;
+    List<Move> validMoves;
     BoardLocation selectedPieceLocation;
     public static int moveNumber = 0, enPassantCaptures = 0;
     static final Team playerTeam = Team.WHITE;
@@ -51,7 +51,8 @@ public class GameState {
         }
 
         if (!validMoves.isEmpty()) {
-            for (BoardLocation moveLoc : validMoves) {
+            for (Move validMove : validMoves) {
+                var moveLoc = validMove.getTo();
                 if (to.equals(moveLoc)) {
                     moveNumber++;
                     System.err.println("moveNumber: " + moveNumber);
@@ -77,13 +78,13 @@ public class GameState {
     }
     public void movePieceAndEndTurn(BoardLocation destination) {
         if (destination != null) {
-            board.movePiece(selectedPieceLocation, destination);
+            board.movePiece(new Move(selectedPieceLocation, destination));
         }
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
     public void movePieceAndEndTurn(Move move) {
         if (move.getFrom() != null && move.getTo() != null) {
-            board.movePiece(move.getFrom(), move.getTo());
+            board.movePiece(move);
         }
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
@@ -99,9 +100,17 @@ public class GameState {
         validMoves = Rules.getValidMoves(selectedPieceLocation, piece, board, true);
 
         if (!validMoves.isEmpty()) {
-            for (BoardLocation validMove : validMoves) {
-                if (move.getTo().equals(validMove)) {
+            for (Move validMove : validMoves) {
+                var validTo = validMove.getTo();
+//                if (!move.getTo().equals(validTo)) System.out.println(move.getTo().getAlgebraicNotationLocation() + " " + validTo.getAlgebraicNotationLocation());
+                if (move.getTo().equals(validTo)) {
+//                    System.out.println("*** " + move.getFrom().getAlgebraicNotationLocation() + " " + move.getTo().getAlgebraicNotationLocation() + " ***");
+//                    board.printBoardInConsole(true);
+//                    System.out.println("...");
                     moveNumber++;
+                    if (validMove.getMoveFlag() != null && !validMove.getMoveFlag().equals(MoveFlag.none)) move.setMoveFlag(validMove.getMoveFlag());
+                    if (validMove.getCapturedPiece() != null) move.setCapturedPiece(validMove.getCapturedPiece());
+                    if (validMove.getMovedPiece() != null) move.setMovedPiece(validMove.getMovedPiece());
                     // Pawn Promotion
                     if ((move.getTo().getY() == 0 || move.getTo().getY() == 7) && piece.type == PieceType.PAWN && move.getPromotionPiece() != null) {
                         promotionLocation = move.getTo();
@@ -120,11 +129,11 @@ public class GameState {
                         move.setCapturedPiece(board.getPiece(enPassantCapture));
                         move.setMoveFlag(MoveFlag.enPassant);
                     } else if (move.getMovedPiece().type == PieceType.KING && Math.abs(move.getFrom().getX() - move.getTo().getX()) == 2) {
-                        move.setMoveFlag(MoveFlag.castling);
-                    } else {
-                        move.setMoveFlag(MoveFlag.none);
+//                        move.setMoveFlag(MoveFlag.castling);
                     }
                     movePieceAndEndTurn(move);
+//                    board.printBoardInConsole(true);
+//                    System.out.println("*** ***");
                     break;
                 }
             }

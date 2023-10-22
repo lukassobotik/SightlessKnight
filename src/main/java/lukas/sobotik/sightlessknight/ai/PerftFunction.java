@@ -34,7 +34,8 @@ public class PerftFunction {
             var location = board.getPointFromArrayIndex(i);
             if (piece == null || piece.team != team) continue;
 
-            List<BoardLocation> moves = Rules.getValidMoves(board.getPointFromArrayIndex(i), piece, board, true);
+            var allMoves = Rules.getValidMoves(board.getPointFromArrayIndex(i), piece, board, true);
+            var moves = allMoves.stream().map(Move::getTo).toList();
             validMoves.addAll(new HashSet<>(moves).stream().map(moveLocation -> {
                 Move move = new Move(location, moveLocation, piece, board.getPiece(moveLocation));
                 // Pawn Promotion
@@ -58,6 +59,11 @@ public class PerftFunction {
                 return move;
             }).toList());
         }
+//        System.out.println("Move Number: " + GameState.moveNumber);
+//        if (GameState.moveNumber == 1) {
+//
+//        }
+//        validMoves.forEach(move -> System.out.println(move.getMovedPiece().team + " " + move.getMovedPiece().type + " " + move.getFrom().getAlgebraicNotationLocation() + move.getTo().getAlgebraicNotationLocation()));
         return validMoves;
     }
 
@@ -73,7 +79,7 @@ public class PerftFunction {
         if (depth == 0) return 1;
 
         var fenUtils = new FenUtils(gameState.board.pieces);
-        String beforeFen = "", moveFen = "", afterFen;
+        String beforeFen = "", moveFen = "", afterFen = "";
         List<Move> moves = getAllValidMoves(turn);
         int numberOfPositions = 0;
         Map<String, Integer> numberOfPositionsOnMove = new HashMap<>();
@@ -94,6 +100,7 @@ public class PerftFunction {
                 afterFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces);
                 debugCheck(beforeFen, moveFen, afterFen, fenUtils);
             }
+            var s = "";
         }
 
         if (log) {
@@ -112,10 +119,11 @@ public class PerftFunction {
      * Method used for debugging.
      * It preforms a check on the FENs before and after the move.
      * This method is resource intensive and should not be used in production.
+     *
      * @param beforeFen FEN generated before the move occurs
-     * @param moveFen FEN generated after the move occurs
-     * @param afterFen FEN generated after the move is undone
-     * @param fenUtils FenUtils object used to generate the FENs
+     * @param moveFen   FEN generated after the move occurs
+     * @param afterFen  FEN generated after the move is undone
+     * @param fenUtils  FenUtils object used to generate the FENs
      */
     private void debugCheck(String beforeFen, String moveFen, String afterFen, FenUtils fenUtils) {
         if (!beforeFen.equals(afterFen)) {
@@ -138,21 +146,20 @@ public class PerftFunction {
      */
     private void debugPause(int numberOfPositions, Move move, int depth) {
         boolean pause = false;
-        if (move.getMovedPiece().type.equals(PieceType.PAWN)
-                && board.getKing(Team.WHITE).getAlgebraicNotationLocation().equals("a5")
-                && board.getKing(Team.BLACK).getAlgebraicNotationLocation().equals("h1")
-                && board.pieces[39] != null && board.pieces[39].type.equals(PieceType.ROOK)
+        if (
+                move.getFrom().getAlgebraicNotationLocation().equals("e1")
+                && move.getTo().getAlgebraicNotationLocation().equals("c1")
 //                && board.pieces[board.getArrayIndexFromLocation(new BoardLocation(7, 4))] != null
 //                && board.pieces[board.getArrayIndexFromLocation(new BoardLocation(7, 4))].type.equals(PieceType.ROOK)
         ) pause = true;
 
 //        if (numberOfPositions >= 4000) pause = true;
 
-        if (depth == 1) pause = true;
+//        if (depth == 1) pause = true;
 
         // Manual Override
-//        pause = pause;
         pause = false;
+//        pause = false;
 
         if (pause && view != null) {
             view.getUI().ifPresent(value -> value.access(() -> view.createBoard(board.pieces)));
