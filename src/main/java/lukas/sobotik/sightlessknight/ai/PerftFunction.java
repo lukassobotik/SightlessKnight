@@ -1,11 +1,22 @@
 package lukas.sobotik.sightlessknight.ai;
 
-import lukas.sobotik.sightlessknight.gamelogic.*;
+import lukas.sobotik.sightlessknight.gamelogic.Board;
+import lukas.sobotik.sightlessknight.gamelogic.BoardLocation;
+import lukas.sobotik.sightlessknight.gamelogic.FenUtils;
+import lukas.sobotik.sightlessknight.gamelogic.GameState;
+import lukas.sobotik.sightlessknight.gamelogic.Move;
+import lukas.sobotik.sightlessknight.gamelogic.Rules;
 import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
 import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 import lukas.sobotik.sightlessknight.views.play.PlayView;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 public class PerftFunction {
     Board board;
@@ -64,6 +75,14 @@ public class PerftFunction {
 //
 //        }
 //        validMoves.forEach(move -> System.out.println(move.getMovedPiece().team + " " + move.getMovedPiece().type + " " + move.getFrom().getAlgebraicNotationLocation() + move.getTo().getAlgebraicNotationLocation()));
+
+        // The Board.java doesn't store move history for the king and the rook, so it only remembers the last move.
+        // Once it reaches more than one move (depth 3 or more), it only remembers the last move, so it can't castle.
+        // Meaning that it will think that the piece has moved, because it did before, but not when it does the now
+        // one. e.g. on depth 3, king has not moved on move 0, but it has on move 1, so it thinks it has moved. It
+        // remembers from the start of the depth, not the start of the game.
+        // Need to implement move history for each rook and king, so it can remember whether it has moved or not.
+//        System.err.println("validMoves size: " + validMoves.size() + " " + GameState.moveNumber);
         return validMoves;
     }
 
@@ -86,9 +105,9 @@ public class PerftFunction {
 
         for (Move move : moves) {
             debugPause(numberOfPositions, move, depth);
-            if (debug) beforeFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces);
+            if (debug) beforeFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces, turn);
             gameState.playTestMove(move);
-            if (debug) moveFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces);
+            if (debug) moveFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces, turn);
 
             int positions = playMoves(depth - 1, turn == Team.BLACK ? Team.WHITE : Team.BLACK, log, debug);
             numberOfPositions += positions;
@@ -97,7 +116,7 @@ public class PerftFunction {
 
             gameState.undoMove(move);
             if (debug) {
-                afterFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces);
+                afterFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces, turn);
                 debugCheck(beforeFen, moveFen, afterFen, fenUtils);
             }
             var s = "";
@@ -168,7 +187,7 @@ public class PerftFunction {
             sleep();
         } else if (pause) {
             System.out.println("-------------------");
-            System.out.println(numberOfPositions);
+            System.out.println(numberOfPositions + " - " + move.getFrom().getAlgebraicNotationLocation() + move.getTo().getAlgebraicNotationLocation());
             if (move.getFrom() == move.getTo()) System.out.println("EXPECTED ERROR");
             board.printBoardInConsole(true);
             sleep();

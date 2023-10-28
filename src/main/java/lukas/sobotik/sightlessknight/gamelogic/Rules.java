@@ -19,11 +19,11 @@ public class Rules {
      * @param selectedPieceLocation where the piece is located on the board
      * @param piece what piece are the moves generated for
      * @param board the board where the moves take place
-     * @param checkForChecks whether the method should check for checks and piece pins
+     * @param removePseudoLegalMoves whether the method should check for checks and piece pins
      * @return list of valid moves for a given piece
      */
-    public static List<Move> getValidMoves(BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks) {
-        return getValidMoves(selectedPieceLocation, piece, board, checkForChecks, true);
+    public static List<Move> getValidMoves(BoardLocation selectedPieceLocation, Piece piece, Board board, boolean removePseudoLegalMoves) {
+        return getValidMoves(selectedPieceLocation, piece, board, removePseudoLegalMoves, true);
     }
 
     /**
@@ -31,22 +31,22 @@ public class Rules {
      * @param selectedPieceLocation where the piece is located on the board
      * @param piece what piece are the moves generated for
      * @param board the board where the moves take place
-     * @param checkForChecks whether the method should check for checks and piece pins
-     * @param checkCastlingMoves whether the method should add castling moves
+     * @param removePseudoLegalMoves whether the method should check for checks and piece pins
+     * @param addCastlingMoves whether the method should add castling moves
      * @return list of valid moves for a given piece
      */
-    static List<Move> getValidMoves(BoardLocation selectedPieceLocation, Piece piece, Board board, boolean checkForChecks, boolean checkCastlingMoves) {
+    static List<Move> getValidMoves(BoardLocation selectedPieceLocation, Piece piece, Board board, boolean removePseudoLegalMoves, boolean addCastlingMoves) {
         List<Move> legalMoves = new ArrayList<>();
         switch (piece.type) {
             case PAWN -> legalMoves.addAll(Objects.requireNonNull(getValidPawnMoves(selectedPieceLocation, piece.team, board)));
             case BISHOP -> legalMoves.addAll(getValidBishopMoves(legalMoves, selectedPieceLocation, piece.team, board));
             case KNIGHT -> legalMoves.addAll(getValidKnightMoves(selectedPieceLocation, piece.team, board, false));
             case ROOK -> legalMoves.addAll(getValidRookMoves(selectedPieceLocation, piece.team, board, false));
-            case KING -> legalMoves.addAll(getValidKingMoves(legalMoves, selectedPieceLocation, piece.team, board, checkCastlingMoves));
+            case KING -> legalMoves.addAll(getValidKingMoves(legalMoves, selectedPieceLocation, piece.team, board, addCastlingMoves));
             case QUEEN -> legalMoves.addAll(getValidQueenMoves(legalMoves, selectedPieceLocation, piece.team, board, false));
         }
-        if (checkForChecks) {
-            checkForChecks(legalMoves, selectedPieceLocation, piece.team, board);
+        if (removePseudoLegalMoves) {
+            removePseudoLegalMoves(legalMoves, selectedPieceLocation, piece.team, board);
         }
         return legalMoves;
     }
@@ -100,15 +100,67 @@ public class Rules {
      * @param returnBothTeams whether the method should return both teams' castling rights
      * @return the FEN notation of castling rights ["K" for white's kingside castling rights, "Q" for white's queenside castling rights, "k" for black's kingside castling rights, "q" for black's queenside castling rights], e.g. "KQkq" or "Kkq"
      */
-    public static String isCastlingPossible(Team team, Piece[] pieces, BoardLocation whiteKing, BoardLocation blackKing, boolean returnBothTeams) {
+    public static String isCastlingPossible(Team team, Piece[] pieces, Board board, BoardLocation whiteKing, BoardLocation blackKing, boolean returnBothTeams) {
         StringBuilder castlingAvailability = new StringBuilder();
         if (whiteKing == null || blackKing == null) return "";
 
-        if (whiteKing.equals(new BoardLocation(4, 0)) && pieces[4] != null && pieces[4].type == PieceType.KING && !pieces[4].hasMoved) {
-            if (pieces[7] != null && pieces[7].type == PieceType.ROOK && !pieces[7].hasMoved) {
+        boolean whiteKingMoved;
+        boolean whiteKingRookMoved;
+        boolean whiteQueenRookMoved;
+        if (board == null) {
+            whiteKingMoved = whiteKing.equals(new BoardLocation(4, 0))
+                    && pieces[4] != null
+                    && pieces[4].type == PieceType.KING
+                    && !pieces[4].hasMoved;
+            whiteKingRookMoved = pieces[7] != null
+                    && pieces[7].type == PieceType.ROOK
+                    && !pieces[7].hasMoved;
+            whiteQueenRookMoved = pieces[0] != null
+                    && pieces[0].type == PieceType.ROOK
+                    && !pieces[0].hasMoved;
+        } else {
+            whiteKingMoved = !board.whiteKingMoves.getValue()
+                            && pieces[4] != null
+                            && pieces[4].type == PieceType.KING;
+            whiteKingRookMoved = !board.whiteKingRookMoves.getValue()
+                            && pieces[7] != null
+                            && pieces[7].type == PieceType.ROOK;
+            whiteQueenRookMoved = !board.whiteQueenRookMoves.getValue()
+                            && pieces[0] != null
+                            && pieces[0].type == PieceType.ROOK;
+        }
+
+        boolean blackKingMoved;
+        boolean blackKingRookMoved;
+        boolean blackQueenRookMoved;
+        if (board == null) {
+            blackKingMoved = blackKing.equals(new BoardLocation(4, 7))
+                    && pieces[4 + 7 * 8] != null
+                    && pieces[4 + 7 * 8].type == PieceType.KING
+                    && !pieces[4 + 7 * 8].hasMoved;
+            blackKingRookMoved = pieces[7 + 7 * 8] != null
+                    && pieces[7 + 7 * 8].type == PieceType.ROOK
+                    && !pieces[7 + 7 * 8].hasMoved;
+            blackQueenRookMoved = pieces[7 * 8] != null
+                    && pieces[7 * 8].type == PieceType.ROOK
+                    && !pieces[7 * 8].hasMoved;
+        } else {
+            blackKingMoved = !board.blackKingMoves.getValue()
+                            && pieces[4 + 7 * 8] != null
+                            && pieces[4 + 7 * 8].type == PieceType.KING;
+            blackKingRookMoved = !board.blackKingRookMoves.getValue()
+                            && pieces[7 + 7 * 8] != null
+                            && pieces[7 + 7 * 8].type == PieceType.ROOK;
+            blackQueenRookMoved = !board.blackQueenRookMoves.getValue()
+                            && pieces[7 * 8] != null
+                            && pieces[7 * 8].type == PieceType.ROOK;
+        }
+
+        if (whiteKingMoved) {
+            if (whiteKingRookMoved) {
                 castlingAvailability.append("K");
             }
-            if (pieces[0] != null && pieces[0].type == PieceType.ROOK && !pieces[0].hasMoved) {
+            if (whiteQueenRookMoved) {
                 castlingAvailability.append("Q");
             }
         }
@@ -116,17 +168,95 @@ public class Rules {
             if (team == Team.WHITE) return castlingAvailability.toString();
             castlingAvailability = new StringBuilder();
         }
-        if (blackKing.equals(new BoardLocation(4, 7)) && pieces[4 + 7 * 8] != null && pieces[4 + 7 * 8].type == PieceType.KING && !pieces[4 + 7 * 8].hasMoved) {
-            if (pieces[7 + 7 * 8] != null && pieces[7 + 7 * 8].type == PieceType.ROOK && !pieces[7 + 7 * 8].hasMoved) {
+        if (blackKingMoved) {
+            if (blackKingRookMoved) {
                 castlingAvailability.append("k");
             }
-            if (pieces[7 * 8] != null && pieces[7 * 8].type == PieceType.ROOK && !pieces[7 * 8].hasMoved) {
+            if (blackQueenRookMoved) {
                 castlingAvailability.append("q");
             }
         }
         return castlingAvailability.toString();
     }
+/*
+StringBuilder castlingAvailability = new StringBuilder();
+        if (whiteKing == null || blackKing == null) return "";
 
+        boolean whiteKingMoved;
+        boolean whiteKingRookMoved;
+        boolean whiteQueenRookMoved;
+        if (board == null) {
+
+        } else {
+            whiteKingMoved = board.whiteKingMoves.getValue()
+                            && pieces[4] != null
+                            && pieces[4].type == PieceType.KING;
+            whiteKingRookMoved = board.whiteKingRookMoves.getValue()
+                            && pieces[7] != null
+                            && pieces[7].type == PieceType.ROOK;
+            whiteQueenRookMoved = board.whiteQueenRookMoves.getValue()
+                            && pieces[0] != null
+                            && pieces[0].type == PieceType.ROOK;
+        }
+        whiteKingMoved = whiteKing.equals(new BoardLocation(4, 0))
+                && pieces[4] != null
+                && pieces[4].type == PieceType.KING
+                && pieces[4].hasMoved;
+        whiteKingRookMoved = pieces[7] != null
+                && pieces[7].type == PieceType.ROOK
+                && pieces[7].hasMoved;
+        whiteQueenRookMoved = pieces[0] != null
+                && pieces[0].type == PieceType.ROOK
+                && pieces[0].hasMoved;
+        boolean blackKingMoved;
+        boolean blackKingRookMoved;
+        boolean blackQueenRookMoved;
+        if (board == null) {
+
+        } else {
+            blackKingMoved = board.blackKingMoves.getValue()
+                            && pieces[4 + 7 * 8] != null
+                            && pieces[4 + 7 * 8].type == PieceType.KING;
+            blackKingRookMoved = board.blackKingRookMoves.getValue()
+                            && pieces[7 + 7 * 8] != null
+                            && pieces[7 + 7 * 8].type == PieceType.ROOK;
+            blackQueenRookMoved = board.blackQueenRookMoves.getValue()
+                            && pieces[7 * 8] != null
+                            && pieces[7 * 8].type == PieceType.ROOK;
+        }
+        blackKingMoved = blackKing.equals(new BoardLocation(4, 7))
+                && pieces[4 + 7 * 8] != null
+                && pieces[4 + 7 * 8].type == PieceType.KING
+                && pieces[4 + 7 * 8].hasMoved;
+        blackKingRookMoved = pieces[7 + 7 * 8] != null
+                && pieces[7 + 7 * 8].type == PieceType.ROOK
+                && pieces[7 + 7 * 8].hasMoved;
+        blackQueenRookMoved = pieces[7 * 8] != null
+                && pieces[7 * 8].type == PieceType.ROOK
+                && pieces[7 * 8].hasMoved;
+
+        if (!whiteKingMoved) {
+            if (!whiteKingRookMoved) {
+                castlingAvailability.append("K");
+            }
+            if (!whiteQueenRookMoved) {
+                castlingAvailability.append("Q");
+            }
+        }
+        if (!returnBothTeams) {
+            if (team == Team.WHITE) return castlingAvailability.toString();
+            castlingAvailability = new StringBuilder();
+        }
+        if (!blackKingMoved) {
+            if (!blackKingRookMoved) {
+                castlingAvailability.append("k");
+            }
+            if (!blackQueenRookMoved) {
+                castlingAvailability.append("q");
+            }
+        }
+        return castlingAvailability.toString();
+ */
     /**
      * Method that removes pseudo-legal moves (e.g. moves through pins to the king)
      * @param legalMoves piece's legal moves
@@ -134,7 +264,7 @@ public class Rules {
      * @param team which team the piece is
      * @param board the board where the pieces move
      */
-    private static void checkForChecks(List<Move> legalMoves, BoardLocation selectedPieceLocation, Team team, Board board) {
+    private static void removePseudoLegalMoves(List<Move> legalMoves, BoardLocation selectedPieceLocation, Team team, Board board) {
         for (int i = 0; i < legalMoves.size(); i++) {
             BoardLocation move = legalMoves.get(i).getTo();
 
@@ -225,10 +355,10 @@ public class Rules {
      * @param selectedPieceLocation where the piece for generating legal moves is located on the board
      * @param team what team the king is
      * @param board the board where the pieces move
-     * @param checkCastlingMoves whether it should check for castling moves
+     * @param addCastlingMoves whether it should check for castling moves
      * @return list of legal king moves
      */
-    private static List<Move> getValidKingMoves(List<Move> legalKingMoves, BoardLocation selectedPieceLocation, Team team, Board board, boolean checkCastlingMoves) {
+    private static List<Move> getValidKingMoves(List<Move> legalKingMoves, BoardLocation selectedPieceLocation, Team team, Board board, boolean addCastlingMoves) {
         for (int xDir = -1; xDir <= 1; xDir++) {
             for (int yDir = -1; yDir <= 1; yDir++) {
                 if (xDir == 0 && yDir == 0) {
@@ -241,7 +371,7 @@ public class Rules {
                 }
 
                 // Check if castling moves are valid
-                if (checkCastlingMoves) {
+                if (addCastlingMoves) {
                     legalKingMoves.addAll(getValidCastlingMoves(selectedPieceLocation, team, board, xDir, yDir));
                 }
             }
@@ -260,7 +390,7 @@ public class Rules {
      */
     public static List<Move> getValidCastlingMoves(BoardLocation selectedPieceLocation, Team team, Board board, int xDir, int yDir) {
         List<Move> legalKingMoves = new ArrayList<>();
-        String teamCastle = isCastlingPossible(team, board.pieces, board.whiteKingLocation, board.blackKingLocation, false);
+        String teamCastle = isCastlingPossible(team, board.pieces, board, board.whiteKingLocation, board.blackKingLocation, false);
         // Kingside Castling
         List<Move> kingsideCastling = checkKingsideCastling(selectedPieceLocation, team, board, xDir, yDir, legalKingMoves, teamCastle);
         if (kingsideCastling != null) return kingsideCastling;

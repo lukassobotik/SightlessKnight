@@ -1,5 +1,6 @@
 package lukas.sobotik.sightlessknight.gamelogic;
 
+import lombok.Getter;
 import lukas.sobotik.sightlessknight.gamelogic.entity.MoveFlag;
 import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
 import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
@@ -8,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GameState {
+    @Getter
     public Board board;
     public static Team currentTurn;
     public boolean hasGameEnded = false;
@@ -73,9 +75,6 @@ public class GameState {
             selectedPieceLocation = null;
         }
     }
-    public Board getBoard() {
-        return board;
-    }
     public void movePieceAndEndTurn(BoardLocation destination) {
         if (destination != null) {
             board.movePiece(new Move(selectedPieceLocation, destination));
@@ -99,52 +98,64 @@ public class GameState {
         selectedPieceLocation = move.getFrom();
         validMoves = Rules.getValidMoves(selectedPieceLocation, piece, board, true);
 
-        if (!validMoves.isEmpty()) {
-            for (Move validMove : validMoves) {
-                var validTo = validMove.getTo();
-//                if (!move.getTo().equals(validTo)) System.out.println(move.getTo().getAlgebraicNotationLocation() + " " + validTo.getAlgebraicNotationLocation());
-                if (move.getTo().equals(validTo)) {
-//                    System.out.println("*** " + move.getFrom().getAlgebraicNotationLocation() + " " + move.getTo().getAlgebraicNotationLocation() + " ***");
-//                    board.printBoardInConsole(true);
-//                    System.out.println("...");
-                    moveNumber++;
-                    if (validMove.getMoveFlag() != null && !validMove.getMoveFlag().equals(MoveFlag.none)) move.setMoveFlag(validMove.getMoveFlag());
-                    if (validMove.getCapturedPiece() != null) move.setCapturedPiece(validMove.getCapturedPiece());
-                    if (validMove.getMovedPiece() != null) move.setMovedPiece(validMove.getMovedPiece());
-                    // Pawn Promotion
-                    if ((move.getTo().getY() == 0 || move.getTo().getY() == 7) && piece.type == PieceType.PAWN && move.getPromotionPiece() != null) {
-                        promotionLocation = move.getTo();
-                        movePieceAndEndTurn(move);
-                        promotePawn(move.getPromotionPiece());
-                        break;
-                    }
-                    // En Passant
-                    BoardLocation enPassantCapture = new BoardLocation(move.getTo().getX(), move.getFrom().getY());
-                    if (board.getPiece(enPassantCapture) != null
-                            && board.getPiece(enPassantCapture).type == PieceType.PAWN
-                            && board.getPiece(enPassantCapture).team != move.getMovedPiece().team
-                            && move.getMovedPiece().type == PieceType.PAWN
-                            && move.getFrom().getX() != move.getTo().getX()
-                            && (board.getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1)) {
-                        move.setCapturedPiece(board.getPiece(enPassantCapture));
-                        move.setMoveFlag(MoveFlag.enPassant);
-                    } else if (move.getMovedPiece().type == PieceType.KING && Math.abs(move.getFrom().getX() - move.getTo().getX()) == 2) {
-//                        move.setMoveFlag(MoveFlag.castling);
-                    }
-                    movePieceAndEndTurn(move);
-//                    board.printBoardInConsole(true);
-//                    System.out.println("*** ***");
-                    break;
-                }
-            }
-            validMoves.clear();
-            selectedPieceLocation = null;
+        if (validMoves.isEmpty()) {
+            return;
         }
+
+        for (Move validMove : validMoves) {
+            if (!move.getTo().equals(validMove.getTo())) {
+                continue;
+            }
+
+            moveNumber++;
+            updateMoveFlagsAndPieces(move, validMove);
+            // Pawn Promotion
+            if (isPawnPromotion(move, validMove)) {
+                promotionLocation = move.getTo();
+                movePieceAndEndTurn(move);
+                promotePawn(move.getPromotionPiece());
+                break;
+            }
+            // En Passant
+            else if (isEnPassantCapture(move, validMove)) {
+                move.setCapturedPiece(board.getPiece(new BoardLocation(move.getTo().getX(), move.getFrom().getY())));
+                move.setMoveFlag(MoveFlag.enPassant);
+            }
+
+            movePieceAndEndTurn(move);
+            break;
+        }
+        validMoves.clear();
+        selectedPieceLocation = null;
+    }
+    private void updateMoveFlagsAndPieces(Move move, Move validMove) {
+        if (validMove.getMoveFlag() != null && !validMove.getMoveFlag().equals(MoveFlag.none)) {
+            move.setMoveFlag(validMove.getMoveFlag());
+        }
+        if (validMove.getCapturedPiece() != null) {
+            move.setCapturedPiece(validMove.getCapturedPiece());
+        }
+        if (validMove.getMovedPiece() != null) {
+            move.setMovedPiece(validMove.getMovedPiece());
+        }
+    }
+    private boolean isEnPassantCapture(Move move, Move validMove) {
+        BoardLocation enPassantCapture = new BoardLocation(move.getTo().getX(), move.getFrom().getY());
+        return board.getPiece(enPassantCapture) != null
+                && board.getPiece(enPassantCapture).type == PieceType.PAWN
+                && board.getPiece(enPassantCapture).team != move.getMovedPiece().team
+                && move.getMovedPiece().type == PieceType.PAWN
+                && move.getFrom().getX() != move.getTo().getX()
+                && (board.getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1);
+    }
+    private boolean isPawnPromotion(Move move, Move validMove) {
+        return (move.getTo().getY() == 0 || move.getTo().getY() == 7)
+                && move.getMovedPiece().type == PieceType.PAWN
+                && move.getPromotionPiece() != null;
     }
     public static int capturedPieces = 0, enPassantCapturesReturned = 0;
     public void undoMove(Move move) {
         if (moveNumber - 1 >= 0) moveNumber -= 1;
-        else return;
 
         board.undoMove(move);
 
