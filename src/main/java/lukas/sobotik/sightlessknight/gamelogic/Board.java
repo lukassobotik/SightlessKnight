@@ -381,7 +381,7 @@ public class Board {
         var to = move.getTo();
         var enPassantCapture = new BoardLocation(to.getX(), from.getY());
 
-        movePieceWithoutSpecialMoves(move);
+        movePieceWithoutSpecialMoves(new Move(to, from, getPiece(to), getPiece(from)));
         pieces[getArrayIndexFromLocation(enPassantCapture)] = move.getCapturedPiece();
     }
 
