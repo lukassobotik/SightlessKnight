@@ -344,6 +344,9 @@ public class Rules {
                     || board.getPiece(selectedPieceLocation.transpose(xDir - 2, yDir)) != null) {
                 return new ArrayList<>();
             }
+            if (isKingInCheck(team, board)) {
+                return new ArrayList<>();
+            }
 
             if ((fen.contains("Q") && team == Team.WHITE) || (fen.contains("q") && team == Team.BLACK)) {
                 BoardLocation castleMove = selectedPieceLocation.transpose(xDir - 1, yDir);
@@ -377,6 +380,9 @@ public class Rules {
             if (board.getPiece(selectedPieceLocation.transpose(xDir, yDir)) != null
                     || board.getPiece(selectedPieceLocation.transpose(xDir + 1, yDir)) != null)
                 return new ArrayList<>();
+            if (isKingInCheck(team, board)) {
+                return new ArrayList<>();
+            }
 
             if ((fen.contains("K") && team == Team.WHITE) || (fen.contains("k") && team == Team.BLACK)) {
                 BoardLocation castleMove = selectedPieceLocation.transpose(xDir + 1, yDir);
