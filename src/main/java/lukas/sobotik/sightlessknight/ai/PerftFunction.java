@@ -71,19 +71,7 @@ public class PerftFunction {
                 return move;
             }).toList());
         }
-//        System.out.println("Move Number: " + GameState.moveNumber);
-//        if (GameState.moveNumber == 1) {
-//
-//        }
-//        validMoves.forEach(move -> System.out.println(move.getMovedPiece().team + " " + move.getMovedPiece().type + " " + move.getFrom().getAlgebraicNotationLocation() + move.getTo().getAlgebraicNotationLocation()));
 
-        // The Board.java doesn't store move history for the king and the rook, so it only remembers the last move.
-        // Once it reaches more than one move (depth 3 or more), it only remembers the last move, so it can't castle.
-        // Meaning that it will think that the piece has moved, because it did before, but not when it does the now
-        // one. e.g. on depth 3, king has not moved on move 0, but it has on move 1, so it thinks it has moved. It
-        // remembers from the start of the depth, not the start of the game.
-        // Need to implement move history for each rook and king, so it can remember whether it has moved or not.
-//        System.err.println("validMoves size: " + validMoves.size() + " " + GameState.moveNumber);
         return validMoves;
     }
 
@@ -120,7 +108,6 @@ public class PerftFunction {
                 afterFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces, turn);
                 debugCheck(beforeFen, moveFen, afterFen, fenUtils);
             }
-            var s = "";
         }
 
         if (log) {
@@ -182,20 +169,6 @@ public class PerftFunction {
      */
     private void debugPause(int numberOfPositions, Move move, int depth) {
         boolean pause = false;
-        if (
-                move.getFrom().getAlgebraicNotationLocation().equals("e1")
-                && move.getTo().getAlgebraicNotationLocation().equals("c1")
-//                && board.pieces[board.getArrayIndexFromLocation(new BoardLocation(7, 4))] != null
-//                && board.pieces[board.getArrayIndexFromLocation(new BoardLocation(7, 4))].type.equals(PieceType.ROOK)
-        ) pause = true;
-
-//        if (numberOfPositions >= 4000) pause = true;
-
-//        if (depth == 1) pause = true;
-
-        // Manual Override
-        pause = false;
-//        pause = false;
 
         if (pause && view != null) {
             view.getUI().ifPresent(value -> value.access(() -> view.createBoard(board.pieces)));
