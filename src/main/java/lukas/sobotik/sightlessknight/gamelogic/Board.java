@@ -284,7 +284,13 @@ public class Board {
             blackKingLocation = to;
         }
 
-        lastRemovedPiece = pieces[to.getX() + to.getY() * 8];
+        if (move.getCapturedPiece() != null) {
+            lastRemovedPiece = move.getCapturedPiece();
+        } else if (pieces[to.getX() + to.getY() * 8] != null) {
+            lastRemovedPiece = pieces[to.getX() + to.getY() * 8];
+        } else {
+            lastRemovedPiece = null;
+        }
 
         pieces[getArrayIndexFromLocation(to)] = pieces[getArrayIndexFromLocation(from)];
         removePiece(from);

@@ -23,7 +23,7 @@ public class Rules {
      * @return list of valid moves for a given piece
      */
     public static List<Move> getValidMoves(BoardLocation selectedPieceLocation, Piece piece, Board board, boolean removePseudoLegalMoves) {
-        return getValidMoves(selectedPieceLocation, piece, board, removePseudoLegalMoves, true);
+        return getValidMoves(selectedPieceLocation, piece, board, removePseudoLegalMoves, true, false);
     }
 
     /**
@@ -33,12 +33,13 @@ public class Rules {
      * @param board the board where the moves take place
      * @param removePseudoLegalMoves whether the method should check for checks and piece pins
      * @param addCastlingMoves whether the method should add castling moves
+     * @param ignoreEnPassant whether the method should ignore en passant moves
      * @return list of valid moves for a given piece
      */
-    static List<Move> getValidMoves(BoardLocation selectedPieceLocation, Piece piece, Board board, boolean removePseudoLegalMoves, boolean addCastlingMoves) {
+    static List<Move> getValidMoves(BoardLocation selectedPieceLocation, Piece piece, Board board, boolean removePseudoLegalMoves, boolean addCastlingMoves, boolean ignoreEnPassant) {
         List<Move> legalMoves = new ArrayList<>();
         switch (piece.type) {
-            case PAWN -> legalMoves.addAll(Objects.requireNonNull(getValidPawnMoves(selectedPieceLocation, piece.team, board)));
+            case PAWN -> legalMoves.addAll(Objects.requireNonNull(getValidPawnMoves(selectedPieceLocation, piece.team, board, ignoreEnPassant)));
             case BISHOP -> legalMoves.addAll(getValidBishopMoves(legalMoves, selectedPieceLocation, piece.team, board));
             case KNIGHT -> legalMoves.addAll(getValidKnightMoves(selectedPieceLocation, piece.team, board, false));
             case ROOK -> legalMoves.addAll(getValidRookMoves(selectedPieceLocation, piece.team, board, false));
@@ -78,7 +79,7 @@ public class Rules {
 
         for (PieceType type : PieceType.values()) {
             Piece info = new Piece(friendlyTeam, type);
-            list = getValidMoves(square, info, board, false, false);
+            list = getValidMoves(square, info, board, false, false, true);
             for (Move move : list) {
                 var to = move.getTo();
                 Piece target = board.getPiece(to);
@@ -466,9 +467,10 @@ public class Rules {
      * @param pawnLocation where the pawn is located on the board
      * @param team what team the pawn is
      * @param board the board where the pieces move
+     * @param ignoreEnPassant whether the method should ignore en passant moves
      * @return returns a list of legal moves for a given pawn
      */
-    public static List<Move> getValidPawnMoves(BoardLocation pawnLocation, Team team, Board board) {
+    public static List<Move> getValidPawnMoves(BoardLocation pawnLocation, Team team, Board board, boolean ignoreEnPassant) {
         List<Move> legalPawnMoves = new ArrayList<>();
 
         int forwardDirection = (team == playerTeam) ? 1 : -1;
@@ -489,8 +491,8 @@ public class Rules {
         // Check for capture moves
         BoardLocation leftCapture = new BoardLocation(pawnLocation.getX() - 1, pawnLocation.getY() + forwardDirection);
         BoardLocation rightCapture = new BoardLocation(pawnLocation.getX() + 1, pawnLocation.getY() + forwardDirection);
-        legalPawnMoves.addAll(addPawnCaptureMoves(pawnLocation, team, board, leftCapture));
-        legalPawnMoves.addAll(addPawnCaptureMoves(pawnLocation, team, board, rightCapture));
+        legalPawnMoves.addAll(addPawnCaptureMoves(pawnLocation, team, board, leftCapture, ignoreEnPassant));
+        legalPawnMoves.addAll(addPawnCaptureMoves(pawnLocation, team, board, rightCapture, ignoreEnPassant));
 
         return legalPawnMoves;
     }
@@ -501,9 +503,10 @@ public class Rules {
      * @param team what team the pawn is
      * @param board the board where the pieces move
      * @param captureLocation where the pawn can capture a piece
+     * @param ignoreEnPassant whether the method should ignore en passant moves
      * @return list of legal pawn capture moves
      */
-    private static List<Move> addPawnCaptureMoves(BoardLocation pawnLocation, Team team, Board board, BoardLocation captureLocation) {
+    private static List<Move> addPawnCaptureMoves(BoardLocation pawnLocation, Team team, Board board, BoardLocation captureLocation, boolean ignoreEnPassant) {
         List<Move> legalPawnMoves = new ArrayList<>();
         if (board.isInBounds(captureLocation)) {
             Piece rightCapturePiece = board.getPiece(captureLocation);
@@ -511,7 +514,10 @@ public class Rules {
             if (rightCapturePiece != null && rightCapturePiece.team != team) {
                 legalPawnMoves.add(new Move(pawnLocation, captureLocation, board.getPiece(pawnLocation), rightCapturePiece));
             }
-            legalPawnMoves.addAll(checkEnPassant(team, board, captureLocation, pawnLocation));
+
+            if (!ignoreEnPassant) {
+                legalPawnMoves.addAll(checkEnPassant(team, board, captureLocation, pawnLocation));
+            }
         }
         return legalPawnMoves;
     }
@@ -595,7 +601,7 @@ public class Rules {
             BoardLocation point = board.getPointFromArrayIndex(i);
             Piece piece = board.pieces[i];
             if (piece != null && piece.team == team) {
-                validMoves = getValidMoves(point, piece, board, true, false);
+                validMoves = getValidMoves(point, piece, board, true, false, false);
                 for (Move move : validMoves) {
                     var to = move.getTo();
                     board.movePieceWithoutSpecialMovesAndSave(point, to);
