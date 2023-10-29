@@ -1,9 +1,23 @@
 package lukas.sobotik.sightlessknight.ai;
 
-import lukas.sobotik.sightlessknight.gamelogic.*;
+import lukas.sobotik.sightlessknight.gamelogic.Board;
+import lukas.sobotik.sightlessknight.gamelogic.BoardLocation;
+import lukas.sobotik.sightlessknight.gamelogic.FenUtils;
+import lukas.sobotik.sightlessknight.gamelogic.GameState;
+import lukas.sobotik.sightlessknight.gamelogic.Move;
+import lukas.sobotik.sightlessknight.gamelogic.Piece;
+import lukas.sobotik.sightlessknight.gamelogic.Rules;
+import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
+import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 import lukas.sobotik.sightlessknight.views.play.PlayView;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 public class PerftFunction {
     Board board;
@@ -13,7 +27,18 @@ public class PerftFunction {
         this.board = board;
         this.gameState = gameState;
         this.view = view;
+
+        GameState.moveNumber = 0;
+        GameState.capturedPieces = 0;
+        GameState.enPassantCaptures = 0;
+        GameState.enPassantCapturesReturned = 0;
     }
+
+    /**
+     * Returns all valid moves for a given team.
+     * @param team team whose valid moves are to be returned.
+     * @return list of all valid moves for the given team.
+     */
     public List<Move> getAllValidMoves(Team team) {
         List<Move> validMoves = new ArrayList<>();
         for (int i = 0; i < 64; i++) {
@@ -21,39 +46,81 @@ public class PerftFunction {
             var location = board.getPointFromArrayIndex(i);
             if (piece == null || piece.team != team) continue;
 
-            List<BoardLocation> moves = new ArrayList<>();
-            Rules.getValidMoves(moves, board.getPointFromArrayIndex(i), piece, board, true);
+            var allMoves = Rules.getValidMoves(board.getPointFromArrayIndex(i), piece, board, true);
+            var moves = allMoves.stream().map(Move::getTo).toList();
             validMoves.addAll(new HashSet<>(moves).stream().map(moveLocation -> {
                 Move move = new Move(location, moveLocation, piece, board.getPiece(moveLocation));
-                if ((moveLocation.getY() == 0 || moveLocation.getY() == 7) && piece.type == PieceType.PAWN) {
+                // Pawn Promotion
+                if (((moveLocation.getY() == 0 && piece.team == Team.BLACK) || (moveLocation.getY() == 7 && piece.team == Team.WHITE))
+                        && piece.type == PieceType.PAWN) {
                     // Add four promotion options: bishop, knight, rook, queen
                     List<PieceType> promotionPieces = Arrays.asList(PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN);
                     for (PieceType promotionPiece : promotionPieces) {
                         Move promotionMove = new Move(location, moveLocation, piece, board.getPiece(moveLocation));
                         promotionMove.setPromotionPiece(promotionPiece);
+                        if (promotionPiece == PieceType.QUEEN) return promotionMove;
                         validMoves.add(promotionMove);
                     }
+                }
+                // En Passant
+                BoardLocation enPassantCapture = new BoardLocation(moveLocation.getX(), location.getY());
+                if (board.getPiece(enPassantCapture) != null
+                        && location.getX() != moveLocation.getX()) {
+                    piece.enPassant = true;
                 }
                 return move;
             }).toList());
         }
+//        System.out.println("Move Number: " + GameState.moveNumber);
+//        if (GameState.moveNumber == 1) {
+//
+//        }
+//        validMoves.forEach(move -> System.out.println(move.getMovedPiece().team + " " + move.getMovedPiece().type + " " + move.getFrom().getAlgebraicNotationLocation() + move.getTo().getAlgebraicNotationLocation()));
+
+        // The Board.java doesn't store move history for the king and the rook, so it only remembers the last move.
+        // Once it reaches more than one move (depth 3 or more), it only remembers the last move, so it can't castle.
+        // Meaning that it will think that the piece has moved, because it did before, but not when it does the now
+        // one. e.g. on depth 3, king has not moved on move 0, but it has on move 1, so it thinks it has moved. It
+        // remembers from the start of the depth, not the start of the game.
+        // Need to implement move history for each rook and king, so it can remember whether it has moved or not.
+//        System.err.println("validMoves size: " + validMoves.size() + " " + GameState.moveNumber);
         return validMoves;
     }
-    public int playMoves(int depth, Team turn, boolean log) {
+
+    /**
+     * Main method for the Perft Function.
+     * @param depth depth of the Perft Function.
+     * @param turn Team whose turn it is.
+     * @param log whether to log the results of the Perft Function.
+     * @param debug whether to preform a resource intensive check that helps with debugging.
+     * @return number of positions generated by the Perft Function.
+     */
+    public int playMoves(int depth, Team turn, boolean log, boolean debug) {
         if (depth == 0) return 1;
 
+        var fenUtils = new FenUtils(gameState.board.pieces);
+        String beforeFen = "", moveFen = "", afterFen = "";
         List<Move> moves = getAllValidMoves(turn);
         int numberOfPositions = 0;
         Map<String, Integer> numberOfPositionsOnMove = new HashMap<>();
 
         for (Move move : moves) {
-            gameState.testsPlayMove(move);
+            debugPause(numberOfPositions, move, depth);
+            if (debug) beforeFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces, turn);
+            gameState.playTestMove(move);
+            if (debug) moveFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces, turn);
 
-            int positions = playMoves(depth - 1, turn == Team.BLACK ? Team.WHITE : Team.BLACK, log);
+            int positions = playMoves(depth - 1, turn == Team.BLACK ? Team.WHITE : Team.BLACK, log, debug);
             numberOfPositions += positions;
-            numberOfPositionsOnMove.put(move.getFrom().getAlgebraicNotationLocation() + move.getTo().getAlgebraicNotationLocation(), positions);
+            addPositionsToHashMap(move, numberOfPositionsOnMove, positions);
+            debugPause(numberOfPositions, move, depth);
 
             gameState.undoMove(move);
+            if (debug) {
+                afterFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces, turn);
+                debugCheck(beforeFen, moveFen, afterFen, fenUtils);
+            }
+            var s = "";
         }
 
         if (log) {
@@ -66,5 +133,100 @@ public class PerftFunction {
         }
 
         return numberOfPositions;
+    }
+
+    /**
+     * Method used only for logging the split results of the Perft function.
+     * @param move move that was played.
+     * @param numberOfPositionsOnMove map that stores the split results of the Perft function.
+     * @param positions number of positions generated by the Perft Function.
+     */
+    private static void addPositionsToHashMap(final Move move, final Map<String, Integer> numberOfPositionsOnMove, final int positions) {
+        if (move.getPromotionPiece() != null) {
+            numberOfPositionsOnMove.put(move.getFrom().getAlgebraicNotationLocation()
+                            + move.getTo().getAlgebraicNotationLocation()
+                            + new FenUtils(new Piece[64]).getSymbolFromPieceType(move.getPromotionPiece(), Team.BLACK), positions);
+        } else {
+            numberOfPositionsOnMove.put(move.getFrom().getAlgebraicNotationLocation()
+                                                + move.getTo().getAlgebraicNotationLocation(), positions);
+        }
+    }
+
+    /**
+     * Method used for debugging.
+     * It preforms a check on the FENs before and after the move.
+     * This method is resource intensive and should not be used in production.
+     * @param beforeFen FEN generated before the move occurs
+     * @param moveFen   FEN generated after the move occurs
+     * @param afterFen  FEN generated after the move is undone
+     * @param fenUtils  FenUtils object used to generate the FENs
+     */
+    private void debugCheck(String beforeFen, String moveFen, String afterFen, FenUtils fenUtils) {
+        if (!beforeFen.equals(afterFen)) {
+            System.out.println("---");
+            System.out.println("--- From ---");
+            gameState.getBoard().printBoardInConsole(true, fenUtils.generatePositionFromFEN(beforeFen));
+            System.out.println("--- To ---");
+            gameState.getBoard().printBoardInConsole(true, fenUtils.generatePositionFromFEN(moveFen));
+            System.out.println("--- After ---");
+            gameState.getBoard().printBoardInConsole(true, fenUtils.generatePositionFromFEN(afterFen));
+            System.out.println("---");
+            sleep(9000);
+        }
+    }
+
+    /**
+     * Helpful method for debugging used for pausing the Perft Function on certain conditions.
+     * @param numberOfPositions number of positions for the Perft Function generated so far
+     * @param move what move the Perft Function is currently processing
+     */
+    private void debugPause(int numberOfPositions, Move move, int depth) {
+        boolean pause = false;
+        if (
+                move.getFrom().getAlgebraicNotationLocation().equals("e1")
+                && move.getTo().getAlgebraicNotationLocation().equals("c1")
+//                && board.pieces[board.getArrayIndexFromLocation(new BoardLocation(7, 4))] != null
+//                && board.pieces[board.getArrayIndexFromLocation(new BoardLocation(7, 4))].type.equals(PieceType.ROOK)
+        ) pause = true;
+
+//        if (numberOfPositions >= 4000) pause = true;
+
+//        if (depth == 1) pause = true;
+
+        // Manual Override
+        pause = false;
+//        pause = false;
+
+        if (pause && view != null) {
+            view.getUI().ifPresent(value -> value.access(() -> view.createBoard(board.pieces)));
+            view.getUI().ifPresent(value -> value.access(() -> view.showTargetSquare(String.valueOf(GameState.moveNumber))));
+            board.printBoardInConsole(true);
+            sleep();
+        } else if (pause) {
+            System.out.println("-------------------");
+            System.out.println(numberOfPositions + " - " + move.getFrom().getAlgebraicNotationLocation() + move.getTo().getAlgebraicNotationLocation());
+            if (move.getFrom() == move.getTo()) System.out.println("EXPECTED ERROR");
+            board.printBoardInConsole(true);
+            sleep();
+        }
+    }
+
+    /**
+     * Method that pauses code execution for 3 seconds.
+     */
+    private void sleep() {
+        sleep(3000);
+    }
+
+    /**
+     * Method that pauses code execution for a given number of milliseconds.
+     * @param millis number of milliseconds to pause code execution for
+     */
+    private void sleep(int millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -1,0 +1,26 @@
+name: Maven Build and Test
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: 19
+          distribution: 'adopt'
+
+      - name: Install Maven
+        run: sudo apt-get update && sudo apt-get install -y maven
+
+      - name: Build and Test
+        run: mvn test

@@ -1,5 +1,9 @@
 package lukas.sobotik.sightlessknight.gamelogic;
 
+import lombok.Getter;
+import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
+import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,10 +12,12 @@ public class FenUtils {
     Team team = Team.BLACK;
     BoardLocation whiteKingPosition;
     BoardLocation blackKingPosition;
+    @Getter
     int whiteKingIndex, blackKingIndex;
     BoardLocation lastFromMove;
     BoardLocation lastDoublePawnMoveWithWhite;
     BoardLocation lastDoublePawnMoveWithBlack;
+    @Getter
     Team startingTeam;
     public FenUtils(Piece[] pieces, BoardLocation whiteKingPosition, BoardLocation blackKingPosition, BoardLocation lastFromMove, BoardLocation lastDoublePawnMoveWithWhite, BoardLocation lastDoublePawnMoveWithBlack) {
         this.pieces = pieces;
@@ -60,16 +66,10 @@ public class FenUtils {
 
         return pieces;
     }
-    public Team getStartingTeam() {
-        return startingTeam;
-    }
-    public int getWhiteKingIndex() {
-        return whiteKingIndex;
-    }
-    public int getBlackKingIndex() {
-        return blackKingIndex;
-    }
     public String generateFenFromPosition(Piece[] pieces) {
+        return generateFenFromPosition(pieces, null);
+    }
+    public String generateFenFromPosition(Piece[] pieces, Team turn) {
         StringBuilder fenBuilder = new StringBuilder();
 
         for (int rank = 7; rank >= 0; rank--) {
@@ -98,12 +98,17 @@ public class FenUtils {
         }
 
         // Active color
-        Team activeColor = GameState.moveNumber % 2 == 0 ? Team.BLACK : Team.WHITE;
+        Team activeColor;
+        if (team == null) {
+            activeColor = GameState.moveNumber % 2 == 0 ? Team.BLACK : Team.WHITE;
+        } else {
+            activeColor = team;
+        }
         fenBuilder.append(" ").append(activeColor == Team.WHITE ? "b" : "w");
 
         // Castling availability
         StringBuilder castlingAvailability = new StringBuilder();
-        castlingAvailability.append(Rules.isCastlingPossible(team, pieces, whiteKingPosition, blackKingPosition, true));
+        castlingAvailability.append(Rules.isCastlingPossible(team, pieces, null, whiteKingPosition, blackKingPosition, true));
         if (castlingAvailability.length() == 0) {
             castlingAvailability.append("-");
         }

@@ -11,14 +11,13 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.*;
-import lukas.sobotik.sightlessknight.ai.PerftFunction;
 import lukas.sobotik.sightlessknight.gamelogic.*;
+import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
+import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 import lukas.sobotik.sightlessknight.views.MainLayout;
 
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 @PageTitle("Play")
@@ -50,7 +49,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
                 }
             }
             initialize(pieces, true);
-            showTargetSquare();
+            showTargetSquare(startSquare.getAlgebraicNotationLocation() + " → " + targetSquare.getAlgebraicNotationLocation());
         }
     }
     public PlayView() {
@@ -118,12 +117,12 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         gameInfoLayout.add(algebraicNotationHistoryLayout);
         gameContentLayout.add(gameInfoLayout);
 
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
-        executorService.execute(() -> System.out.println("number of pos 2: " + new PerftFunction(board, gameState, this).playMoves(2, Team.WHITE, false)));
-        executorService.execute(() -> System.out.println("number of pos 3: " + new PerftFunction(board, gameState, this).playMoves(3, Team.BLACK, false)));
-        executorService.execute(() -> System.out.println("number of pos 4: " + new PerftFunction(board, gameState, this).playMoves(4, Team.WHITE, false)));
-        executorService.execute(() -> System.out.println("number of pos 5: " + new PerftFunction(board, gameState, this).playMoves(5, Team.WHITE, false)));
-        executorService.shutdown();
+//        ExecutorService executorService = Executors.newSingleThreadExecutor();
+//        executorService.execute(() -> System.out.println("number of pos 2: " + new PerftFunction(board, gameState, this).playMoves(2, fenUtils.getStartingTeam(), false)));
+//        executorService.execute(() -> System.out.println("number of pos 3: " + new PerftFunction(board, gameState, this).playMoves(3, fenUtils.getStartingTeam(), false)));
+//        executorService.execute(() -> System.out.println("number of pos 4: " + new PerftFunction(board, gameState, this).playMoves(4, fenUtils.getStartingTeam(), false)));
+//        executorService.execute(() -> System.out.println("number of pos 5: " + new PerftFunction(board, gameState, this).playMoves(5, fenUtils.getStartingTeam(), false)));
+//        executorService.shutdown();
     }
 
     private void playMove(BoardLocation from, BoardLocation to) {
@@ -149,10 +148,10 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         }
 
         // Piece Move Drills
-        if (targetSquare != null && Rules.isPieceOnTargetSquare(pieceForKinglessGames, targetSquare, board)) {
+        if (targetSquare != null && Rules.isPieceOnSquare(pieceForKinglessGames, targetSquare, board)) {
             generateKnightGame();
             createBoard(board.pieces);
-            showTargetSquare();
+            showTargetSquare(startSquare.getAlgebraicNotationLocation() + " → " + targetSquare.getAlgebraicNotationLocation());
         }
     }
 
@@ -439,10 +438,10 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         System.out.println(targetSquare.getAlgebraicNotationLocation());
         return pieces;
     }
-    public void showTargetSquare() {
+    public void showTargetSquare(String s) {
         targetSquareLayout.removeAll();
         targetSquareLayout.setVisible(true);
-        var paragraph = new Paragraph(startSquare.getAlgebraicNotationLocation() + " → " + targetSquare.getAlgebraicNotationLocation());
+        var paragraph = new Paragraph(s);
         paragraph.setWidthFull();
         paragraph.addClassName("target_square");
         targetSquareLayout.setHeight("auto");

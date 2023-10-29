@@ -1,15 +1,21 @@
 package lukas.sobotik.sightlessknight.gamelogic;
 
+import lombok.Getter;
+import lukas.sobotik.sightlessknight.gamelogic.entity.MoveFlag;
+import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
+import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class GameState {
+    @Getter
     public Board board;
     public static Team currentTurn;
     public boolean hasGameEnded = false;
-    final List<BoardLocation> validMoves;
+    List<Move> validMoves;
     BoardLocation selectedPieceLocation;
-    public static int moveNumber = 0;
+    public static int moveNumber = 0, enPassantCaptures = 0;
     static final Team playerTeam = Team.WHITE;
     public static boolean isPawnPromotionPending = false;
     public static BoardLocation promotionLocation;
@@ -43,11 +49,12 @@ public class GameState {
         if (piece == null) return;
         if (piece.team == currentTurn || kinglessGame) {
             selectedPieceLocation = from;
-            Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board, !kinglessGame);
+            validMoves = Rules.getValidMoves(selectedPieceLocation, piece, board, !kinglessGame);
         }
 
         if (!validMoves.isEmpty()) {
-            for (BoardLocation moveLoc : validMoves) {
+            for (Move validMove : validMoves) {
+                var moveLoc = validMove.getTo();
                 if (to.equals(moveLoc)) {
                     moveNumber++;
                     System.err.println("moveNumber: " + moveNumber);
@@ -58,7 +65,7 @@ public class GameState {
                         return;
                     }
 
-                    movePieceAndEndTurn(to);
+                    movePieceAndEndTurn(move);
                     createParsedMoveHistory(new Move(from, to, board.getPiece(to), capturedPiece));
                     hasGameEnded = Rules.isCheckmate(currentTurn, board) || Rules.isStalemate(currentTurn, board);
                     break;
@@ -68,12 +75,15 @@ public class GameState {
             selectedPieceLocation = null;
         }
     }
-    public Board getBoard() {
-        return board;
-    }
     public void movePieceAndEndTurn(BoardLocation destination) {
         if (destination != null) {
-            board.movePiece(selectedPieceLocation, destination);
+            board.movePiece(new Move(selectedPieceLocation, destination));
+        }
+        currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
+    }
+    public void movePieceAndEndTurn(Move move) {
+        if (move.getFrom() != null && move.getTo() != null) {
+            board.movePiece(move);
         }
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
@@ -82,36 +92,73 @@ public class GameState {
      * Function used by tests like the Perft test, generally shouldn't be used to play user moves
      * @param move which move should be played
      */
-    public void testsPlayMove(Move move) {
+    public void playTestMove(Move move) {
         Piece piece = move.getMovedPiece();
         if (piece == null) return;
         selectedPieceLocation = move.getFrom();
-        Rules.getValidMoves(validMoves, selectedPieceLocation, piece, board, true);
+        validMoves = Rules.getValidMoves(selectedPieceLocation, piece, board, true);
 
-        if (!validMoves.isEmpty()) {
-            for (BoardLocation validMove : validMoves) {
-                if (move.getTo().equals(validMove)) {
-                    if ((move.getTo().getY() == 0 || move.getTo().getY() == 7) && piece.type == PieceType.PAWN && move.getPromotionPiece() != null ) {
-                        promotionLocation = move.getTo();
-                        movePieceAndEndTurn(move.getTo());
-                        promotePawn(move.getPromotionPiece());
-                        return;
-                    }
-                    movePieceAndEndTurn(move.getTo());
-                    break;
-                }
+        if (validMoves.isEmpty()) {
+            return;
+        }
+
+        for (Move validMove : validMoves) {
+            if (!move.getTo().equals(validMove.getTo())) {
+                continue;
             }
-            validMoves.clear();
-            selectedPieceLocation = null;
+
+            moveNumber++;
+            updateMoveFlagsAndPieces(move, validMove);
+            // Pawn Promotion
+            if (isPawnPromotion(move, validMove)) {
+                promotionLocation = move.getTo();
+                movePieceAndEndTurn(move);
+                promotePawn(move.getPromotionPiece());
+                break;
+            }
+            // En Passant
+            else if (isEnPassantCapture(move, validMove)) {
+                move.setCapturedPiece(board.getPiece(new BoardLocation(move.getTo().getX(), move.getFrom().getY())));
+                move.setMoveFlag(MoveFlag.enPassant);
+            }
+
+            movePieceAndEndTurn(move);
+            break;
+        }
+        validMoves.clear();
+        selectedPieceLocation = null;
+    }
+    private void updateMoveFlagsAndPieces(Move move, Move validMove) {
+        if (validMove.getMoveFlag() != null && !validMove.getMoveFlag().equals(MoveFlag.none)) {
+            move.setMoveFlag(validMove.getMoveFlag());
+        }
+        if (validMove.getCapturedPiece() != null) {
+            move.setCapturedPiece(validMove.getCapturedPiece());
+        }
+        if (validMove.getMovedPiece() != null) {
+            move.setMovedPiece(validMove.getMovedPiece());
         }
     }
-    public int capturedPieces = 0;
+    private boolean isEnPassantCapture(Move move, Move validMove) {
+        BoardLocation enPassantCapture = new BoardLocation(move.getTo().getX(), move.getFrom().getY());
+        return board.getPiece(enPassantCapture) != null
+                && board.getPiece(enPassantCapture).type == PieceType.PAWN
+                && board.getPiece(enPassantCapture).team != move.getMovedPiece().team
+                && move.getMovedPiece().type == PieceType.PAWN
+                && move.getFrom().getX() != move.getTo().getX()
+                && (board.getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1);
+    }
+    private boolean isPawnPromotion(Move move, Move validMove) {
+        return (move.getTo().getY() == 0 || move.getTo().getY() == 7)
+                && move.getMovedPiece().type == PieceType.PAWN
+                && move.getPromotionPiece() != null;
+    }
+    public static int capturedPieces = 0, enPassantCapturesReturned = 0;
     public void undoMove(Move move) {
-        board.movePiece(move.getTo(), move.getFrom());
-        if (move.getCapturedPiece() != null) {
-            capturedPieces++;
-            board.pieces[board.getArrayIndexFromLocation(move.getTo())] = move.getCapturedPiece();
-        }
+        if (moveNumber - 1 >= 0) moveNumber -= 1;
+
+        board.undoMove(move);
+
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
     public void createParsedMoveHistory(Move move) {
@@ -136,6 +183,6 @@ public class GameState {
         isPawnPromotionPending = false;
         promotionLocation = null;
         selectedPromotionPieceType = null;
-        movePieceAndEndTurn(null);
+        movePieceAndEndTurn((BoardLocation) null);
     }
 }
