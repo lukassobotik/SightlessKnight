@@ -153,7 +153,7 @@ public class FenUtils {
         throw new IllegalArgumentException("Invalid piece type: " + type);
     }
 
-    private HashMap<Character, PieceType> getPieceTypeFromSymbol() {
+    public HashMap<Character, PieceType> getPieceTypeFromSymbol() {
         HashMap<Character, PieceType> pieceTypeFromSymbol = new HashMap<>();
         pieceTypeFromSymbol.put('k', PieceType.KING);
         pieceTypeFromSymbol.put('p', PieceType.PAWN);

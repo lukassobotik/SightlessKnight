@@ -55,4 +55,11 @@ public class Move {
     public String getMoveNotation(Piece[] pieces, GameState gameState, Board board) {
         return new AlgebraicNotationUtils(this, new FenUtils(pieces), gameState, board).getParsedMove(this);
     }
+    public Piece getSimplifiedMovedPiece() {
+        return new Piece(movedPiece.team, movedPiece.type);
+    }
+    public Piece getSimplifiedCapturedPiece() {
+        if (capturedPiece == null) return new Piece(null, null);
+        return new Piece(capturedPiece.team, capturedPiece.type);
+    }
 }

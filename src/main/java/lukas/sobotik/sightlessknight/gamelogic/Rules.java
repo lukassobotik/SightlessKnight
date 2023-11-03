@@ -40,10 +40,10 @@ public class Rules {
         List<Move> legalMoves = new ArrayList<>();
         switch (piece.type) {
             case PAWN -> legalMoves.addAll(Objects.requireNonNull(getValidPawnMoves(selectedPieceLocation, piece.team, board, ignoreEnPassant)));
-            case BISHOP -> legalMoves.addAll(getValidBishopMoves(legalMoves, selectedPieceLocation, piece.team, board));
+            case BISHOP -> legalMoves.addAll(getValidBishopMoves(legalMoves, selectedPieceLocation, piece.team, board, false));
             case KNIGHT -> legalMoves.addAll(getValidKnightMoves(selectedPieceLocation, piece.team, board, false));
             case ROOK -> legalMoves.addAll(getValidRookMoves(selectedPieceLocation, piece.team, board, false));
-            case KING -> legalMoves.addAll(getValidKingMoves(legalMoves, selectedPieceLocation, piece.team, board, addCastlingMoves));
+            case KING -> legalMoves.addAll(getValidKingMoves(legalMoves, selectedPieceLocation, piece.team, board, addCastlingMoves, false));
             case QUEEN -> legalMoves.addAll(getValidQueenMoves(legalMoves, selectedPieceLocation, piece.team, board, false));
         }
         if (removePseudoLegalMoves) {
@@ -54,17 +54,21 @@ public class Rules {
 
     /**
      * Used for disambiguating friendly moves, it will return all possible moves including friendly piece captures, so it shouldn't be used for normal applications
-     * @param legalMoves list of the legal moves that will be updated
      * @param selectedPieceLocation location of the piece that the method will generate legal moves for
      * @param piece piece that the method will generate moves for
      * @param board the board where the moves take place
+     * @return list of all pseudo-legal moves for a given piece
      */
-    static void getPseudoLegalMoves(List<Move> legalMoves, BoardLocation selectedPieceLocation, Piece piece, Board board) {
+    static List<Move> getPseudoLegalMoves(BoardLocation selectedPieceLocation, Piece piece, Board board) {
+        List<Move> legalMoves = new ArrayList<>();
         switch (piece.type) {
             case KNIGHT -> legalMoves.addAll(getValidKnightMoves(selectedPieceLocation, piece.team, board, true));
+            case BISHOP -> legalMoves.addAll(getValidBishopMoves(legalMoves, selectedPieceLocation, piece.team, board, true));
             case ROOK -> legalMoves.addAll(getValidRookMoves(selectedPieceLocation, piece.team, board, true));
             case QUEEN -> legalMoves.addAll(getValidQueenMoves(legalMoves, selectedPieceLocation, piece.team, board, true));
+            case KING -> legalMoves.addAll(getValidKingMoves(legalMoves, selectedPieceLocation, piece.team, board, true, true));
         }
+        return legalMoves;
     }
 
     /**
@@ -281,7 +285,7 @@ public class Rules {
      * @param addCastlingMoves whether it should check for castling moves
      * @return list of legal king moves
      */
-    private static List<Move> getValidKingMoves(List<Move> legalKingMoves, BoardLocation selectedPieceLocation, Team team, Board board, boolean addCastlingMoves) {
+    private static List<Move> getValidKingMoves(List<Move> legalKingMoves, BoardLocation selectedPieceLocation, Team team, Board board, boolean addCastlingMoves, boolean ignoreFriendlyPieces) {
         for (int xDir = -1; xDir <= 1; xDir++) {
             for (int yDir = -1; yDir <= 1; yDir++) {
                 if (xDir == 0 && yDir == 0) {
@@ -289,7 +293,7 @@ public class Rules {
                 }
                 BoardLocation move = selectedPieceLocation.transpose(xDir, yDir);
                 Piece target = board.getPiece(move);
-                if (board.isInBounds(move) && (target == null || target.team != team)) {
+                if (board.isInBounds(move) && ((target == null || target.team != team) || ignoreFriendlyPieces)) {
                     legalKingMoves.add(new Move(selectedPieceLocation, move, board.getPiece(selectedPieceLocation), target));
                 }
 
@@ -459,10 +463,10 @@ public class Rules {
      * @param board the board where the pieces move
      * @return returns a list of all legal moves for a given bishop
      */
-    private static List<Move> getValidBishopMoves(List<Move> legalBishopMoves, BoardLocation selectedPieceLocation, Team team, Board board) {
+    private static List<Move> getValidBishopMoves(List<Move> legalBishopMoves, BoardLocation selectedPieceLocation, Team team, Board board, boolean ignoreFriendlyPieces) {
         for (int xDir = -1; xDir <= 1; xDir += 2) {
             for (int yDir = -1; yDir <= 1; yDir += 2) {
-                pieceDirections(legalBishopMoves, selectedPieceLocation, team, board, xDir, yDir, false);
+                pieceDirections(legalBishopMoves, selectedPieceLocation, team, board, xDir, yDir, ignoreFriendlyPieces);
             }
         }
         return legalBishopMoves;
@@ -556,7 +560,7 @@ public class Rules {
      * @param isDifferentFile whether the pawn location is on the same file as the location where the pawn can capture a piece
      * @return list of legal En Passant moves
      */
-    private static List<Move> addLegalEnPassant(Team team, Board board, BoardLocation captureMove, BoardLocation pawnLocation, BoardLocation pieceLocationNextToPawn, boolean isDifferentFile) {
+    public static List<Move> addLegalEnPassant(Team team, Board board, BoardLocation captureMove, BoardLocation pawnLocation, BoardLocation pieceLocationNextToPawn, boolean isDifferentFile) {
         Piece pieceNextToPawn = board.getPiece(pieceLocationNextToPawn);
         if (pieceNextToPawn != null
                 && pieceNextToPawn.type.equals(PieceType.PAWN)
