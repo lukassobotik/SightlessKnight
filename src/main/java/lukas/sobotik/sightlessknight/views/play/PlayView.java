@@ -45,8 +45,8 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
     BoardLocation startSquare = null;
 
     Piece pieceForKinglessGames = null;
-    HorizontalLayout gameContentLayout, targetSquareLayout;
-    VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout;
+    HorizontalLayout gameContentLayout, targetSquareLayout, gameLayout;
+    VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout, quickSettingsLayout;
     public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     @Override
     public void setParameter(BeforeEvent beforeEvent, @OptionalParameter String s) {
@@ -107,18 +107,25 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         gameContentLayout = new HorizontalLayout();
         gameContentLayout.addClassName("game_content_layout");
 
-        var quickSettingsLayout = new VerticalLayout();
+        quickSettingsLayout = new VerticalLayout();
+        quickSettingsLayout.setWidth("50%");
         quickSettingsLayout.addClassName("game_content_layout_child");
         gameContentLayout.add(quickSettingsLayout);
+
 
         gameContentLayout.setHeightFull();
         gameContentLayout.setWidthFull();
         add(gameContentLayout);
 
+        gameLayout = new HorizontalLayout();
+        gameLayout.setClassName("game_layout");
 
         createBoard(pieces);
 
+        gameContentLayout.add(gameLayout);
+
         gameInfoLayout = new VerticalLayout();
+        gameInfoLayout.setWidth("50%");
         gameInfoLayout.setClassName("game_content_layout_child");
 
         targetSquareLayout = new HorizontalLayout();
@@ -265,7 +272,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
             boardLayout = new VerticalLayout();
             boardLayout.setAlignItems(Alignment.CENTER);
             boardLayout.setClassName("board");
-            gameContentLayout.add(boardLayout);
+            gameLayout.add(boardLayout);
         } else {
             boardLayout.removeAll();
         }
@@ -341,6 +348,26 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
             }
             boardLayout.add(rowLayout);
         }
+
+        String resizeObserverScript = "if (window.ResizeObserver) { " +
+                "var isResizing = false; " +
+                "var observer = new ResizeObserver(function(entries) { " +
+                "  entries.forEach(function(entry) { " +
+                "    if (isResizing) { " +
+                "      var width = entry.contentRect.width; " +
+                "      entry.target.style.height = width + 'px'; " +
+                "    } " +
+                "  }); " +
+                "}); " +
+                "observer.observe(this); " +
+                "this.addEventListener('mousedown', function(event) { " +
+                "  isResizing = true; " +
+                "}); " +
+                "this.addEventListener('mouseup', function(event) { " +
+                "  isResizing = false; " +
+                "}); " +
+                "}";
+        gameLayout.getElement().executeJs(resizeObserverScript);
     }
 
     private VerticalLayout findBoardLayout() {

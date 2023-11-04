@@ -15,10 +15,22 @@
     width: 40vw;
     aspect-ratio: 1/1;
     position: relative;
+    flex-shrink: 0;
+    min-width: 20vw;
+    max-width: 50vw;
+}
+
+.game_layout {
+    padding: 0;
+    aspect-ratio: 1/1;
+    min-width: 20vw;
+    width: 80vw;
+    resize: horizontal;
+    overflow: hidden;
 }
 
 .board_row {
-    width: 80vh;
+    width: 100%;
     position: relative;
 }
 
@@ -60,11 +72,12 @@
 
 .game_content_layout {
     height: 80vh;
-    width: 80vh;
+    width: auto;
 }
 
 .game_content_layout_child {
     height: auto;
+    flex-grow: 1;
 }
 
 .target_square {
@@ -91,6 +104,39 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+
+
+
+
+.column-container {
+    display: flex;
+    height: 100%;
+    align-items: stretch;
+}
+
+.column {
+    flex-grow: 1; /* Allow the middle column to grow and fill the remaining space */
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.left-column {
+    width: 200px; /* Set a fixed width or minimum width as needed */
+    background-color: lightgray;
+}
+
+.middle-column {
+    flex-shrink: 0;
+    resize: block;
+    min-width: 100px; /* Define a minimum width for the middle column */
+    background-color: lightblue;
+}
+
+.right-column {
+    width: 200px; /* Set a fixed width or minimum width as needed */
+    background-color: lightgray;
 }
 
 @media (max-aspect-ratio: 1/1) and (min-aspect-ratio: 0/1) {
