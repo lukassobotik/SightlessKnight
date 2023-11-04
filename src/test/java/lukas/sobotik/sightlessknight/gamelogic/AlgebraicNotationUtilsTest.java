@@ -59,9 +59,10 @@ class AlgebraicNotationUtilsTest {
     private static Stream<Arguments> testPositionsProvider() {
          return Stream.of(
                  // Pawn moves
-                 Arguments.of("8/8/8/1Pp5/8/8/8/5k1K b - - 0 1", "bxc6 e.p", new BoardLocation(1, 4), new BoardLocation(2, 5), true),
+                 Arguments.of("8/8/8/1Pp5/8/8/8/5k1K w - - 0 1", "bxc6 e.p", new BoardLocation(1, 4), new BoardLocation(2, 5), true),
                  Arguments.of("5K1k/8/8/8/8/3p4/2P5/8 w - - 0 1", "cxd3", new BoardLocation(2, 1), new BoardLocation(3, 2), false),
                  Arguments.of("5K1k/8/8/8/8/3p4/2P5/8 w - - 0 1", "c3", new BoardLocation(2, 1), new BoardLocation(2, 2), false),
+                 Arguments.of("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "e4", new BoardLocation(4, 1), new BoardLocation(4, 3), false),
                  // Move Disambiguation
                  Arguments.of("rnbqkbnr/pppppppp/8/2N5/4p3/2N1K3/PPPP1PPP/R1BQKB1R w kq - 0 1", "N5xe4", new BoardLocation(2, 4), new BoardLocation(4, 3), false),
                  Arguments.of("rnbqkbnr/pppppppp/8/2N5/4p3/2N1K3/PPPP1PPP/R1BQKB1R w kq - 0 1", "N3xe4", new BoardLocation(2, 2), new BoardLocation(4, 3), false),
@@ -69,7 +70,9 @@ class AlgebraicNotationUtilsTest {
                  Arguments.of("rnbqkbnr/pppppppp/8/6N1/4p3/2N1K3/PPPP1PPP/R1BQKB1R w kq - 0 1", "Ncxe4", new BoardLocation(2, 2), new BoardLocation(4, 3), false),
                  // Castling
                  Arguments.of("rnbqk2r/pppppppp/8/8/8/8/PPPPPPPP/RNBQK2R w KQkq - 0 1", "O-O", new BoardLocation(4, 0), new BoardLocation(6, 0), false),
-                 Arguments.of("r3kbnr/pppppppp/8/8/8/8/PPPPPPPP/R3KBNR w KQk - 0 1", "O-O-O", new BoardLocation(4, 0), new BoardLocation(2, 0), false)
+                 Arguments.of("r3kbnr/pppppppp/8/8/8/8/PPPPPPPP/R3KBNR w KQk - 0 1", "O-O-O", new BoardLocation(4, 0), new BoardLocation(2, 0), false),
+                 // Bishop moves
+                 Arguments.of("r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1", "Bb5", new BoardLocation(5, 0), new BoardLocation(1, 4), false)
          );
     }
 }

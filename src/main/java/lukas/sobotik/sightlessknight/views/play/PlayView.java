@@ -1,6 +1,7 @@
 package lukas.sobotik.sightlessknight.views.play;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -10,8 +11,19 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.*;
-import lukas.sobotik.sightlessknight.gamelogic.*;
+import com.vaadin.flow.router.BeforeEvent;
+import com.vaadin.flow.router.HasUrlParameter;
+import com.vaadin.flow.router.OptionalParameter;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
+import lukas.sobotik.sightlessknight.gamelogic.AlgebraicNotationUtils;
+import lukas.sobotik.sightlessknight.gamelogic.Board;
+import lukas.sobotik.sightlessknight.gamelogic.BoardLocation;
+import lukas.sobotik.sightlessknight.gamelogic.FenUtils;
+import lukas.sobotik.sightlessknight.gamelogic.GameState;
+import lukas.sobotik.sightlessknight.gamelogic.Move;
+import lukas.sobotik.sightlessknight.gamelogic.Piece;
+import lukas.sobotik.sightlessknight.gamelogic.Rules;
 import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
 import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 import lukas.sobotik.sightlessknight.views.MainLayout;
@@ -71,20 +83,25 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         algebraicNotationUtils = new AlgebraicNotationUtils(fenUtils, gameState, board);
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
+        horizontalLayout.setClassName("text_field_layout");
+        horizontalLayout.setWidthFull();
         TextField textField = new TextField();
         textField.setAutofocus(true);
         Button button = new Button("Play");
+        textField.addKeyDownListener(Key.ENTER, keyDownEvent -> button.click());
         button.addClickListener(buttonClickEvent -> {
             Notification.show(textField.getValue());
 
-            var splitFromAndTo = textField.getValue().split(":");
-            var from = splitFromAndTo[0].split(",");
-            var to = splitFromAndTo[1].split(",");
+            algebraicNotationUtils.updateVariables(fenUtils, gameState, board);
+            Move move = algebraicNotationUtils.getMoveFromParsedMove(textField.getValue());
+            if (move == null) {
+                Notification.show("Invalid Move");
+                return;
+            }
 
-            BoardLocation fromLoc = new BoardLocation(Integer.parseInt(from[0]), Integer.parseInt(from[1]));
-            BoardLocation toLoc = new BoardLocation(Integer.parseInt(to[0]), Integer.parseInt(to[1]));
+            System.out.println("Playing move via text: " + move.getFrom().getAlgebraicNotationLocation() + move.getTo().getAlgebraicNotationLocation() + move.getSimplifiedMovedPiece().team + move.getSimplifiedMovedPiece().type);
 
-            playMove(fromLoc, toLoc);
+            playMove(move);
         });
 
         gameContentLayout = new HorizontalLayout();
@@ -98,8 +115,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         gameContentLayout.setWidthFull();
         add(gameContentLayout);
 
-        horizontalLayout.add(textField, button);
-        add(horizontalLayout);
+
         createBoard(pieces);
 
         gameInfoLayout = new VerticalLayout();
@@ -115,18 +131,16 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         algebraicNotationHistoryLayout.addClassName("move_history");
 
         gameInfoLayout.add(algebraicNotationHistoryLayout);
-        gameContentLayout.add(gameInfoLayout);
 
-//        ExecutorService executorService = Executors.newSingleThreadExecutor();
-//        executorService.execute(() -> System.out.println("number of pos 2: " + new PerftFunction(board, gameState, this).playMoves(2, fenUtils.getStartingTeam(), false)));
-//        executorService.execute(() -> System.out.println("number of pos 3: " + new PerftFunction(board, gameState, this).playMoves(3, fenUtils.getStartingTeam(), false)));
-//        executorService.execute(() -> System.out.println("number of pos 4: " + new PerftFunction(board, gameState, this).playMoves(4, fenUtils.getStartingTeam(), false)));
-//        executorService.execute(() -> System.out.println("number of pos 5: " + new PerftFunction(board, gameState, this).playMoves(5, fenUtils.getStartingTeam(), false)));
-//        executorService.shutdown();
+        horizontalLayout.add(textField, button);
+        gameInfoLayout.add(horizontalLayout);
+
+        gameContentLayout.add(gameInfoLayout);
     }
 
-    private void playMove(BoardLocation from, BoardLocation to) {
-        Move move = new Move(from, to, board.getPiece(from), board.getPiece(to));
+    private void playMove(Move move) {
+        var from = move.getFrom();
+        var to = move.getTo();
         gameState.play(new Move(from, to));
         board = gameState.getBoard();
         printBoard(board.pieces);
@@ -300,7 +314,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
                             }
                         });
                         System.out.println("MOVE to " + toLocation.get().getX() + "," + toLocation.get().getY() + " from " + selectedSquare.get().getX() + "," + selectedSquare.get().getY());
-                        playMove(selectedSquare.get(), toLocation.get());
+                        playMove(new Move(selectedSquare.get(), toLocation.get(), board.getPiece(selectedSquare.get()), board.getPiece(toLocation.get())));
                     }
 
                     // Remove all previously selected squares

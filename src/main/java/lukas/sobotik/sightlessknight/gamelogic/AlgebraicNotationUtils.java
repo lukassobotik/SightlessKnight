@@ -25,6 +25,12 @@ public class AlgebraicNotationUtils {
         this.board = board;
     }
 
+    public void updateVariables(FenUtils fenUtils, GameState gameState, Board board) {
+        this.fenUtils = fenUtils;
+        this.gameState = gameState;
+        this.board = board;
+    }
+
     public String getParsedMove(Move move) {
         BoardLocation from = move.getFrom(),
                       to = move.getTo();
@@ -139,7 +145,7 @@ public class AlgebraicNotationUtils {
     }
 
     public Move getMoveFromParsedMove(String parsedMove) {
-        var playerTeam = GameState.playerTeam;
+        var playerTeam = GameState.currentTurn;
         if (parsedMove.equals("O-O") || parsedMove.equals("0-0")) {
             var from = new BoardLocation(4, playerTeam == Team.WHITE ? 0 : 7);
             var to = new BoardLocation(6, playerTeam == Team.WHITE ? 0 : 7);
@@ -223,15 +229,15 @@ public class AlgebraicNotationUtils {
             if (!parsedMove.contains("x")) {
                 try {
                     var loc = board.getPiece(to.transpose(0, playerTeam == Team.WHITE ? -1 : 1));
-                    if (loc != null) {
+                    if (loc != null && loc.type.equals(PieceType.PAWN) && loc.team.equals(playerTeam)) {
                         piece = loc;
                         from = to.transpose(0, playerTeam == Team.WHITE ? -1 : 1);
                     }
                 } catch (Exception ignored) {}
                 try {
                     var loc = board.getPiece(to.transpose(0, playerTeam == Team.WHITE ? -2 : 2));
-                    if (loc != null) {
-                        piece = null;
+                    if (loc != null && loc.type.equals(PieceType.PAWN) && loc.team.equals(playerTeam)) {
+                        piece = loc;
                         from = to.transpose(0, playerTeam == Team.WHITE ? -2 : 2);
                     }
                 } catch (Exception ignored) {}
@@ -260,14 +266,14 @@ public class AlgebraicNotationUtils {
 
                 try {
                     var loc = board.getPiece(to.transpose(-1, playerTeam == Team.WHITE ? -1 : 1));
-                    if (loc != null) {
+                    if (loc != null && loc.type.equals(PieceType.PAWN) && loc.team.equals(playerTeam)) {
                         piece = loc;
                         from = to.transpose(-1, playerTeam == Team.WHITE ? -1 : 1);
                     }
                 } catch (Exception ignored) {}
                 try {
                     var loc = board.getPiece(to.transpose(1, playerTeam == Team.WHITE ? -1 : 1));
-                    if (loc != null) {
+                    if (loc != null && loc.type.equals(PieceType.PAWN) && loc.team.equals(playerTeam)) {
                         piece = loc;
                         from = to.transpose(1, playerTeam == Team.WHITE ? -1 : 1);
                     }
@@ -288,7 +294,10 @@ public class AlgebraicNotationUtils {
     }
 
     private static Move parsingMoveDisambiguation(final String beforeTakes, final List<Move> possibleMoves) {
-        if (beforeTakes.length() == 1) {
+        if (beforeTakes.isEmpty()) {
+            // Gets rid of duplicate moves
+            return possibleMoves.get(0);
+        } else if (beforeTakes.length() == 1) {
             var file = beforeTakes.charAt(0);
             for (Move move : possibleMoves) {
                 if (move.getFrom().getAlgebraicNotationLocation().charAt(0) == file) {

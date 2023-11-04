@@ -87,6 +87,12 @@
     width: 100%;
 }
 
+.text_field_layout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 @media (max-aspect-ratio: 1/1) and (min-aspect-ratio: 0/1) {
     .game_content_layout {
         height: 75vw;
