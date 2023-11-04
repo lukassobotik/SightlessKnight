@@ -95,7 +95,7 @@ public class PerftFunction {
         for (Move move : moves) {
             debugPause(numberOfPositions, move, depth);
             if (debug) beforeFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces, turn);
-            gameState.playTestMove(move);
+            gameState.playMove(move, true);
             if (debug) moveFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces, turn);
 
             int positions = playMoves(depth - 1, turn == Team.BLACK ? Team.WHITE : Team.BLACK, log, debug);

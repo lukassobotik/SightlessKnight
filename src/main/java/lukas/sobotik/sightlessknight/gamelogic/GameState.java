@@ -34,47 +34,7 @@ public class GameState {
         GameState.kinglessGame = kinglessGame;
         this.board = board;
     }
-    public void play(Move move) {
-        BoardLocation from = move.getFrom(), to = move.getTo();
 
-        if (hasGameEnded && !kinglessGame) {
-            return;
-        }
-        if (isPawnPromotionPending) {
-            return;
-        }
-
-        Piece piece = board.getPiece(from);
-        Piece capturedPiece = board.getPiece(to);
-        if (piece == null) return;
-        if (piece.team == currentTurn || kinglessGame) {
-            selectedPieceLocation = from;
-            validMoves = Rules.getValidMoves(selectedPieceLocation, piece, board, !kinglessGame);
-        }
-
-        if (!validMoves.isEmpty()) {
-            for (Move validMove : validMoves) {
-                var moveLoc = validMove.getTo();
-                if (to.equals(moveLoc)) {
-                    moveNumber++;
-                    System.err.println("moveNumber: " + moveNumber);
-
-                    if ((moveLoc.getY() == 0 || moveLoc.getY() == 7) && piece.type == PieceType.PAWN && piece.promotion == null) {
-                        promotionLocation = to;
-                        isPawnPromotionPending = true;
-                        return;
-                    }
-
-                    movePieceAndEndTurn(move);
-                    createParsedMoveHistory(new Move(from, to, board.getPiece(to), capturedPiece));
-                    hasGameEnded = Rules.isCheckmate(currentTurn, board) || Rules.isStalemate(currentTurn, board);
-                    break;
-                }
-            }
-            validMoves.clear();
-            selectedPieceLocation = null;
-        }
-    }
     public void movePieceAndEndTurn(BoardLocation destination) {
         if (destination != null) {
             board.movePiece(new Move(selectedPieceLocation, destination));
@@ -89,14 +49,15 @@ public class GameState {
     }
 
     /**
-     * Function used by tests like the Perft test, generally shouldn't be used to play user moves
+     * Function used for playing a move in the game.
      * @param move which move should be played
+     * @param isTest whether the move is being played by a test function like the Perft test or an AI.
      */
-    public void playTestMove(Move move) {
+    public void playMove(Move move, boolean isTest) {
         Piece piece = move.getMovedPiece();
         if (piece == null) return;
         selectedPieceLocation = move.getFrom();
-        validMoves = Rules.getValidMoves(selectedPieceLocation, piece, board, true);
+        validMoves = Rules.getValidMoves(selectedPieceLocation, piece, board, !kinglessGame);
 
         if (validMoves.isEmpty()) {
             return;
@@ -109,20 +70,31 @@ public class GameState {
 
             moveNumber++;
             updateMoveFlagsAndPieces(move, validMove);
+
             // Pawn Promotion
-            if (isPawnPromotion(move, validMove)) {
+            if (isPawnPromotion(move, validMove) && (isTest || move.getPromotionPiece() != null)) {
                 promotionLocation = move.getTo();
                 movePieceAndEndTurn(move);
                 promotePawn(move.getPromotionPiece());
                 break;
             }
+            if ((validMove.getTo().getY() == 0 || validMove.getTo().getY() == 7) && piece.type == PieceType.PAWN && piece.promotion == null && !isTest) {
+                promotionLocation = validMove.getTo();
+                isPawnPromotionPending = true;
+                return;
+            }
+
             // En Passant
-            else if (isEnPassantCapture(move, validMove)) {
+            else if (isEnPassantCapture(move, validMove) && isTest) {
                 move.setCapturedPiece(board.getPiece(new BoardLocation(move.getTo().getX(), move.getFrom().getY())));
                 move.setMoveFlag(MoveFlag.enPassant);
             }
 
             movePieceAndEndTurn(move);
+            if (!isTest) {
+                createParsedMoveHistory(move);
+                hasGameEnded = Rules.isCheckmate(currentTurn, board) || Rules.isStalemate(currentTurn, board);
+            }
             break;
         }
         validMoves.clear();

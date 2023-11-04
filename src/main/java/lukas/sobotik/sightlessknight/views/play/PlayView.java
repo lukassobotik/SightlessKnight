@@ -141,7 +141,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
     private void playMove(Move move) {
         var from = move.getFrom();
         var to = move.getTo();
-        gameState.play(new Move(from, to));
+        gameState.playMove(move, false);
         board = gameState.getBoard();
         printBoard(board.pieces);
         createBoard(board.pieces);
@@ -291,7 +291,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
                 VerticalLayout finalBoardLayout = boardLayout;
                 square.addClickListener(view -> {
                     if (gameState.hasGameEnded) return;
-                    gameState.play(new Move(board.getPointFromArrayIndex(index), new BoardLocation(-1, -1)));
+                    gameState.playMove(new Move(board.getPointFromArrayIndex(index), new BoardLocation(-1, -1)), false);
 
                     AtomicReference<BoardLocation> selectedSquare = new AtomicReference<>(null);
                     finalBoardLayout.getChildren().forEach(component -> component.getChildren().forEach(componentRow -> {
