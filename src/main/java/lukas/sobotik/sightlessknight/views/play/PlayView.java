@@ -16,6 +16,7 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import lukas.sobotik.sightlessknight.components.CustomProgressBar;
 import lukas.sobotik.sightlessknight.gamelogic.AlgebraicNotationUtils;
 import lukas.sobotik.sightlessknight.gamelogic.Board;
 import lukas.sobotik.sightlessknight.gamelogic.BoardLocation;
@@ -143,11 +144,61 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
         gameInfoLayout.add(horizontalLayout);
 
         gameContentLayout.add(gameInfoLayout);
+        createGameSettings();
+    }
+
+    private void createGameSettings() {
+        var boardSizeLayout = new HorizontalLayout();
+        boardSizeLayout.setWidthFull();
+        boardSizeLayout.getStyle().set("position", "relative");
+        boardSizeLayout.getStyle().set("display", "flex");
+        boardSizeLayout.getStyle().set("align-items", "center");
+        var boardSizeSettingText = new Text("Board Size: ");
+        boardSizeLayout.add(boardSizeSettingText);
+
+        CustomProgressBar progressBar = new CustomProgressBar();
+        progressBar.setValue(1);
+
+        var progressBarCode = "const container = document.querySelector('.progress-container');"
+                            + "const bar = document.querySelector('.progress-bar');"
+                            + "const boardSizeNumber = document.querySelector('.board_size_number');"
+                            + "const gameLayout = document.querySelector('.game_layout');"
+                            + "let isDragging = false;"
+
+                            + "const getNumericValue = (value) => parseFloat(value.match(/(\\d+(\\.\\d+)?)|(\\.\\d+)/)[0]);"
+                            + "const minAllowedWidth = getNumericValue(getComputedStyle(gameLayout).getPropertyValue('min-width'));"
+                            + "const maxAllowedWidth = getNumericValue(getComputedStyle(gameLayout).getPropertyValue" + "('max-width'));"
+
+                            + "container?.addEventListener('mousedown', (e) => {"
+                            + "  isDragging = true;"
+                            + "});"
+
+                            + "document.addEventListener('mousemove', (e) => {"
+                            + "  if (isDragging) {"
+                            + "      const rect = container.getBoundingClientRect();"
+                            + "      const w = (e.clientX - rect.left) / rect.width * 100;"
+                            + "      console.log(w, e.clientX, minAllowedWidth, maxAllowedWidth, (minAllowedWidth + (w * 0.01 * (maxAllowedWidth - minAllowedWidth))).toFixed(2));"
+                            + "      let percent = Math.min(100, Math.max(0, w));"
+
+                            + "      const mappedWidth = (minAllowedWidth + (w * 0.01 * (maxAllowedWidth - minAllowedWidth))).toFixed(2) + 'px';"
+
+                            + "      bar.style.width = `${percent}%`;"
+                            + "      gameLayout.style.width = mappedWidth;"
+                            + "      boardSizeNumber.innerHTML = `${Math.floor(percent)}%`;"
+                            + "  }"
+                            + "});"
+
+                            + "document.addEventListener('mouseup', () => {"
+                            + "  isDragging = false;"
+                            + "});";
+        progressBar.getElement().executeJs(progressBarCode);
+        boardSizeLayout.add(progressBar);
+
+        quickSettingsLayout.add(boardSizeLayout);
+        quickSettingsLayout.add(progressBar);
     }
 
     private void playMove(Move move) {
-        var from = move.getFrom();
-        var to = move.getTo();
         gameState.playMove(move, false);
         board = gameState.getBoard();
         printBoard(board.pieces);
@@ -272,7 +323,7 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
             boardLayout = new VerticalLayout();
             boardLayout.setAlignItems(Alignment.CENTER);
             boardLayout.setClassName("board");
-            gameLayout.add(boardLayout);
+            gameLayout.addComponentAsFirst(boardLayout);
         } else {
             boardLayout.removeAll();
         }
@@ -348,26 +399,6 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
             }
             boardLayout.add(rowLayout);
         }
-
-        String resizeObserverScript = "if (window.ResizeObserver) { " +
-                "var isResizing = false; " +
-                "var observer = new ResizeObserver(function(entries) { " +
-                "  entries.forEach(function(entry) { " +
-                "    if (isResizing) { " +
-                "      var width = entry.contentRect.width; " +
-                "      entry.target.style.height = width + 'px'; " +
-                "    } " +
-                "  }); " +
-                "}); " +
-                "observer.observe(this); " +
-                "this.addEventListener('mousedown', function(event) { " +
-                "  isResizing = true; " +
-                "}); " +
-                "this.addEventListener('mouseup', function(event) { " +
-                "  isResizing = false; " +
-                "}); " +
-                "}";
-        gameLayout.getElement().executeJs(resizeObserverScript);
     }
 
     private VerticalLayout findBoardLayout() {
