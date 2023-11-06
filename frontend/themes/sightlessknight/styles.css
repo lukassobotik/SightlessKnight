@@ -93,6 +93,11 @@
 .game_content_layout_child {
     height: auto;
     flex-grow: 1;
+    scrollbar-width: none;
+}
+
+.game_content_layout_child::-webkit-scrollbar {
+    display: none;
 }
 
 .target_square {
@@ -109,6 +114,10 @@
 .move_history {
     height: 50vh;
     overflow: scroll;
+    scrollbar-width: none;
+}
+.move_history::-webkit-scrollbar {
+    display: none;
 }
 
 .settings_nav_item {
