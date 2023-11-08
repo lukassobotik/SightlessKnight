@@ -323,7 +323,8 @@ public class PlayView extends VerticalLayout implements HasUrlParameter<String> 
             boardLayout = new VerticalLayout();
             boardLayout.setAlignItems(Alignment.CENTER);
             boardLayout.setClassName("board");
-            gameLayout.addComponentAsFirst(boardLayout);
+            gameLayout.removeAll();
+            gameLayout.add(boardLayout);
         } else {
             boardLayout.removeAll();
         }
