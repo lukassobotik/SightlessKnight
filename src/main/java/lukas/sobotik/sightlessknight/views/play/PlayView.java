@@ -11,9 +11,6 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.BeforeEvent;
-import com.vaadin.flow.router.HasUrlParameter;
-import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lukas.sobotik.sightlessknight.components.CustomProgressBar;
@@ -35,38 +32,31 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @PageTitle("Play")
 @Route(value = "play", layout = MainLayout.class)
-public class PlayView extends VerticalLayout implements HasUrlParameter<String> {
+public class PlayView extends VerticalLayout {
     FenUtils fenUtils;
     AlgebraicNotationUtils algebraicNotationUtils;
     GameState gameState;
     Board board;
 
-    // Knight Game
+    // Piece Game
     BoardLocation targetSquare = null;
     BoardLocation startSquare = null;
+    public boolean isTrainingMode = false;
 
     Piece pieceForKinglessGames = null;
     HorizontalLayout gameContentLayout, targetSquareLayout, gameLayout;
     VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout, quickSettingsLayout;
     public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    @Override
-    public void setParameter(BeforeEvent beforeEvent, @OptionalParameter String s) {
-        System.out.println(s);
-        if (s == null) {
-            initialize();
-        } else {
-            Piece[] pieces = new Piece[64];
-            switch (s) {
-                case "knight" -> {
-                    pieces = generateKnightGame();
-                }
-            }
-            initialize(pieces, true);
-            showTargetSquare(startSquare.getAlgebraicNotationLocation() + " → " + targetSquare.getAlgebraicNotationLocation());
-        }
-    }
-    public PlayView() {
 
+    public void generatePieceTrainingGame(String s) {
+        Piece[] pieces = new Piece[64];
+        switch (s) {
+            case "knight" -> {
+                pieces = generateKnightGame();
+            }
+        }
+        initialize(pieces, true);
+        showTargetSquare(startSquare.getAlgebraicNotationLocation() + " → " + targetSquare.getAlgebraicNotationLocation());
     }
 
     private void initialize() {
