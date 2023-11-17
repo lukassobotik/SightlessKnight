@@ -48,6 +48,10 @@ public class PlayView extends VerticalLayout {
     VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout, quickSettingsLayout;
     public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
+    /**
+     * Generates a piece training game based on the given piece type.
+     * @param s the piece type to generate the game for ("knight")
+     */
     public void generatePieceTrainingGame(String s) {
         Piece[] pieces = new Piece[64];
         switch (s) {
@@ -59,6 +63,10 @@ public class PlayView extends VerticalLayout {
         showTargetSquare(startSquare.getAlgebraicNotationLocation() + " → " + targetSquare.getAlgebraicNotationLocation());
     }
 
+    /**
+     * Initializes the game board and pieces.
+     * This method is called internally when starting a new game.
+     */
     private void initialize() {
         Piece[] pieces = new Piece[64];
         fenUtils = new FenUtils(pieces);
@@ -66,6 +74,11 @@ public class PlayView extends VerticalLayout {
         board = new Board(64, pieces, fenUtils);
         initialize(pieces, false);
     }
+    /**
+     * Initializes the game board and pieces.
+     * @param pieces an array of Piece objects representing the initial positions of the pieces on the board
+     * @param kinglessGame a boolean value indicating whether the game is a kingless game or not
+     */
     private void initialize(Piece[] pieces, boolean kinglessGame) {
         setAlignItems(Alignment.CENTER);
         setHeight("100%");
@@ -188,28 +201,61 @@ public class PlayView extends VerticalLayout {
         quickSettingsLayout.add(progressBar);
     }
 
+    /**
+     * Plays a move in the game.
+     * @param move the move to be played
+     */
     private void playMove(Move move) {
-        gameState.playMove(move, false);
-        board = gameState.getBoard();
-        printBoard(board.pieces);
-        createBoard(board.pieces);
+        updateGameStateAndBoard(move);
         checkIfGameEnded();
+
         if (GameState.isPawnPromotionPending) {
-            Dialog dialog = new Dialog();
-            dialog.setHeaderTitle("Pawn Promotion");
-            Image queenButton = initializePawnPromotionButton("_queen.svg", "Queen", PieceType.QUEEN, move, dialog);
-            Image rookButton = initializePawnPromotionButton("_rook.svg", "Rook", PieceType.ROOK, move, dialog);
-            Image knightButton = initializePawnPromotionButton("_knight.svg", "Knight", PieceType.KNIGHT, move, dialog);
-            Image bishopButton = initializePawnPromotionButton("_bishop.svg", "Bishop", PieceType.BISHOP, move, dialog);
-            dialog.add(queenButton, rookButton, knightButton, bishopButton);
-            dialog.setCloseOnOutsideClick(false);
-            dialog.open();
-            add(dialog);
+            handlePawnPromotion(move);
         } else {
             getAlgebraicNotation();
         }
 
-        // Piece Move Drills
+        managePieceMoveDrills();
+    }
+
+    /**
+     * Updates the game state and the game board after a move is played.
+     * @param move the Move object representing the move that was played
+     */
+    private void updateGameStateAndBoard(Move move) {
+        gameState.playMove(move, false);
+        board = gameState.getBoard();
+        printBoard(board.pieces);
+        createBoard(board.pieces);
+    }
+
+    /**
+     * Handles the pawn promotion when a pawn reaches the opposite end of the board.
+     * @param move the Move object representing the move that resulted in the pawn promotion
+     */
+    private void handlePawnPromotion(Move move) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Pawn Promotion");
+
+        String[] pieceTypes = {"Queen", "Rook", "Knight", "Bishop"};
+        PieceType[] pieces = {PieceType.QUEEN, PieceType.ROOK, PieceType.KNIGHT, PieceType.BISHOP};
+
+        for(int i = 0; i < 4; i++) {
+            Image pieceButton = initializePawnPromotionButton("_" + pieceTypes[i].toLowerCase() + ".svg", pieceTypes[i], pieces[i], move, dialog);
+            dialog.add(pieceButton);
+        }
+
+        dialog.setCloseOnOutsideClick(false);
+        dialog.open();
+        add(dialog);
+    }
+
+    /**
+     * Manages piece move drills.
+     * If there is a target square and the piece for kingless games is on that square,
+     * it generates a knight game, creates the game board, and shows the target square.
+     */
+    private void managePieceMoveDrills() {
         if (targetSquare != null && Rules.isPieceOnSquare(pieceForKinglessGames, targetSquare, board)) {
             generateKnightGame();
             createBoard(board.pieces);
@@ -217,6 +263,15 @@ public class PlayView extends VerticalLayout {
         }
     }
 
+    /**
+     * Initializes the pawn promotion button.
+     * @param imagePath The path to the image file for the button.
+     * @param pieceString The string representation of the piece.
+     * @param pieceType The type of the promoted piece.
+     * @param move The move associated with the pawn promotion.
+     * @param dialog The dialog window to close after the pawn promotion.
+     * @return The initialized pawn promotion button.
+     */
     private Image initializePawnPromotionButton(String imagePath, String pieceString, PieceType pieceType, Move move, Dialog dialog) {
         Image button = new Image("images/sprites/" + ((GameState.currentTurn == Team.WHITE ? "w" : "b") + imagePath), pieceString);
         button.addClickListener(view -> {
@@ -233,6 +288,10 @@ public class PlayView extends VerticalLayout {
         return button;
     }
 
+    /**
+     * Displays the algebraic notation history.
+     * Prints the move history, parsed move history, and fen move history to the console.
+     */
     private void getAlgebraicNotation() {
         showAlgebraicNotationHistory();
         System.out.println("moveHistory: " + gameState.moveHistory);
@@ -240,6 +299,10 @@ public class PlayView extends VerticalLayout {
         System.out.println("fenMoveHistory: " + gameState.fenMoveHistory);
     }
 
+    /**
+     * Remove old items from the algebraic notation history layout and display the new items.
+     * Prints the parsed move history to the console.
+     */
     private void showAlgebraicNotationHistory() {
         // Remove old items
         List<Component> componentsToRemove = algebraicNotationHistoryLayout.getChildren().toList();
@@ -270,6 +333,9 @@ public class PlayView extends VerticalLayout {
         }
     }
 
+    /**
+     * Check if the game has ended and display the appropriate message and dialog.
+     */
     private void checkIfGameEnded() {
         if (gameState.hasGameEnded) {
             if (Rules.isStalemate(GameState.currentTurn, board) && !GameState.isPawnPromotionPending) {
@@ -287,6 +353,11 @@ public class PlayView extends VerticalLayout {
         }
     }
 
+    /**
+     * Create the game over dialog with the specified layout and text.
+     * @param dialogLayout The layout for the dialog.
+     * @param dialogText   The text to be displayed in the dialog.
+     */
     private void createGameOverDialog(VerticalLayout dialogLayout, Text dialogText) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle("Game Over!");
@@ -403,52 +474,38 @@ public class PlayView extends VerticalLayout {
     }
 
 
+    /**
+     * Get the URL of the chess piece image based on the specified piece string.
+     * @param s The piece string. Must be one of the following: "P", "N", "B", "R", "Q", "K", "p", "n", "b", "r", "q", "k".
+     * @return The URL of the chess piece image. Returns an empty string if the piece string is null or invalid.
+     */
     private String getChessPieceUrl(String s) {
         if (s == null) {
             return "";
         }
 
+        var url = "";
         switch (s) {
-            case "P" -> {
-                return "images/sprites/w_pawn.svg";
-            }
-            case "N" -> {
-                return "images/sprites/w_knight.svg";
-            }
-            case "B" -> {
-                return "images/sprites/w_bishop.svg";
-            }
-            case "R" -> {
-                return "images/sprites/w_rook.svg";
-            }
-            case "Q" -> {
-                return "images/sprites/w_queen.svg";
-            }
-            case "K" -> {
-                return "images/sprites/w_king.svg";
-            }
-            case "p" -> {
-                return "images/sprites/b_pawn.svg";
-            }
-            case "n" -> {
-                return "images/sprites/b_knight.svg";
-            }
-            case "b" -> {
-                return "images/sprites/b_bishop.svg";
-            }
-            case "r" -> {
-                return "images/sprites/b_rook.svg";
-            }
-            case "q" -> {
-                return "images/sprites/b_queen.svg";
-            }
-            case "k" -> {
-                return "images/sprites/b_king.svg";
-            }
+            case "P" -> url = "images/sprites/w_pawn.svg";
+            case "N" -> url = "images/sprites/w_knight.svg";
+            case "B" -> url = "images/sprites/w_bishop.svg";
+            case "R" -> url = "images/sprites/w_rook.svg";
+            case "Q" -> url = "images/sprites/w_queen.svg";
+            case "K" -> url = "images/sprites/w_king.svg";
+            case "p" -> url = "images/sprites/b_pawn.svg";
+            case "n" -> url = "images/sprites/b_knight.svg";
+            case "b" -> url = "images/sprites/b_bishop.svg";
+            case "r" -> url = "images/sprites/b_rook.svg";
+            case "q" -> url = "images/sprites/b_queen.svg";
+            case "k" -> url = "images/sprites/b_king.svg";
         }
-        return "";
+        return url;
     }
 
+    /**
+     * Print the chess board.
+     * @param pieces An array of Piece objects representing the chess board.
+     */
     private void printBoard(Piece[] pieces) {
         // Remove old boards
         String classNameToRemove = "board";
@@ -482,6 +539,10 @@ public class PlayView extends VerticalLayout {
         System.out.println("-----------------------------");
     }
 
+    /**
+     * Generate a chess game with a single knight piece.
+     * @return An array of Piece objects representing the chess board.
+     */
     private Piece[] generateKnightGame() {
         Piece piece = new Piece(Team.WHITE, PieceType.KNIGHT);
         pieceForKinglessGames = piece;
@@ -501,6 +562,12 @@ public class PlayView extends VerticalLayout {
         System.out.println(targetSquare.getAlgebraicNotationLocation());
         return pieces;
     }
+
+    /**
+     * Display the target square of the chess game.
+     * Used for piece move drills.
+     * @param s The target square to be displayed.
+     */
     public void showTargetSquare(String s) {
         targetSquareLayout.removeAll();
         targetSquareLayout.setVisible(true);
@@ -510,6 +577,15 @@ public class PlayView extends VerticalLayout {
         targetSquareLayout.setHeight("auto");
         targetSquareLayout.add(paragraph);
     }
+
+    /**
+     * Generates a random square within a given distance from a given square.
+     * The generated square will be different from the given square.
+     * Used for piece move drills.
+     * @param square The square for which the random square is generated.
+     * @param distance The maximum distance from the given square.
+     * @return A random square within the given distance from the given square.
+     */
     public static int getRandomSquareWithinDistance(int square, int distance) {
         Random random = new Random();
         int targetSquare;
