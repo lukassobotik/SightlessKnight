@@ -63,6 +63,10 @@ public class PlayView extends VerticalLayout {
         showTargetSquare(startSquare.getAlgebraicNotationLocation() + " → " + targetSquare.getAlgebraicNotationLocation());
     }
 
+    public PlayView() {
+        initialize();
+    }
+
     /**
      * Initializes the game board and pieces.
      * This method is called internally when starting a new game.
