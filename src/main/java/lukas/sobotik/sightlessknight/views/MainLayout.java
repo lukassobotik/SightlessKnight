@@ -2,7 +2,10 @@ package lukas.sobotik.sightlessknight.views;
 
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
-import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.html.Footer;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.sidenav.SideNav;
@@ -11,6 +14,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import lukas.sobotik.sightlessknight.views.play.PlayView;
 import lukas.sobotik.sightlessknight.views.settings.SettingsView;
+import lukas.sobotik.sightlessknight.views.train.TrainingView;
 import org.vaadin.lineawesome.LineAwesomeIcon;
 
 /**
@@ -51,6 +55,7 @@ public class MainLayout extends AppLayout {
 
         nav.addItem(new SideNavItem("Home", HomeView.class, LineAwesomeIcon.HOME_SOLID.create()));
         nav.addItem(new SideNavItem("Play", PlayView.class, LineAwesomeIcon.CHESS_SOLID.create()));
+        nav.addItem(new SideNavItem("Train", TrainingView.class, LineAwesomeIcon.DUMBBELL_SOLID.create()));
 
         return nav;
     }
