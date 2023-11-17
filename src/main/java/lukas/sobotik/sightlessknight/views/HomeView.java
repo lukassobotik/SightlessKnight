@@ -14,7 +14,7 @@ public class HomeView extends VerticalLayout {
         Button knightButton = new Button("Knight");
         knightButton.addClickListener(e -> {
             knightButton.getUI().ifPresent(ui ->
-                    ui.navigate("play/knight"));
+                    ui.navigate("train/knight"));
         });
 
         add(practiceMoves, knightButton);
