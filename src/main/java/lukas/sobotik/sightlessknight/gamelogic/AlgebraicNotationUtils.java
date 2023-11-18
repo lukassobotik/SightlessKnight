@@ -13,24 +13,54 @@ public class AlgebraicNotationUtils {
     FenUtils fenUtils;
     Board board;
     GameState gameState;
+
+    /**
+     * Initializes the AlgebraicNotationUtils with the given parameters.
+     *
+     * @param move The Move object representing the current move.
+     * @param fenUtils The FenUtils object for handling FEN notation.
+     * @param gameState The GameState object representing the current state of the game.
+     * @param board The Board object representing the current state of the chess board.
+     */
     public AlgebraicNotationUtils(Move move, FenUtils fenUtils, GameState gameState, Board board) {
         this.move = move;
         this.fenUtils = fenUtils;
         this.gameState = gameState;
         this.board = board;
     }
+
+    /**
+     * Creates an instance of AlgebraicNotationUtils with the specified dependencies.
+     *
+     * @param fenUtils the FenUtils object to use for converting between FEN strings and game state
+     * @param gameState the GameState object representing the current state of the game
+     * @param board the Board object representing the chess board
+     */
     public AlgebraicNotationUtils(FenUtils fenUtils, GameState gameState, Board board) {
         this.fenUtils = fenUtils;
         this.gameState = gameState;
         this.board = board;
     }
 
+    /**
+     * Update the variables fenUtils, gameState, and board with the given values.
+     *
+     * @param fenUtils the new FenUtils object to be assigned
+     * @param gameState the new GameState object to be assigned
+     * @param board the new Board object to be assigned
+     */
     public void updateVariables(FenUtils fenUtils, GameState gameState, Board board) {
         this.fenUtils = fenUtils;
         this.gameState = gameState;
         this.board = board;
     }
 
+    /**
+     * Parses a chess move into algebraic notation.
+     *
+     * @param move The move to parse.
+     * @return The move parsed into algebraic notation.
+     */
     public String getParsedMove(Move move) {
         BoardLocation from = move.getFrom(),
                       to = move.getTo();
@@ -89,6 +119,13 @@ public class AlgebraicNotationUtils {
         return algebraicNotationMove;
     }
 
+    /**
+     * Disambiguates the moves of a piece.
+     *
+     * @param move The move object containing the from and to locations, as well as the moved and captured pieces.
+     * @param pieceType The type of the piece.
+     * @return The disambiguated move as a string.
+     */
     private String disambiguatePieceMoves(Move move, PieceType pieceType) {
         BoardLocation from = move.getFrom(),
                 to = move.getTo();
@@ -144,6 +181,12 @@ public class AlgebraicNotationUtils {
         return normalMove;
     }
 
+    /**
+     * Returns a Move object based on a chess move string from the SAN notation.
+     *
+     * @param parsedMove The parsed chess move string.
+     * @return The Move object representing the parsed move if it is a valid move, null otherwise.
+     */
     public Move getMoveFromParsedMove(String parsedMove) {
         var playerTeam = GameState.currentTurn;
         if (parsedMove.equals("O-O") || parsedMove.equals("0-0")) {
@@ -293,6 +336,13 @@ public class AlgebraicNotationUtils {
         return null;
     }
 
+    /**
+     * Parses move disambiguation based on the given parameters.
+     *
+     * @param beforeTakes The string representing the part of the move before the pawn takes notation. It can be empty, one character representing a file, or two characters representing a rank or file and a rank.
+     * @param possibleMoves The list of possible moves to be considered for disambiguation.
+     * @return The move that matches the disambiguation criteria, or null if no match is found.
+     */
     private static Move parsingMoveDisambiguation(final String beforeTakes, final List<Move> possibleMoves) {
         if (beforeTakes.isEmpty()) {
             // Gets rid of duplicate moves
@@ -318,6 +368,13 @@ public class AlgebraicNotationUtils {
         return null;
     }
 
+    /**
+     * Parses a string representation of a chess square and returns the corresponding BoardLocation object.
+     *
+     * @param square the algebraic notation of the chess square (e.g. "e4")
+     * @return the BoardLocation object representing the given chess square
+     * @throws IllegalArgumentException if the given square is invalid
+     */
     public BoardLocation parseSquare(String square) {
         char file = square.charAt(0);
         int rank = Character.getNumericValue(square.charAt(1)) - 1;
