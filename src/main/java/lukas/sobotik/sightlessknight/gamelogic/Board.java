@@ -22,6 +22,13 @@ public class Board {
     public HasMovedHistory blackKingMoves = new HasMovedHistory(false);
     public HasMovedHistory blackKingRookMoves = new HasMovedHistory(false);
     public HasMovedHistory blackQueenRookMoves = new HasMovedHistory(false);
+
+    /**
+     * Initializes a new instance of the Board class.
+     * @param size The size of the board.
+     * @param pieces An array of pieces on the board.
+     * @param fenUtils  An instance of FenUtils class.
+     */
     public Board(int size, Piece[] pieces, FenUtils fenUtils) {
         this.size = size;
         this.pieces = pieces;
@@ -33,6 +40,11 @@ public class Board {
         fenUtils.whiteKingPosition = whiteKingLocation;
         fenUtils.blackKingPosition = blackKingLocation;
     }
+
+    /**
+     * Resets the board position based on the given starting position.
+     * @param startPosition The starting position in Forsyth-Edwards Notation (FEN) format.
+     */
     public void resetBoardPosition(String startPosition) {
         pieces = fenUtils.generatePositionFromFEN(startPosition);
         GameState.currentTurn = fenUtils.getStartingTeam();
@@ -40,9 +52,21 @@ public class Board {
         System.out.println(fenUtils.generateFenFromPosition(fenUtils.pieces));
         printBoardInConsole(false);
     }
+
+    /**
+     * Prints the board in the console.
+     * @param specialCharacters true to use special chess characters, false to use regular characters.
+     */
     public void printBoardInConsole(boolean specialCharacters) {
         printBoardInConsole(specialCharacters, pieces);
     }
+
+    /**
+     * Prints the board in the console.
+     *
+     * @param specialCharacters true to use special chess characters, false to use regular characters.
+     * @param pieces the array of pieces representing the chess board.
+     */
     public void printBoardInConsole(boolean specialCharacters, Piece[] pieces) {
         for (int rank = 7; rank >= 0; rank--) {
             for (int file = 0; file < 8; file++) {
@@ -58,6 +82,14 @@ public class Board {
             System.out.println(); // Move to the next line for the next rank
         }
     }
+
+    /**
+     * Returns the symbol representation of a chess piece.
+     *
+     * @param type the type of the chess piece.
+     * @param team the team of the chess piece.
+     * @return the symbol representation of the chess piece.
+     */
     private String getPieceSymbol(PieceType type, Team team) {
         String s = "";
         if (team == Team.WHITE) {
@@ -83,10 +115,22 @@ public class Board {
         return s;
     }
 
+    /**
+     * Returns the location of the king for the given team.
+     *
+     * @param team the team whose king's location is to be retrieved
+     * @return the location of the king for the given team
+     */
     public BoardLocation getKing(Team team) {
         return (team == Team.WHITE) ? whiteKingLocation : blackKingLocation;
     }
 
+    /**
+     * Returns the piece at the specified board location.
+     *
+     * @param boardLocation the location on the board to retrieve the piece from
+     * @return the piece at the specified board location, or null if the location is out of bounds
+     */
     public Piece getPiece(BoardLocation boardLocation) {
         if (!isInBounds(boardLocation)) {
             return null;
@@ -94,6 +138,11 @@ public class Board {
         return pieces[boardLocation.getX() + boardLocation.getY() * 8];
     }
 
+    /**
+     * Moves a piece on the board based on the provided move.
+     *
+     * @param move the move object containing the from and to locations
+     */
     public void movePiece(Move move) {
         var from = move.getFrom();
         var to = move.getTo();
@@ -141,6 +190,14 @@ public class Board {
         lastFromLocation = from;
         lastToLocation = to;
     }
+
+    /**
+     * Saves the last move that was a double pawn move.
+     *
+     * @param from the starting location of the move
+     * @param to the destination location of the move
+     * @param movedPiece the piece that was moved
+     */
     private void saveDoublePawnMove(BoardLocation from, BoardLocation to, Piece movedPiece) {
         if (movedPiece == null) return;
         if (movedPiece.type == PieceType.PAWN && Math.abs(from.getY() - to.getY()) == 2) {
@@ -149,9 +206,23 @@ public class Board {
             movedPiece.doublePawnMoveOnMoveNumber = GameState.moveNumber;
         }
     }
+
+    /**
+     * Moves a piece on the board without executing any special moves and saves the move.
+     *
+     * @param from the starting location of the move
+     * @param to the destination location of the move
+     */
     public void movePieceWithoutSpecialMovesAndSave(BoardLocation from, BoardLocation to) {
         movePieceWithoutSpecialMovesAndSave(new Move(from, to, getPiece(from), getPiece(to)));
     }
+
+    /**
+     * Moves a piece on the board without executing any special moves and saves the move.
+     *
+     * @param move the move object containing the starting and destination locations of the move,
+     *             as well as the piece being moved
+     */
     public void movePieceWithoutSpecialMovesAndSave(Move move) {
         var from = move.getFrom();
         var to = move.getTo();
@@ -165,6 +236,12 @@ public class Board {
         lastToLocation = to;
     }
 
+    /**
+     * Handles castling moves on the chess board.
+     *
+     * @param move the move object representing the castling move
+     * @param movedPiece the piece that is being moved
+     */
     private void handleCastling(Move move, Piece movedPiece) {
         // Queenside Castling
         if (move.getMoveFlag().equals(MoveFlag.queensideCastling)) {
@@ -189,6 +266,11 @@ public class Board {
         }
     }
 
+    /**
+     * Adds the moved piece to the respective list for tracking castling moves.
+     *
+     * @param move the move object representing the castling move
+     */
     private void addMovedPieceListItemForCastling(Move move) {
         var from = move.getFrom();
         var to = move.getTo();
@@ -219,6 +301,11 @@ public class Board {
         }
     }
 
+    /**
+     * Removes the moved piece from the respective list for tracking castling moves.
+     *
+     * @param move the move object representing the castling move
+     */
     private void removeMovedPieceListItemForCastling(Move move) {
         var from = move.getFrom();
         var to = move.getTo();
@@ -249,6 +336,11 @@ public class Board {
         }
     }
 
+    /**
+     * Moves the piece on the chessboard without considering any special moves.
+     *
+     * @param move the move object representing the move
+     */
     public void movePieceWithoutSpecialMoves(Move move) {
         var from = move.getFrom();
         var to = move.getTo();
@@ -271,6 +363,11 @@ public class Board {
         removePiece(from);
     }
 
+    /**
+     * Removes a piece from the chessboard at the specified board location.
+     *
+     * @param boardLocation the board location of the piece to be removed
+     */
     public void removePiece(BoardLocation boardLocation) {
         if (!isInBounds(boardLocation)) {
             return;
@@ -279,6 +376,12 @@ public class Board {
         pieces[index] = null;
     }
 
+    /**
+     * Undoes the last move on the chessboard.
+     * If there was no previous move, the method returns without doing anything.
+     * The method restores the piece that was previously removed and moves it back to its original location.
+     * The special move flags for the moved piece are not affected.
+     */
     public void undoLastMove() {
         if (lastFromLocation == null || lastToLocation == null) return;
         Piece temp = lastRemovedPiece;
@@ -288,6 +391,16 @@ public class Board {
         pieces[lastFromLocation.getX() + lastFromLocation.getY() * 8] = temp;
     }
 
+    /**
+     * Undoes a given move on the chessboard.
+     * If the move is null, the method returns without doing anything.
+     * The method restores the moved piece to its original location and restores any captured piece.
+     * If the move was a promotion, the original piece is restored instead of the promoted piece.
+     * If the move was a castling move, the rook is moved back to its original position.
+     * The special move flags for the moved piece are not affected.
+     *
+     * @param move the move to undo
+     */
     public void undoMove(Move move) {
         var from = move.getFrom();
         var to = move.getTo();
@@ -320,8 +433,7 @@ public class Board {
         }
 
         // Move the rooks back to the original position when castled
-        if (
-                move.getMovedPiece().type == PieceType.KING
+        if (move.getMovedPiece().type == PieceType.KING
                 && Math.abs(move.getFrom().getX() - move.getTo().getX()) == 2) {
             var team = move.getMovedPiece().team;
             var kingLocation = team == Team.WHITE ? new BoardLocation(4, 0) : new BoardLocation(4, 7);
@@ -342,6 +454,14 @@ public class Board {
         }
     }
 
+    /**
+     * Plays the en passant move on the chessboard.
+     * If the move is null, the method returns without doing anything.
+     * The method moves the moved piece without considering any special move flags.
+     * It also removes the captured piece on the location adjacent to the destination square.
+     *
+     * @param move the en passant move to play
+     */
     public void playEnPassant(Move move) {
         var from = move.getFrom();
         var to = move.getTo();
@@ -350,6 +470,14 @@ public class Board {
         removePiece(new BoardLocation(to.getX(), from.getY()));
     }
 
+    /**
+     * Undoes the en passant move on the chessboard.
+     * If the move is null, the method returns without doing anything.
+     * The method moves the moved piece back to its original position without considering any special move flags.
+     * It also restores the captured piece on the location adjacent to the destination square.
+     *
+     * @param move the en passant move to undo
+     */
     public void undoEnPassant(Move move) {
         var from = move.getFrom();
         var to = move.getTo();
@@ -359,16 +487,34 @@ public class Board {
         pieces[getArrayIndexFromLocation(enPassantCapture)] = move.getCapturedPiece();
     }
 
+    /**
+     * Calculates the board location (x, y) from the given array index.
+     *
+     * @param index the array index
+     * @return the board location corresponding to the given index
+     */
     public BoardLocation getPointFromArrayIndex(int index) {
         int x = index % 8;
         int y = index / 8;
         return new BoardLocation(x, y);
     }
 
+    /**
+     * Calculates the array index from the given board location (x, y).
+     *
+     * @param location the board location
+     * @return the array index calculated from the given location
+     */
     public int getArrayIndexFromLocation(BoardLocation location) {
         return location.getX() + location.getY() * 8;
     }
 
+    /**
+     * Promotes a pawn at the given board location with the selected piece.
+     *
+     * @param pawnLocation the location of the pawn to be promoted
+     * @param selectedPiece the piece to promote the pawn to
+     */
     public void promotePawn(BoardLocation pawnLocation, PieceType selectedPiece) {
         Team team;
         if (pawnLocation.getY() == 7) team = Team.WHITE;
@@ -377,6 +523,12 @@ public class Board {
         pieces[pawnLocation.getX() + pawnLocation.getY() * 8] = piece;
     }
 
+    /**
+     * Checks if the given board location is within the bounds of the board.
+     *
+     * @param boardLocation the board location to check
+     * @return true if the board location is within the bounds, false otherwise
+     */
     public boolean isInBounds(BoardLocation boardLocation) {
         return boardLocation.getX() < 8 && boardLocation.getX() >= 0 && boardLocation.getY() < 8 && boardLocation.getY() >= 0;
     }
