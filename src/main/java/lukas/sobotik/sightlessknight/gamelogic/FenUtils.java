@@ -19,6 +19,17 @@ public class FenUtils {
     BoardLocation lastDoublePawnMoveWithBlack;
     @Getter
     Team startingTeam;
+
+    /**
+     * Constructs a new FenUtils object with the given parameters.
+     *
+     * @param pieces the array of Piece objects representing the current state of the chessboard
+     * @param whiteKingPosition the BoardLocation object representing the position of the white king
+     * @param blackKingPosition the BoardLocation object representing the position of the black king
+     * @param lastFromMove the BoardLocation object representing the position from where the last move was made
+     * @param lastDoublePawnMoveWithWhite the BoardLocation object representing the last double pawn move position for the white side
+     * @param lastDoublePawnMoveWithBlack the BoardLocation object representing the last double pawn move position for the black side
+     */
     public FenUtils(Piece[] pieces, BoardLocation whiteKingPosition, BoardLocation blackKingPosition, BoardLocation lastFromMove, BoardLocation lastDoublePawnMoveWithWhite, BoardLocation lastDoublePawnMoveWithBlack) {
         this.pieces = pieces;
         this.whiteKingPosition = whiteKingPosition;
@@ -28,10 +39,21 @@ public class FenUtils {
         this.lastDoublePawnMoveWithBlack = lastDoublePawnMoveWithBlack;
     }
 
+    /**
+     * Constructs a new FenUtils object with the given parameter.
+     *
+     * @param pieces the array of Piece objects representing the current state of the chessboard
+     */
     public FenUtils(Piece[] pieces) {
         this.pieces = pieces;
     }
 
+    /**
+     * Generates a chessboard position from the given FEN (Forsyth-Edwards Notation) string.
+     *
+     * @param fen the FEN string representing the chessboard position
+     * @return an array of Piece objects representing the chessboard position
+     */
     public Piece[] generatePositionFromFEN(String fen) {
         pieces = new Piece[8 * 8];
 
@@ -66,9 +88,24 @@ public class FenUtils {
 
         return pieces;
     }
+
+    /**
+     * Generates a FEN (Forsyth-Edwards Notation) string representation of the given chessboard position.
+     *
+     * @param pieces the array of Piece objects representing the chessboard position
+     * @return the FEN string representing the chessboard position
+     */
     public String generateFenFromPosition(Piece[] pieces) {
         return generateFenFromPosition(pieces, null);
     }
+
+    /**
+     * Generates a FEN (Forsyth-Edwards Notation) string from the given chessboard position.
+     *
+     * @param pieces the array of Piece objects representing the chessboard position
+     * @param turn the Team representing the active color
+     * @return a FEN string representing the chessboard position
+     */
     public String generateFenFromPosition(Piece[] pieces, Team turn) {
         StringBuilder fenBuilder = new StringBuilder();
 
@@ -122,6 +159,13 @@ public class FenUtils {
 
         return fenBuilder.toString();
     }
+
+    /**
+     * Checks for en passant in the given chessboard position and appends the en passant target square to the FEN string.
+     *
+     * @param fenBuilder the StringBuilder object to which the en passant target square will be appended
+     * @param activeColor the Team representing the active color in the chessboard position
+     */
     private void checkForEnPassant(StringBuilder fenBuilder, Team activeColor) {
         // En passant target square
         BoardLocation enPassantTarget = (activeColor == Team.BLACK) ? lastDoublePawnMoveWithBlack : lastDoublePawnMoveWithWhite;
@@ -141,6 +185,15 @@ public class FenUtils {
             fenBuilder.append(" -");
         }
     }
+
+    /**
+     * Retrieves the symbol of a piece based on its type and team.
+     *
+     * @param type the PieceType representing the type of the piece
+     * @param team the Team representing the team of the piece
+     * @return the symbol corresponding to the piece type and team
+     * @throws IllegalArgumentException if an invalid piece type is provided
+     */
     public char getSymbolFromPieceType(PieceType type, Team team) {
         HashMap<Character, PieceType> pieceTypeFromSymbol = getPieceTypeFromSymbol();
 
@@ -153,6 +206,11 @@ public class FenUtils {
         throw new IllegalArgumentException("Invalid piece type: " + type);
     }
 
+    /**
+     * Retrieves a mapping of symbols to piece types.
+     *
+     * @return a HashMap containing symbols as keys and PieceType as values
+     */
     public HashMap<Character, PieceType> getPieceTypeFromSymbol() {
         HashMap<Character, PieceType> pieceTypeFromSymbol = new HashMap<>();
         pieceTypeFromSymbol.put('k', PieceType.KING);
@@ -164,6 +222,12 @@ public class FenUtils {
         return pieceTypeFromSymbol;
     }
 
+    /**
+     * Retrieves the notation string from the integer coordinates of a BoardLocation.
+     *
+     * @param point the BoardLocation object containing the integer coordinates
+     * @return the notation string representing the BoardLocation
+     */
     private String getNotationFromIntPoint(BoardLocation point) {
         char file;
         char rank;
