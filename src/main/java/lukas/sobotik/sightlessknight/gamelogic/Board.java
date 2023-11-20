@@ -16,12 +16,12 @@ public class Board {
     BoardLocation lastFromLocation, lastToLocation;
     BoardLocation lastDoublePawnMoveWithWhitePieces, lastDoublePawnMoveWithBlackPieces;
 
-    public HasMovedHistory whiteKingMoves = new HasMovedHistory(false);
-    public HasMovedHistory whiteKingRookMoves = new HasMovedHistory(false);
-    public HasMovedHistory whiteQueenRookMoves = new HasMovedHistory(false);
-    public HasMovedHistory blackKingMoves = new HasMovedHistory(false);
-    public HasMovedHistory blackKingRookMoves = new HasMovedHistory(false);
-    public HasMovedHistory blackQueenRookMoves = new HasMovedHistory(false);
+    public MoveHistoryStack whiteKingMoves = new MoveHistoryStack(false);
+    public MoveHistoryStack whiteKingRookMoves = new MoveHistoryStack(false);
+    public MoveHistoryStack whiteQueenRookMoves = new MoveHistoryStack(false);
+    public MoveHistoryStack blackKingMoves = new MoveHistoryStack(false);
+    public MoveHistoryStack blackKingRookMoves = new MoveHistoryStack(false);
+    public MoveHistoryStack blackQueenRookMoves = new MoveHistoryStack(false);
 
     /**
      * Initializes a new instance of the Board class.
