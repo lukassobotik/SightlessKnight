@@ -42,6 +42,7 @@ public class PlayView extends VerticalLayout {
     BoardLocation targetSquare = null;
     BoardLocation startSquare = null;
     public boolean isTrainingMode = false;
+    Piece trainingPiece = null;
 
     Piece pieceForKinglessGames = null;
     HorizontalLayout gameContentLayout, targetSquareLayout, gameLayout;
@@ -53,14 +54,25 @@ public class PlayView extends VerticalLayout {
      * @param s the piece type to generate the game for ("knight")
      */
     public void generatePieceTrainingGame(String s) {
-        Piece[] pieces = new Piece[64];
+        Piece[] pieces;
+        Piece piece = null;
         switch (s) {
-            case "knight" -> {
-                pieces = generateKnightGame();
-            }
+            case "pawn" -> piece = new Piece(Team.WHITE, PieceType.PAWN);
+            case "knight" -> piece = new Piece(Team.WHITE, PieceType.KNIGHT);
+            case "bishop" -> piece = new Piece(Team.WHITE, PieceType.BISHOP);
+            case "rook" -> piece = new Piece(Team.WHITE, PieceType.ROOK);
+            case "queen" -> piece = new Piece(Team.WHITE, PieceType.QUEEN);
+            case "king" -> piece = new Piece(Team.WHITE, PieceType.KING);
         }
-        initialize(pieces, true);
-        showTargetSquare(startSquare.getAlgebraicNotationLocation() + " → " + targetSquare.getAlgebraicNotationLocation());
+
+        if (piece != null) {
+            trainingPiece = piece;
+            pieces = generatePieceTrainingGame(piece);
+            initialize(pieces, true);
+            showTargetSquare(startSquare.getAlgebraicNotationLocation()
+                                     + " → "
+                                     + targetSquare.getAlgebraicNotationLocation());
+        }
     }
 
     public PlayView() {
@@ -261,7 +273,7 @@ public class PlayView extends VerticalLayout {
      */
     private void managePieceMoveDrills() {
         if (targetSquare != null && Rules.isPieceOnSquare(pieceForKinglessGames, targetSquare, board)) {
-            generateKnightGame();
+            generatePieceTrainingGame(trainingPiece);
             createBoard(board.pieces);
             showTargetSquare(startSquare.getAlgebraicNotationLocation() + " → " + targetSquare.getAlgebraicNotationLocation());
         }
@@ -547,21 +559,25 @@ public class PlayView extends VerticalLayout {
      * Generate a chess game with a single knight piece.
      * @return An array of Piece objects representing the chess board.
      */
-    private Piece[] generateKnightGame() {
-        Piece piece = new Piece(Team.WHITE, PieceType.KNIGHT);
+    private Piece[] generatePieceTrainingGame(Piece piece) {
         pieceForKinglessGames = piece;
 
         Piece[] pieces = new Piece[64];
         fenUtils = new FenUtils(pieces);
 
-        int knightPos = new Random().nextInt(64);
-        pieces[knightPos] = piece;
+        int piecePos = new Random().nextInt(64);
+        pieces[piecePos] = piece;
 
         board = new Board(64, pieces, fenUtils);
         gameState = new GameState(board, fenUtils.getStartingTeam(), true);
-        startSquare = board.getPointFromArrayIndex(knightPos);
-        targetSquare = board.getPointFromArrayIndex(getRandomSquareWithinDistance(knightPos, 3));
-
+        startSquare = board.getPointFromArrayIndex(piecePos);
+        if (piece.type.equals(PieceType.KNIGHT)) {
+            targetSquare = board.getPointFromArrayIndex(getRandomSquareWithinDistance(piecePos, 3));
+        } else if (piece.type.equals(PieceType.PAWN)) {
+            targetSquare = board.getPointFromArrayIndex(getRandomSquareWithinDistance(piecePos, 2));
+        } else {
+            targetSquare = board.getPointFromArrayIndex(getRandomSquareWithinDistance(piecePos, 5));
+        }
         System.out.println(fenUtils.generateFenFromPosition(pieces));
         System.out.println(targetSquare.getAlgebraicNotationLocation());
         return pieces;

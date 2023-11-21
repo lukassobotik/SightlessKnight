@@ -7,6 +7,9 @@ import lombok.Setter;
 import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
 import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 
+/**
+ * Represents a chess piece.
+ */
 @Builder (toBuilder = true)
 public class Piece {
 	public Team team;
@@ -19,17 +22,42 @@ public class Piece {
 	public String castling = null;
 	public PieceType promotion = null;
 
+	/**
+	 * Creates a new Instance of the Piece class with the given team and type.
+	 *
+	 * @param team The team of the piece.
+	 * @param type The type of the piece.
+	 */
 	public Piece(Team team, PieceType type) {
 		this.team = team;
 		this.type = type;
 	}
 
+	/**
+	 * Creates a new Instance of the Piece class with the given team, type, and double pawn move number.
+	 *
+	 * @param team The team of the piece.
+	 * @param type The type of the piece.
+	 * @param doublePawnMoveOnMoveNumber The move number on which the double pawn move was made.
+	 */
 	public Piece(Team team, PieceType type, int doublePawnMoveOnMoveNumber) {
 		this.team = team;
 		this.type = type;
 		this.doublePawnMoveOnMoveNumber = doublePawnMoveOnMoveNumber;
 	}
 
+	/**
+	 * Creates a new Instance of the Piece class with the given team, type, double pawn move number,
+	 * has moved status, en passant status, castling status, and promotion type.
+	 *
+	 * @param team The team of the piece.
+	 * @param type The type of the piece.
+	 * @param doublePawnMoveOnMoveNumber The move number on which the double pawn move was made.
+	 * @param hasMoved Indicates whether the piece has moved or not.
+	 * @param enPassant Indicates whether the piece is eligible for en passant capture or not.
+	 * @param castling The castling status of the piece.
+	 * @param promotion The type of piece to which the current piece can be promoted.
+	 */
 	public Piece (Team team, PieceType type, int doublePawnMoveOnMoveNumber, boolean hasMoved, boolean enPassant, String castling, PieceType promotion) {
 		this.team = team;
 		this.type = type;
