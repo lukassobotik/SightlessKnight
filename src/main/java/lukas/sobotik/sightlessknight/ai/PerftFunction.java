@@ -23,6 +23,13 @@ public class PerftFunction {
     Board board;
     GameState gameState;
     PlayView view;
+    /**
+     * Constructs a PerftFunction object.
+     *
+     * @param board the Board object representing the current state of the chessboard
+     * @param gameState the GameState object representing the current state of the game
+     * @param view the PlayView object representing the view of the game
+     */
     public PerftFunction(Board board, GameState gameState, PlayView view) {
         this.board = board;
         this.gameState = gameState;
