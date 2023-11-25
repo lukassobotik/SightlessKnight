@@ -28,9 +28,9 @@ public class TrainingView extends VerticalLayout implements HasUrlParameter<Stri
         if (s == null) {
             initializeEmptyView();
         } else {
-            var playView = new PlayView();
+            var playView = new PlayView(s);
             playView.isTrainingMode = true;
-            playView.generatePieceTrainingGame(s);
+            removeAll();
             add(playView);
         }
     }
@@ -43,9 +43,10 @@ public class TrainingView extends VerticalLayout implements HasUrlParameter<Stri
      * Initializes an empty view with buttons for selecting chess pieces.
      */
     public void initializeEmptyView() {
+        removeAll();
         add(new H1("Train Piece Moves"));
 
-        String[] pieces = { "Pawn", "Rook", "Knight", "Bishop", "Queen", "King" };
+        String[] pieces = { "Rook", "Knight", "Bishop", "Queen", "King" };
         HorizontalLayout layout = new HorizontalLayout();
 
         for (String piece : pieces) {

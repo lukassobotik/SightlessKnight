@@ -19,4 +19,9 @@ public class HomeView extends VerticalLayout {
 
         add(practiceMoves, knightButton);
     }
+
+    public void reload() {
+        removeAll();
+        add(new HomeView());
+    }
 }

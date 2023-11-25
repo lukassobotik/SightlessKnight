@@ -3,6 +3,7 @@ package lukas.sobotik.sightlessknight.views.play;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Image;
@@ -24,6 +25,7 @@ import lukas.sobotik.sightlessknight.gamelogic.Piece;
 import lukas.sobotik.sightlessknight.gamelogic.Rules;
 import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
 import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
+import lukas.sobotik.sightlessknight.views.HomeView;
 import lukas.sobotik.sightlessknight.views.MainLayout;
 
 import java.util.List;
@@ -57,7 +59,6 @@ public class PlayView extends VerticalLayout {
         Piece[] pieces;
         Piece piece = null;
         switch (s) {
-            case "pawn" -> piece = new Piece(Team.WHITE, PieceType.PAWN);
             case "knight" -> piece = new Piece(Team.WHITE, PieceType.KNIGHT);
             case "bishop" -> piece = new Piece(Team.WHITE, PieceType.BISHOP);
             case "rook" -> piece = new Piece(Team.WHITE, PieceType.ROOK);
@@ -72,11 +73,18 @@ public class PlayView extends VerticalLayout {
             showTargetSquare(startSquare.getAlgebraicNotationLocation()
                                      + " → "
                                      + targetSquare.getAlgebraicNotationLocation());
+        } else {
+            Notification.show("Invalid URL");
+            UI.getCurrent().navigate(HomeView.class).ifPresent(HomeView::reload);
         }
     }
 
     public PlayView() {
         initialize();
+    }
+
+    public PlayView(String s) {
+        generatePieceTrainingGame(s);
     }
 
     /**
@@ -572,11 +580,11 @@ public class PlayView extends VerticalLayout {
         gameState = new GameState(board, fenUtils.getStartingTeam(), true);
         startSquare = board.getPointFromArrayIndex(piecePos);
         if (piece.type.equals(PieceType.KNIGHT)) {
-            targetSquare = board.getPointFromArrayIndex(getRandomSquareWithinDistance(piecePos, 3));
-        } else if (piece.type.equals(PieceType.PAWN)) {
-            targetSquare = board.getPointFromArrayIndex(getRandomSquareWithinDistance(piecePos, 2));
+            targetSquare = board.getPointFromArrayIndex(getRandomSquareWithinDistance(piecePos, 3, false));
+        } else if (piece.type.equals(PieceType.BISHOP)) {
+            targetSquare = board.getPointFromArrayIndex(getRandomSquareWithinDistance(piecePos, 5, true));
         } else {
-            targetSquare = board.getPointFromArrayIndex(getRandomSquareWithinDistance(piecePos, 5));
+            targetSquare = board.getPointFromArrayIndex(getRandomSquareWithinDistance(piecePos, 5, false));
         }
         System.out.println(fenUtils.generateFenFromPosition(pieces));
         System.out.println(targetSquare.getAlgebraicNotationLocation());
@@ -606,9 +614,11 @@ public class PlayView extends VerticalLayout {
      * @param distance The maximum distance from the given square.
      * @return A random square within the given distance from the given square.
      */
-    public static int getRandomSquareWithinDistance(int square, int distance) {
+    public static int getRandomSquareWithinDistance(int square, int distance, boolean isBishop) {
         Random random = new Random();
         int targetSquare;
+        var isDarkSquare = (square / 8 + square % 8) % 2 != 0;
+
         do {
             int file = square % 8;
             int rank = square / 8;
@@ -619,9 +629,13 @@ public class PlayView extends VerticalLayout {
             int maxRank = Math.min(7, rank + distance);
 
             int randomFile = random.nextInt(maxFile - minFile + 1) + minFile;
-            int randomRank = random.nextInt(maxRank - minRank + 1) + minRank;
+            int randomRank;
 
-            targetSquare = randomRank * 8 + randomFile;
+            do {
+                randomRank = random.nextInt(maxRank - minRank + 1) + minRank;
+                targetSquare = randomRank * 8 + randomFile;
+            } while (isBishop && ((targetSquare / 8 + targetSquare % 8) % 2 == 0) == isDarkSquare);
+
         } while (targetSquare == square);
 
         return targetSquare;
