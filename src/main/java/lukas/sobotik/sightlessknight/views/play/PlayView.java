@@ -79,10 +79,18 @@ public class PlayView extends VerticalLayout {
         }
     }
 
+    /**
+     * Creates a new instance of the PlayView class.
+     */
     public PlayView() {
         initialize();
     }
 
+    /**
+     * Creates a new instance of the PlayView class with a specified input string.
+     *
+     * @param s the input string used to generate a piece training game.
+     */
     public PlayView(String s) {
         generatePieceTrainingGame(s);
     }
