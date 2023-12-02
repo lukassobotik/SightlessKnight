@@ -5,6 +5,7 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
@@ -50,6 +51,8 @@ public class PlayView extends VerticalLayout {
     HorizontalLayout gameContentLayout, targetSquareLayout, gameLayout;
     VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout, quickSettingsLayout;
     public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+    public boolean showPieces = true;
 
     /**
      * Generates a piece training game based on the given piece type.
@@ -231,6 +234,44 @@ public class PlayView extends VerticalLayout {
 
         quickSettingsLayout.add(boardSizeLayout);
         quickSettingsLayout.add(progressBar);
+
+        var showPiecesButton = new Checkbox("Show Pieces");
+        showPiecesButton.setValue(true);
+        showPiecesButton.addValueChangeListener(valueChangeEvent -> {
+            if (valueChangeEvent.getValue()) {
+                showPieces(true);
+            } else {
+                showPieces(false);
+            }
+        });
+
+        var showBoardButton = new Checkbox("Show Board");
+        showBoardButton.setValue(true);
+        showBoardButton.addValueChangeListener(valueChangeEvent -> {
+            if (valueChangeEvent.getValue()) {
+                gameLayout.setVisible(true);
+                showPiecesButton.setEnabled(true);
+                boardSizeLayout.setEnabled(true);
+            } else {
+                gameLayout.setVisible(false);
+                showPiecesButton.setEnabled(false);
+                boardSizeLayout.setEnabled(false);
+            }
+        });
+
+        quickSettingsLayout.add(showBoardButton);
+        quickSettingsLayout.add(showPiecesButton);
+    }
+
+    public void showPieces(boolean show) {
+        showPieces = show;
+        gameLayout.getChildren().forEach(component -> component.getChildren().forEach(componentRow -> {
+            componentRow.getChildren().forEach(componentSquare -> {
+                componentSquare.getChildren().forEach(componentImage -> {
+                    componentImage.setVisible(show);
+                });
+            });
+        }));
     }
 
     /**
@@ -485,6 +526,7 @@ public class PlayView extends VerticalLayout {
                     cellValue = String.valueOf(fenUtils.getSymbolFromPieceType(piece.type, piece.team));
                     Image image = new Image(getChessPieceUrl(cellValue), cellValue);
                     image.addClassName("square_image");
+                    image.setVisible(showPieces);
                     square.add(image);
                 }
 
