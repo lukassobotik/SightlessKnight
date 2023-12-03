@@ -7,6 +7,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.notification.Notification;
@@ -53,6 +54,7 @@ public class PlayView extends VerticalLayout {
     public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     public boolean showPieces = true;
+    public boolean showBoard = true;
 
     /**
      * Generates a piece training game based on the given piece type.
@@ -191,49 +193,17 @@ public class PlayView extends VerticalLayout {
         boardSizeLayout.getStyle().set("position", "relative");
         boardSizeLayout.getStyle().set("display", "flex");
         boardSizeLayout.getStyle().set("align-items", "center");
-        var boardSizeSettingText = new Text("Board Size: ");
+        var boardSizeSettingText = new Div();
+        boardSizeSettingText.setText("Board Size: ");
+        boardSizeSettingText.addClassName("board_size_setting_label");
         boardSizeLayout.add(boardSizeSettingText);
 
         CustomProgressBar progressBar = new CustomProgressBar();
+        progressBar.setLabelQuery(".board_size_setting_label");
         progressBar.setValue(1);
 
-        var progressBarCode = "const container = document.querySelector('.progress-container');"
-                            + "const bar = document.querySelector('.progress-bar');"
-                            + "const boardSizeNumber = document.querySelector('.board_size_number');"
-                            + "const gameLayout = document.querySelector('.game_layout');"
-                            + "let isDragging = false;"
-
-                            + "const getNumericValue = (value) => parseFloat(value.match(/(\\d+(\\.\\d+)?)|(\\.\\d+)/)[0]);"
-                            + "const minAllowedWidth = getNumericValue(getComputedStyle(gameLayout).getPropertyValue('min-width'));"
-                            + "const maxAllowedWidth = getNumericValue(getComputedStyle(gameLayout).getPropertyValue" + "('max-width'));"
-
-                            + "container?.addEventListener('mousedown', (e) => {"
-                            + "  isDragging = true;"
-                            + "});"
-
-                            + "document.addEventListener('mousemove', (e) => {"
-                            + "  if (isDragging) {"
-                            + "      const rect = container.getBoundingClientRect();"
-                            + "      const w = (e.clientX - rect.left) / rect.width * 100;"
-                            + "      console.log(w, e.clientX, minAllowedWidth, maxAllowedWidth, (minAllowedWidth + (w * 0.01 * (maxAllowedWidth - minAllowedWidth))).toFixed(2));"
-                            + "      let percent = Math.min(100, Math.max(0, w));"
-
-                            + "      const mappedWidth = (minAllowedWidth + (w * 0.01 * (maxAllowedWidth - minAllowedWidth))).toFixed(2) + 'px';"
-
-                            + "      bar.style.width = `${percent}%`;"
-                            + "      gameLayout.style.width = mappedWidth;"
-                            + "      boardSizeNumber.innerHTML = `${Math.floor(percent)}%`;"
-                            + "  }"
-                            + "});"
-
-                            + "document.addEventListener('mouseup', () => {"
-                            + "  isDragging = false;"
-                            + "});";
-        progressBar.getElement().executeJs(progressBarCode);
+        progressBar.getElement().executeJs(getProgressBarCode());
         boardSizeLayout.add(progressBar);
-
-        quickSettingsLayout.add(boardSizeLayout);
-        quickSettingsLayout.add(progressBar);
 
         var showPiecesButton = new Checkbox("Show Pieces");
         showPiecesButton.setValue(true);
@@ -249,18 +219,57 @@ public class PlayView extends VerticalLayout {
         showBoardButton.setValue(true);
         showBoardButton.addValueChangeListener(valueChangeEvent -> {
             if (valueChangeEvent.getValue()) {
-                gameLayout.setVisible(true);
+                showBoard(true);
                 showPiecesButton.setEnabled(true);
-                boardSizeLayout.setEnabled(true);
+                progressBar.setDisabled(false);
             } else {
-                gameLayout.setVisible(false);
+                showBoard(false);
                 showPiecesButton.setEnabled(false);
-                boardSizeLayout.setEnabled(false);
+                progressBar.setDisabled(true);
             }
         });
 
         quickSettingsLayout.add(showBoardButton);
         quickSettingsLayout.add(showPiecesButton);
+
+        quickSettingsLayout.add(boardSizeLayout);
+        quickSettingsLayout.add(progressBar);
+    }
+
+    public String getProgressBarCode() {
+        return    "const container = document.querySelector('.progress-container');"
+                + "const bar = document.querySelector('.progress-bar');"
+                + "const boardSizeNumber = document.querySelector('.board_size_number');"
+                + "const gameLayout = document.querySelector('.game_layout');"
+                + "let isDragging = false;"
+
+                + "const getNumericValue = (value) => parseFloat(value.match(/(\\d+(\\.\\d+)?)|(\\.\\d+)/)[0]);"
+                + "const minAllowedWidth = getNumericValue(getComputedStyle(gameLayout).getPropertyValue('min-width'));"
+                + "const maxAllowedWidth = getNumericValue(getComputedStyle(gameLayout).getPropertyValue" + "('max-width'));"
+
+                + "container?.addEventListener('mousedown', (e) => {"
+                + "  isDragging = true;"
+                + "});"
+
+                + "document.addEventListener('mousemove', (e) => {"
+                + "  if (isDragging) {"
+                + "      const rect = container.getBoundingClientRect();"
+                + "      const w = (e.clientX - rect.left) / rect.width * 100;"
+                + "      console.log(w, e.clientX, minAllowedWidth, maxAllowedWidth, (minAllowedWidth + (w * 0.01 * (maxAllowedWidth - minAllowedWidth))).toFixed(2));"
+                + "      let percent = Math.min(100, Math.max(0, w));"
+
+                + "      const mappedWidth = (minAllowedWidth + (w * 0.01 * (maxAllowedWidth - minAllowedWidth))).toFixed(2) + 'px';"
+                + "      if (container.style.opacity === '1') {"
+                + "         bar.style.width = `${percent}%`;"
+                + "         gameLayout.style.width = mappedWidth;"
+                + "         boardSizeNumber.innerHTML = `${Math.floor(percent)}%`;"
+                + "      }"
+                + "  }"
+                + "});"
+
+                + "document.addEventListener('mouseup', () => {"
+                + "  isDragging = false;"
+                + "});";
     }
 
     public void showPieces(boolean show) {
@@ -270,6 +279,15 @@ public class PlayView extends VerticalLayout {
                 componentSquare.getChildren().forEach(componentImage -> {
                     componentImage.setVisible(show);
                 });
+            });
+        }));
+    }
+
+    public void showBoard(boolean show) {
+        showBoard = show;
+        gameLayout.getChildren().forEach(component -> component.getChildren().forEach(componentRow -> {
+            componentRow.getChildren().forEach(componentSquare -> {
+                componentSquare.setVisible(show);
             });
         }));
     }
@@ -474,6 +492,7 @@ public class PlayView extends VerticalLayout {
                 String cellValue;
                 VerticalLayout square = new VerticalLayout();
                 square.addClassName("square");
+                square.setVisible(showBoard);
 
                 if ((rank + file) % 2 == 0) {
                     square.addClassName("dark_square");

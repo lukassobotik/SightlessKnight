@@ -15,6 +15,10 @@ public class CustomProgressBar extends HorizontalLayout {
     private Div progressBar;
     private Paragraph boardSizeNumber;
     private double value;
+    private boolean isDisabled;
+    private String labelQuery;
+
+    private final String DISABLED_OPACITY = "0.25";
 
     /**
      * Constructs a new CustomProgressBar.
@@ -30,6 +34,7 @@ public class CustomProgressBar extends HorizontalLayout {
         progressBarContainer = new Div();
         progressBarContainer.setClassName("progress-container");
         progressBarContainer.getStyle().set("position", "relative");
+        progressBarContainer.getStyle().set("opacity", "1");
         progressBar = new Div();
         progressBar.setClassName("progress-bar");
 
@@ -43,14 +48,50 @@ public class CustomProgressBar extends HorizontalLayout {
     }
 
     /**
+     * Sets the CSS query for the Custom Label above CustomProgressBar
+     *
+     * @param labelQuery the label query to set
+     */
+    public void setLabelQuery(String labelQuery) {
+        this.labelQuery = labelQuery;
+    }
+
+    /**
+     * Sets the disabled state of the component.
+     *
+     * @param isDisabled true if the component should be disabled, false otherwise
+     */
+    public void setDisabled(boolean isDisabled) {
+        this.isDisabled = isDisabled;
+        if (isDisabled) {
+            progressBarContainer.getStyle().set("opacity", DISABLED_OPACITY);
+            boardSizeNumber.getStyle().set("opacity", DISABLED_OPACITY);
+            if (labelQuery != null) {
+                this.getElement().executeJs("document.querySelector('" + labelQuery + "').style.opacity = '" + DISABLED_OPACITY + "';");
+            }
+            progressBarContainer.getStyle().set("cursor", "initial");
+        } else {
+            progressBarContainer.getStyle().set("opacity", "1");
+            boardSizeNumber.getStyle().set("opacity", "1");
+            if (labelQuery != null) {
+                this.getElement().executeJs("document.querySelector('" + labelQuery + "').style.opacity = '1';");
+            }
+            progressBarContainer.getStyle().set("cursor", "pointer");
+        }
+    }
+
+    /**
      * Sets the value of the progress bar.
      * The value represents the progress amount of the progress bar.
      *
      * @param value the value to set for the progress bar
      */
     public void setValue(double value) {
-        this.value = value;
+        if (isDisabled) {
+            return;
+        }
 
+        this.value = value;
         updateProgressBar();
     }
 

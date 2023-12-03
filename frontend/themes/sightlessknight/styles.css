@@ -150,6 +150,7 @@
     overflow: hidden;
     border-radius: 2rem;
     border: .15rem solid #0b131c;
+    opacity: 1;
 }
 
 .progress-bar {
