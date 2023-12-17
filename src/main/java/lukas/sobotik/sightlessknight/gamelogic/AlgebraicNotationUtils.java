@@ -13,6 +13,7 @@ public class AlgebraicNotationUtils {
     FenUtils fenUtils;
     Board board;
     GameState gameState;
+    static boolean kinglessGame = false;
 
     /**
      * Initializes the AlgebraicNotationUtils with the given parameters.
@@ -53,6 +54,15 @@ public class AlgebraicNotationUtils {
         this.fenUtils = fenUtils;
         this.gameState = gameState;
         this.board = board;
+    }
+
+    /**
+     * Set the kinglessGame variable to the specified value.
+     *
+     * @param kinglessGame the new value to be assigned to kinglessGame
+     */
+    public void setKinglessGame(boolean kinglessGame) {
+        this.kinglessGame = kinglessGame;
     }
 
     /**
@@ -107,12 +117,16 @@ public class AlgebraicNotationUtils {
             }
         }
 
-        if (Rules.isCheckmate(opponentTeam, board)) {
+        if (!kinglessGame) {
+            System.out.println();
+        }
+
+        if (Rules.isCheckmate(opponentTeam, board) && !kinglessGame) {
             algebraicNotationMove += "#";
             return algebraicNotationMove;
         }
 
-        if (Rules.isKingInCheck(opponentTeam, board)) {
+        if (Rules.isKingInCheck(opponentTeam, board) && !kinglessGame) {
             algebraicNotationMove += "+";
         }
 

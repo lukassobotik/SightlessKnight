@@ -122,6 +122,7 @@ public class PlayView extends VerticalLayout {
 
         gameState = new GameState(board, fenUtils.getStartingTeam(), kinglessGame);
         algebraicNotationUtils = new AlgebraicNotationUtils(fenUtils, gameState, board);
+        algebraicNotationUtils.setKinglessGame(kinglessGame);
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         horizontalLayout.setClassName("text_field_layout");
