@@ -28,10 +28,10 @@ html {
     display: flex;
     padding: 0;
     aspect-ratio: 1/1;
-    min-width: 20vw;
-    min-height: 20vw;
-    max-width: 40vw;
-    max-height: 40vw;
+    min-width: 40vh;
+    min-height: 40vh;
+    max-width: 90vh;
+    max-height: 90vh;
     width: 100vw;
     height: fit-content;
     flex-shrink: 0;
@@ -91,6 +91,8 @@ html {
     height: 100%;
     width: auto;
     position: relative;
+    display: flex;
+    justify-content: center;
 }
 
 .game_info_layout {
@@ -118,6 +120,7 @@ html {
     scrollbar-width: none;
     background: var(--lumo-dark-color);
     border-radius: var(--lumo-border-radius-m);
+    max-width: 25vw;
 }
 
 .game_content_layout_child::-webkit-scrollbar {

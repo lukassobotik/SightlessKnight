@@ -5,11 +5,13 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -51,10 +53,12 @@ public class PlayView extends VerticalLayout {
     Piece pieceForKinglessGames = null;
     HorizontalLayout gameContentLayout, targetSquareLayout, gameLayout;
     VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout, quickSettingsLayout;
+    Dialog quickSettingsDialog;
     public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     public boolean showPieces = true;
     public boolean showBoard = true;
+    public static CustomProgressBar boardWidthProgressBar;
 
     /**
      * Generates a piece training game based on the given piece type.
@@ -150,15 +154,22 @@ public class PlayView extends VerticalLayout {
         gameContentLayout.addClassName("game_content_layout");
 
         quickSettingsLayout = new VerticalLayout();
-        quickSettingsLayout.setWidth("50%");
+        quickSettingsLayout.setWidth("100%");
         quickSettingsLayout.addClassName("game_content_layout_child");
-        gameContentLayout.add(quickSettingsLayout);
 
+        quickSettingsDialog = new Dialog();
+        quickSettingsDialog.setHeaderTitle("Quick Settings");
+        quickSettingsDialog.setWidth("25%");
+        Button closeButton = new Button(new Icon("lumo", "cross"),
+                                        (e) -> quickSettingsDialog.close());
+        closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        quickSettingsDialog.getHeader().add(closeButton);
+
+        quickSettingsDialog.add(quickSettingsLayout);
 
         gameContentLayout.setHeightFull();
         gameContentLayout.setWidthFull();
         add(gameContentLayout);
-        getStyle().set("position", "relative");
 
         gameLayout = new HorizontalLayout();
         gameLayout.setClassName("game_layout");
@@ -168,7 +179,7 @@ public class PlayView extends VerticalLayout {
         gameContentLayout.add(gameLayout);
 
         gameInfoLayout = new VerticalLayout();
-        gameInfoLayout.setWidth("50%");
+        gameInfoLayout.setWidth("25%");
         gameInfoLayout.addClassName("game_content_layout_child");
         gameInfoLayout.addClassName("game_info_layout");
 
@@ -185,9 +196,21 @@ public class PlayView extends VerticalLayout {
 
         gameInfoLayout.add(algebraicNotationHistoryLayout);
 
+        var gameInfoLayoutBottomLayout = new VerticalLayout();
         horizontalLayout.add(textField, button);
+        horizontalLayout.getStyle().set("width", "100%");
+        horizontalLayout.getStyle().set("height", "100%");
         horizontalLayout.addClassName("game_info_layout_child");
-        gameInfoLayout.add(horizontalLayout);
+        gameInfoLayoutBottomLayout.add(horizontalLayout);
+        gameInfoLayoutBottomLayout.getStyle().set("display", "flex");
+
+        var settingsButton = new Button(new Icon("lumo", "cog"), (e) -> quickSettingsDialog.open());
+        var gameInfoLayoutBottomButtonsLayout = new HorizontalLayout();
+        gameInfoLayoutBottomButtonsLayout.add(settingsButton);
+        gameInfoLayoutBottomButtonsLayout.getStyle().set("margin-left", "auto");
+
+        gameInfoLayoutBottomLayout.add(gameInfoLayoutBottomButtonsLayout);
+        gameInfoLayout.add(gameInfoLayoutBottomLayout);
 
         gameContentLayout.add(gameInfoLayout);
         createGameSettings();
@@ -204,12 +227,12 @@ public class PlayView extends VerticalLayout {
         boardSizeSettingText.addClassName("board_size_setting_label");
         boardSizeLayout.add(boardSizeSettingText);
 
-        CustomProgressBar progressBar = new CustomProgressBar();
-        progressBar.setLabelQuery(".board_size_setting_label");
-        progressBar.setValue(1);
+        boardWidthProgressBar = new CustomProgressBar();
+        boardWidthProgressBar.setLabelQuery(".board_size_setting_label");
+        boardWidthProgressBar.setValue(1);
 
-        progressBar.getElement().executeJs(getProgressBarCode());
-        boardSizeLayout.add(progressBar);
+        boardWidthProgressBar.getElement().executeJs(getProgressBarCode());
+        boardSizeLayout.add(boardWidthProgressBar);
 
         var showPiecesButton = new Checkbox("Show Pieces");
         showPiecesButton.setValue(true);
@@ -227,11 +250,11 @@ public class PlayView extends VerticalLayout {
             if (valueChangeEvent.getValue()) {
                 showBoard(true);
                 showPiecesButton.setEnabled(true);
-                progressBar.setDisabled(false);
+                boardWidthProgressBar.setDisabled(false);
             } else {
                 showBoard(false);
                 showPiecesButton.setEnabled(false);
-                progressBar.setDisabled(true);
+                boardWidthProgressBar.setDisabled(true);
             }
         });
 
@@ -239,7 +262,7 @@ public class PlayView extends VerticalLayout {
         quickSettingsLayout.add(showPiecesButton);
 
         quickSettingsLayout.add(boardSizeLayout);
-        quickSettingsLayout.add(progressBar);
+        quickSettingsLayout.add(boardWidthProgressBar);
     }
 
     public String getProgressBarCode() {

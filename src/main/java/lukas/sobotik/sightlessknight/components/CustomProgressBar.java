@@ -14,7 +14,7 @@ public class CustomProgressBar extends HorizontalLayout {
     private Div progressBarContainer;
     private Div progressBar;
     private Paragraph boardSizeNumber;
-    private double value;
+    private static double value;
     private boolean isDisabled;
     private String labelQuery;
 
