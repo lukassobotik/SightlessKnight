@@ -62,7 +62,7 @@ public class AlgebraicNotationUtils {
      * @param kinglessGame the new value to be assigned to kinglessGame
      */
     public void setKinglessGame(boolean kinglessGame) {
-        this.kinglessGame = kinglessGame;
+        AlgebraicNotationUtils.kinglessGame = kinglessGame;
     }
 
     /**
@@ -183,6 +183,12 @@ public class AlgebraicNotationUtils {
                 moveBuilder.append(fromAlgebraicNotation.charAt(1));
             } else if (otherPiecePoint.isOnSameRankAs(from)) {
                 moveBuilder.append(fromAlgebraicNotation.charAt(0));
+            } else if (otherPiecePoint.isOnSameDiagonalAs(to)) {
+                moveBuilder.append(fromAlgebraicNotation);
+            } else if (otherPiecePoint.isOnSameFileAs(to)) {
+                moveBuilder.append(fromAlgebraicNotation.charAt(1));
+            } else if (otherPiecePoint.isOnSameRankAs(to)) {
+                moveBuilder.append(fromAlgebraicNotation.charAt(0));
             }
 
             if (capturedPiece != null) {
@@ -251,7 +257,7 @@ public class AlgebraicNotationUtils {
             }
         }
 
-        PieceType movedPieceType = null;
+        PieceType movedPieceType;
         if (Character.isUpperCase(parsedMove.charAt(0))) {
             movedPieceType = new FenUtils(board.pieces)
                     .getPieceTypeFromSymbol()
