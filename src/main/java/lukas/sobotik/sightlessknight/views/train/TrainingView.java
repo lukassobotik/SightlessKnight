@@ -30,13 +30,16 @@ public class TrainingView extends VerticalLayout implements HasUrlParameter<Stri
         } else {
             var playView = new PlayView(s);
             playView.isTrainingMode = true;
+            playView.getStyle().set("padding", "0");
             removeAll();
             add(playView);
         }
     }
 
     public TrainingView() {
-
+        setClassName("train-view");
+        getStyle().set("height", "100%");
+        getStyle().set("position", "relative");
     }
 
     /**

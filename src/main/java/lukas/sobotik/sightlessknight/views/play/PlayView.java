@@ -158,6 +158,7 @@ public class PlayView extends VerticalLayout {
         gameContentLayout.setHeightFull();
         gameContentLayout.setWidthFull();
         add(gameContentLayout);
+        getStyle().set("position", "relative");
 
         gameLayout = new HorizontalLayout();
         gameLayout.setClassName("game_layout");
@@ -168,20 +169,24 @@ public class PlayView extends VerticalLayout {
 
         gameInfoLayout = new VerticalLayout();
         gameInfoLayout.setWidth("50%");
-        gameInfoLayout.setClassName("game_content_layout_child");
+        gameInfoLayout.addClassName("game_content_layout_child");
+        gameInfoLayout.addClassName("game_info_layout");
 
         targetSquareLayout = new HorizontalLayout();
         targetSquareLayout.setVisible(false);
         targetSquareLayout.setWidthFull();
         targetSquareLayout.setAlignItems(Alignment.CENTER);
+        targetSquareLayout.addClassName("game_info_layout_child");
         gameInfoLayout.add(targetSquareLayout);
 
         algebraicNotationHistoryLayout = new VerticalLayout();
         algebraicNotationHistoryLayout.addClassName("move_history");
+        algebraicNotationHistoryLayout.addClassName("game_info_layout_child");
 
         gameInfoLayout.add(algebraicNotationHistoryLayout);
 
         horizontalLayout.add(textField, button);
+        horizontalLayout.addClassName("game_info_layout_child");
         gameInfoLayout.add(horizontalLayout);
 
         gameContentLayout.add(gameInfoLayout);
@@ -416,9 +421,15 @@ public class PlayView extends VerticalLayout {
             }
             blackMove.addClassName("algebraic_history_item");
 
-            HorizontalLayout moveLayout = new HorizontalLayout();
-            moveLayout.add(whiteMove, blackMove);
-            moveLayout.setWidth("auto");
+            HorizontalLayout moveText = new HorizontalLayout();
+            whiteMove.getStyle().set("margin-right", "2em");
+            moveText.add(whiteMove, blackMove);
+            moveText.setWidth("auto");
+
+            var moveLayout = new HorizontalLayout();
+            moveLayout.addClassName("move_layout");
+            moveLayout.add((i / 2 + 1) + ". ");
+            moveLayout.add(moveText);
 
             algebraicNotationHistoryLayout.add(moveLayout);
             algebraicNotationHistoryLayout.getElement().executeJs("this.scrollTop = this.scrollHeight");

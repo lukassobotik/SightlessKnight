@@ -1,12 +1,14 @@
-@import url('./main-layout.css'); html {
-  --lumo-border-radius-s: calc(var(--lumo-size-m) / 6);
-  --lumo-border-radius-m: calc(var(--lumo-size-m) / 2);
-  --lumo-border-radius-l: var(--lumo-size-m);
+@import url('./main-layout.css');
+
+html {
+    --lumo-border-radius-s: calc(var(--lumo-size-m) / 6);
+    --lumo-border-radius-m: calc(var(--lumo-size-m) / 2);
+    --lumo-border-radius-l: var(--lumo-size-m);
 }
 
 [theme~="dark"] {
-  --lumo-base-color: hsl(214, 22%, 13%);
-
+    --lumo-base-color: hsl(214, 22%, 13%);
+    --lumo-dark-color: hsl(214, 22%, 11%);
 }
 
 .board {
@@ -86,14 +88,36 @@
 }
 
 .game_content_layout {
-    height: 80vh;
+    height: 100%;
     width: auto;
+    position: relative;
+}
+
+.game_info_layout {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.game_info_layout_child:nth-child(1) {
+    height: 10%;
+    flex-grow: 0;
+}
+.game_info_layout_child:nth-child(2) {
+    height: 80%;
+    flex-grow: 1;
+}
+.game_info_layout_child:nth-child(3) {
+    height: 10%;
+    flex-grow: 0;
 }
 
 .game_content_layout_child {
-    height: auto;
+    height: 100%;
     flex-grow: 1;
     scrollbar-width: none;
+    background: var(--lumo-dark-color);
+    border-radius: var(--lumo-border-radius-m);
 }
 
 .game_content_layout_child::-webkit-scrollbar {
@@ -103,7 +127,8 @@
 .target_square {
     text-align: center;
     padding: 1rem;
-    margin-top: -.5rem;
+    margin-top: 0;
+    margin-bottom: 0;
     color: #90bdf9;
     background: #1a2a41;
     border-radius: .5rem;
@@ -111,10 +136,17 @@
     font-size: 2rem;
 }
 
+.algebraic_history_item {
+    padding: 0;
+    margin: 0;
+    font-weight: bold;
+}
+
 .move_history {
     height: 50vh;
     overflow: scroll;
     scrollbar-width: none;
+    padding: 0.5rem;
 }
 .move_history::-webkit-scrollbar {
     display: none;

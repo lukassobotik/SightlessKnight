@@ -1,5 +1,8 @@
-vaadin-scroller[slot="drawer"] {
+@import "styles.css"
+
+vaadin-scroller;[slot="drawer"] {
   padding: var(--lumo-space-s);
+  background: var(--lumo-dark-color);
 }
 
 [slot="drawer"]:is(header, footer) {
@@ -9,8 +12,10 @@ vaadin-scroller[slot="drawer"] {
   padding: var(--lumo-space-s) var(--lumo-space-m);
   min-height: var(--lumo-size-xl);
   box-sizing: border-box;
+  background: var(--lumo-dark-color);
 }
 
 [slot="drawer"]:is(header, footer):is(:empty) {
   display: none;
+  background: var(--lumo-dark-color);
 }
