@@ -33,6 +33,22 @@ public class Piece {
 		this.type = type;
 	}
 
+    /**
+     * Copy constructor for the Piece class.
+     * Creates a new Piece object by copying the properties of the given Piece object.
+     *
+     * @param copyPiece The Piece object to be copied.
+     */
+    public Piece(Piece copyPiece) {
+        this.team = copyPiece.team;
+        this.type = copyPiece.type;
+        this.doublePawnMoveOnMoveNumber = copyPiece.doublePawnMoveOnMoveNumber;
+        this.hasMoved = copyPiece.hasMoved;
+        this.enPassant = copyPiece.enPassant;
+        this.castling = copyPiece.castling;
+        this.promotion = copyPiece.promotion;
+    }
+
 	/**
 	 * Creates a new Instance of the Piece class with the given team, type, and double pawn move number.
 	 *

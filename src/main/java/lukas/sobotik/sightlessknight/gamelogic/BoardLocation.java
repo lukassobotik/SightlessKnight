@@ -16,6 +16,11 @@ public class BoardLocation {
         this.y = y;
     }
 
+    public BoardLocation(BoardLocation other) {
+        this.x = other.x;
+        this.y = other.y;
+    }
+
     /**
      * Compares this BoardLocation object to the specified object for equality.
      * Two BoardLocation objects are considered equal if they have the same values for their x and y coordinates.

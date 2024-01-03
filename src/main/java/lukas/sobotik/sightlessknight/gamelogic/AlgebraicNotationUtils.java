@@ -169,8 +169,18 @@ public class AlgebraicNotationUtils {
         if (otherPieceIndex < 0) return normalMove;
         Piece otherPiece = board.pieces[otherPieceIndex];
 
-        List<Move> otherPieceMoves = Rules.getPseudoLegalMoves(board.getPointFromArrayIndex(otherPieceIndex), otherPiece, board);
-        if (otherPieceMoves.stream()
+        List<Move> otherPiecePseudoLegalMoves = Rules.getPseudoLegalMoves(board.getPointFromArrayIndex(otherPieceIndex), otherPiece, board);
+
+        Board oldBoard = new Board(board);
+        oldBoard.movePiece(new Move(to, from, movedPiece));
+        List<Move> otherPieceLegalMoves = Rules.getValidMoves(oldBoard.getPointFromArrayIndex(otherPieceIndex), otherPiece, oldBoard, true);
+        boolean isDisambiguationNeeded = otherPieceLegalMoves.stream().anyMatch(streamMove -> streamMove.getTo().equals(to));
+
+        if (!isDisambiguationNeeded) {
+            return normalMove;
+        }
+
+        if (otherPiecePseudoLegalMoves.stream()
                 .anyMatch(streamMove -> streamMove.getTo().equals(to))) {
             var otherPiecePoint = board.getPointFromArrayIndex(otherPieceIndex);
             var fromAlgebraicNotation = from.getAlgebraicNotationLocation();

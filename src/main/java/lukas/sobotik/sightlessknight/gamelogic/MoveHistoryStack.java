@@ -17,6 +17,29 @@ public class MoveHistoryStack {
     }
 
     /**
+     * Copy constructor for the MoveHistoryStack class.
+     * Creates a new MoveHistoryStack object by copying the properties of the given MoveHistoryStack object.
+     *
+     * @param copyStack The MoveHistoryStack object to be copied.
+     */
+    public MoveHistoryStack(MoveHistoryStack copyStack) {
+        this.currentStep = copyStep(copyStack.currentStep);
+    }
+
+    /**
+     * Recursive method to deep copy a Step object.
+     *
+     * @param copyStep The Step object to be copied.
+     * @return A deep copy of the Step object.
+     */
+    private Step copyStep(Step copyStep) {
+        if (copyStep == null) {
+            return null;
+        }
+        return new Step(copyStep.value, copyStep(copyStep.previousStep));
+    }
+
+    /**
      * Method used to set the value of the MoveHistoryStack class.
      * @param value the new value to be set for the MoveHistoryStack class.
      */
