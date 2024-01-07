@@ -46,7 +46,7 @@ public class Rules {
             case KING -> legalMoves.addAll(getValidKingMoves(legalMoves, selectedPieceLocation, piece.team, board, addCastlingMoves, false));
             case QUEEN -> legalMoves.addAll(getValidQueenMoves(legalMoves, selectedPieceLocation, piece.team, board, false));
         }
-        if (removePseudoLegalMoves) {
+        if (removePseudoLegalMoves && !legalMoves.isEmpty()) {
             removePseudoLegalMoves(legalMoves, selectedPieceLocation, piece.team, board);
         }
         return legalMoves;
@@ -79,20 +79,14 @@ public class Rules {
      * @return true or false depending on whether enemy attacks the given square
      */
     public static boolean isSquareAttackedByEnemy(BoardLocation square, Team friendlyTeam, Board board) {
-        List<Move> list;
+        Team enemyTeam = (friendlyTeam == Team.WHITE) ? Team.BLACK : Team.WHITE;
+        int squareIndex = board.getArrayIndexFromLocation(square);
 
-        for (PieceType type : PieceType.values()) {
-            Piece info = new Piece(friendlyTeam, type);
-            list = getValidMoves(square, info, board, false, false, true);
-            for (Move move : list) {
-                var to = move.getTo();
-                Piece target = board.getPiece(to);
-                if (target != null && target.type == type) {
-                    return true;
-                }
-            }
-            list.clear();
+        long bitboard = board.bitboard.getControlledSquares(enemyTeam);
+        if ((bitboard & (1L << squareIndex)) != 0) {
+            return true;
         }
+
         return false;
     }
 
@@ -240,10 +234,16 @@ public class Rules {
      * @param ignoreFriendlyPieces If true, ignore friendly pieces while transposing; otherwise, consider them as blocking pieces.
      */
     private static void pieceDirections(List<Move> boardLocations, BoardLocation selectedPieceLocation, Team team, Board board, int xDir, int yDir, boolean ignoreFriendlyPieces) {
-        BoardLocation move = selectedPieceLocation;
-        do {
-            move = move.transpose(xDir, yDir);
-        } while (checkIfInBounds(boardLocations, team, board, selectedPieceLocation, move, ignoreFriendlyPieces));
+        int x = selectedPieceLocation.getX();
+        int y = selectedPieceLocation.getY();
+        while (true) {
+            x += xDir;
+            y += yDir;
+            BoardLocation move = new BoardLocation(x, y);
+            if (!checkIfInBounds(boardLocations, team, board, selectedPieceLocation, move, ignoreFriendlyPieces)) {
+                break;
+            }
+        }
     }
 
     /**
@@ -255,26 +255,30 @@ public class Rules {
      * @return list of legal knight moves
      */
     private static List<Move> getValidKnightMoves(BoardLocation selectedPieceLocation, Team team, Board board, boolean ignoreFriendlyPieces) {
-        List<Move> legalKnightMoves = new ArrayList<>();
-        for (int direction = 0; direction < 2; direction++) {
-            for (int longDir = -2; longDir <= 2; longDir += 4) {
-                for (int shortDir = -1; shortDir <= 1; shortDir += 2) {
-                    BoardLocation to;
-                    if (direction == 0) {
-                        to = selectedPieceLocation.transpose(longDir, shortDir);
-                    } else {
-                        to = selectedPieceLocation.transpose(shortDir, longDir);
-                    }
-                    Piece target = board.getPiece(to);
-                    if (board.isInBounds(to) && ((target == null || target.team != team) || ignoreFriendlyPieces)) {
-                        Move move = new Move(selectedPieceLocation, to, board.getPiece(selectedPieceLocation), target);
-                        legalKnightMoves.add(move);
-                    }
+    List<Move> legalKnightMoves = new ArrayList<>();
+    for (int direction = 0; direction < 2; direction++) {
+        for (int longDir = -2; longDir <= 2; longDir += 4) {
+            for (int shortDir = -1; shortDir <= 1; shortDir += 2) {
+                int x = selectedPieceLocation.getX();
+                int y = selectedPieceLocation.getY();
+                if (direction == 0) {
+                    x += longDir;
+                    y += shortDir;
+                } else {
+                    x += shortDir;
+                    y += longDir;
+                }
+                BoardLocation to = new BoardLocation(x, y);
+                Piece target = board.getPiece(to);
+                if (board.isInBounds(to) && ((target == null || target.team != team) || ignoreFriendlyPieces)) {
+                    Move move = new Move(selectedPieceLocation, to, board.getPiece(selectedPieceLocation), target);
+                    legalKnightMoves.add(move);
                 }
             }
         }
-        return legalKnightMoves;
     }
+    return legalKnightMoves;
+}
 
     /**
      * Returns valid moves for a given king
@@ -291,10 +295,11 @@ public class Rules {
                 if (xDir == 0 && yDir == 0) {
                     continue;
                 }
-                BoardLocation move = selectedPieceLocation.transpose(xDir, yDir);
-                Piece target = board.getPiece(move);
-                if (board.isInBounds(move) && ((target == null || target.team != team) || ignoreFriendlyPieces)) {
-                    legalKingMoves.add(new Move(selectedPieceLocation, move, board.getPiece(selectedPieceLocation), target));
+                int x = selectedPieceLocation.getX() + xDir;
+                int y = selectedPieceLocation.getY() + yDir;
+                Piece target = board.getPiece(new BoardLocation(x, y));
+                if (board.isInBounds(new BoardLocation(x, y)) && ((target == null || target.team != team) || ignoreFriendlyPieces)) {
+                    legalKingMoves.add(new Move(selectedPieceLocation, new BoardLocation(x, y), board.getPiece(selectedPieceLocation), target));
                 }
 
                 // Check if castling moves are valid
@@ -413,15 +418,19 @@ public class Rules {
         List<Move> legalRookMoves = new ArrayList<>();
         for (int direction = 0; direction < 2; direction++) {
             for (int direction2 = -1; direction2 <= 1; direction2 += 2) {
-                BoardLocation move = selection;
-                do {
+                int x = selection.getX();
+                int y = selection.getY();
+                while (true) {
                     if (direction == 0) {
-                        move = move.transpose(direction2, 0);
+                        x += direction2;
                     } else {
-                        move = move.transpose(0, direction2);
+                        y += direction2;
                     }
-
-                } while (checkIfInBounds(legalRookMoves, team, board, selection, move, ignoreFriendlyPieces));
+                    BoardLocation move = new BoardLocation(x, y);
+                    if (!checkIfInBounds(legalRookMoves, team, board, selection, move, ignoreFriendlyPieces)) {
+                        break;
+                    }
+                }
             }
         }
         return legalRookMoves;
@@ -442,15 +451,17 @@ public class Rules {
         }
 
         Piece target = board.getPiece(to);
-
+        Piece piece = board.getPiece(from);
+        Move move = new Move(from, to, piece);
         if (target != null) {
             if (target.team != team || ignoreFriendlyPieces) {
-                legalMoves.add(new Move(from, to, board.getPiece(from), target));
+                move.setCapturedPiece(target);
+                legalMoves.add(move);
             }
             return false;
         }
 
-        legalMoves.add(new Move(from, to, board.getPiece(from)));
+        legalMoves.add(move);
         return true;
     }
 
@@ -499,11 +510,29 @@ public class Rules {
         }
 
         // Check for capture moves
+        legalPawnMoves.addAll(getPawnCaptureMoves(pawnLocation, team, board, ignoreEnPassant, false));
+
+        return legalPawnMoves;
+    }
+
+    /**
+     * This method generates the capture moves for a pawn. It takes into account the unique capturing
+     * rule of pawns, which is to capture diagonally. It also considers the en passant rule.
+     *
+     * @param pawnLocation The current location of the pawn on the board.
+     * @param team The team to which the pawn belongs.
+     * @param board The current state of the chess board.
+     * @param ignoreEnPassant A flag to indicate whether to ignore en passant moves. If true, en passant moves are not considered.
+     * @param addControlledSquares A flag to indicate whether to add the squares controlled by the pawn. If true, the squares controlled by the pawn are added to the list of moves (a.k.a. they will most likely be pseudo-legal).
+     * @return A list of legal pawn capture moves.
+     */
+    public static List<Move> getPawnCaptureMoves(BoardLocation pawnLocation, Team team, Board board, boolean ignoreEnPassant, boolean addControlledSquares) {
+        List<Move> legalPawnMoves = new ArrayList<>();
+        int forwardDirection = (team == playerTeam) ? 1 : -1;
         BoardLocation leftCapture = new BoardLocation(pawnLocation.getX() - 1, pawnLocation.getY() + forwardDirection);
         BoardLocation rightCapture = new BoardLocation(pawnLocation.getX() + 1, pawnLocation.getY() + forwardDirection);
-        legalPawnMoves.addAll(addPawnCaptureMoves(pawnLocation, team, board, leftCapture, ignoreEnPassant));
-        legalPawnMoves.addAll(addPawnCaptureMoves(pawnLocation, team, board, rightCapture, ignoreEnPassant));
-
+        legalPawnMoves.addAll(addPawnCaptureMoves(pawnLocation, team, board, leftCapture, ignoreEnPassant, addControlledSquares));
+        legalPawnMoves.addAll(addPawnCaptureMoves(pawnLocation, team, board, rightCapture, ignoreEnPassant, addControlledSquares));
         return legalPawnMoves;
     }
 
@@ -516,12 +545,12 @@ public class Rules {
      * @param ignoreEnPassant whether the method should ignore en passant moves
      * @return list of legal pawn capture moves
      */
-    private static List<Move> addPawnCaptureMoves(BoardLocation pawnLocation, Team team, Board board, BoardLocation captureLocation, boolean ignoreEnPassant) {
+    public static List<Move> addPawnCaptureMoves(BoardLocation pawnLocation, Team team, Board board, BoardLocation captureLocation, boolean ignoreEnPassant, boolean addControlledSquares) {
         List<Move> legalPawnMoves = new ArrayList<>();
         if (board.isInBounds(captureLocation)) {
             Piece rightCapturePiece = board.getPiece(captureLocation);
 
-            if (rightCapturePiece != null && rightCapturePiece.team != team) {
+            if ((rightCapturePiece != null && rightCapturePiece.team != team) || addControlledSquares) {
                 legalPawnMoves.add(new Move(pawnLocation, captureLocation, board.getPiece(pawnLocation), rightCapturePiece));
             }
 

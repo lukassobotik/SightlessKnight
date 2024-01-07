@@ -23,6 +23,7 @@ public class Board {
     public MoveHistoryStack blackKingRookMoves = new MoveHistoryStack(false);
     public MoveHistoryStack blackQueenRookMoves = new MoveHistoryStack(false);
 
+    public Bitboard bitboard;
     /**
      * Initializes a new instance of the Board class.
      * @param size The size of the board.
@@ -35,10 +36,19 @@ public class Board {
         this.fenUtils = fenUtils;
         squareSize = size / 8;
 
+        bitboard = new Bitboard();
+
         whiteKingLocation = getPointFromArrayIndex(fenUtils.getWhiteKingIndex());
         blackKingLocation = getPointFromArrayIndex(fenUtils.getBlackKingIndex());
         fenUtils.whiteKingPosition = whiteKingLocation;
         fenUtils.blackKingPosition = blackKingLocation;
+
+        for (int i = 0; i < 64; i++) {
+            Piece piece = pieces[i];
+            if (piece != null) {
+                bitboard.setPiece(piece.type, piece.team, i);
+            }
+        }
     }
 
     /**
@@ -221,6 +231,8 @@ public class Board {
 
         movedPiece.hasMoved = true;
 
+        movedPiece.index = getArrayIndexFromLocation(to);
+
         lastFromLocation = from;
         lastToLocation = to;
     }
@@ -395,6 +407,12 @@ public class Board {
 
         pieces[getArrayIndexFromLocation(to)] = pieces[getArrayIndexFromLocation(from)];
         removePiece(from);
+
+        // Update the Bitboard
+        bitboard.removePiece(move.getMovedPiece().type, move.getMovedPiece().team, getArrayIndexFromLocation(move.getFrom()));
+        bitboard.setPiece(move.getMovedPiece().type, move.getMovedPiece().team, getArrayIndexFromLocation(move.getTo()));
+        bitboard.updateControlledSquares(Team.WHITE, this);
+        bitboard.updateControlledSquares(Team.BLACK, this);
     }
 
     /**
@@ -408,6 +426,11 @@ public class Board {
         }
         int index = getArrayIndexFromLocation(boardLocation);
         pieces[index] = null;
+
+        Piece piece = pieces[getArrayIndexFromLocation(boardLocation)];
+        if (piece != null) {
+            bitboard.removePiece(piece.type, piece.team, getArrayIndexFromLocation(boardLocation));
+        }
     }
 
     /**
@@ -564,6 +587,8 @@ public class Board {
      * @return true if the board location is within the bounds, false otherwise
      */
     public boolean isInBounds(BoardLocation boardLocation) {
-        return boardLocation.getX() < 8 && boardLocation.getX() >= 0 && boardLocation.getY() < 8 && boardLocation.getY() >= 0;
+        int x = boardLocation.getX();
+        int y = boardLocation.getY();
+        return x >= 0 && x < 8 && y >= 0 && y < 8;
     }
 }

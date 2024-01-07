@@ -1,7 +1,6 @@
 package lukas.sobotik.sightlessknight.views.play;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -15,9 +14,9 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import lukas.sobotik.sightlessknight.components.CommandLine;
 import lukas.sobotik.sightlessknight.components.CustomProgressBar;
 import lukas.sobotik.sightlessknight.gamelogic.AlgebraicNotationUtils;
 import lukas.sobotik.sightlessknight.gamelogic.Board;
@@ -59,6 +58,9 @@ public class PlayView extends VerticalLayout {
     public boolean showPieces = true;
     public boolean showBoard = true;
     public static CustomProgressBar boardWidthProgressBar;
+
+    public Team showBitboardTeam = null;
+    public PieceType showBitboardPieceType = null;
 
     /**
      * Generates a piece training game based on the given piece type.
@@ -128,28 +130,6 @@ public class PlayView extends VerticalLayout {
         algebraicNotationUtils = new AlgebraicNotationUtils(fenUtils, gameState, board);
         algebraicNotationUtils.setKinglessGame(kinglessGame);
 
-        HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.setClassName("text_field_layout");
-        horizontalLayout.setWidthFull();
-        TextField textField = new TextField();
-        textField.setAutofocus(true);
-        Button button = new Button("Play");
-        textField.addKeyDownListener(Key.ENTER, keyDownEvent -> button.click());
-        button.addClickListener(buttonClickEvent -> {
-            Notification.show(textField.getValue());
-
-            algebraicNotationUtils.updateVariables(fenUtils, gameState, board);
-            Move move = algebraicNotationUtils.getMoveFromParsedMove(textField.getValue());
-            if (move == null) {
-                Notification.show("Invalid Move");
-                return;
-            }
-
-            System.out.println("Playing move via text: " + move.getFrom().getAlgebraicNotationLocation() + move.getTo().getAlgebraicNotationLocation() + move.getSimplifiedMovedPiece().team + move.getSimplifiedMovedPiece().type);
-
-            playMove(move);
-        });
-
         gameContentLayout = new HorizontalLayout();
         gameContentLayout.addClassName("game_content_layout");
 
@@ -197,11 +177,8 @@ public class PlayView extends VerticalLayout {
         gameInfoLayout.add(algebraicNotationHistoryLayout);
 
         var gameInfoLayoutBottomLayout = new VerticalLayout();
-        horizontalLayout.add(textField, button);
-        horizontalLayout.getStyle().set("width", "100%");
-        horizontalLayout.getStyle().set("height", "100%");
-        horizontalLayout.addClassName("game_info_layout_child");
-        gameInfoLayoutBottomLayout.add(horizontalLayout);
+        var commandLine = getCommandLine();
+        gameInfoLayoutBottomLayout.add(commandLine);
         gameInfoLayoutBottomLayout.getStyle().set("display", "flex");
 
         var settingsButton = new Button(new Icon("lumo", "cog"), (e) -> quickSettingsDialog.open());
@@ -214,6 +191,32 @@ public class PlayView extends VerticalLayout {
 
         gameContentLayout.add(gameInfoLayout);
         createGameSettings();
+    }
+
+    /**
+     * Creates and returns a CommandLine object.
+     *
+     * @return the created CommandLine object
+     */
+    private CommandLine getCommandLine() {
+        var commandLine = new CommandLine(this);
+        commandLine.setClickListener(view -> {
+            if (commandLine.getCommand().startsWith("/")) return;
+
+            Notification.show(commandLine.getCommand());
+
+            algebraicNotationUtils.updateVariables(fenUtils, gameState, board);
+            Move move = algebraicNotationUtils.getMoveFromParsedMove(commandLine.getCommand());
+            if (move == null) {
+                Notification.show("Invalid Move");
+                return;
+            }
+
+            System.out.println("Playing move via text: " + move.getFrom().getAlgebraicNotationLocation() + move.getTo().getAlgebraicNotationLocation() + move.getSimplifiedMovedPiece().team + move.getSimplifiedMovedPiece().type);
+
+            playMove(move);
+        });
+        return commandLine;
     }
 
     private void createGameSettings() {
@@ -319,6 +322,60 @@ public class PlayView extends VerticalLayout {
                 componentSquare.setVisible(show);
             });
         }));
+    }
+
+    public void showBitboardOverlay(PieceType pieceType, Team team) {
+        showBitboardTeam = team;
+        showBitboardPieceType = pieceType;
+        long bitboard;
+        if (pieceType == null) {
+            board.bitboard.updateControlledSquares(team, board);
+            bitboard = board.bitboard.getControlledSquares(team);
+        } else {
+            bitboard = board.bitboard.getBitboard(pieceType, team);
+        }
+        for (int i = 0; i < 64; i++) {
+            if ((bitboard & (1L << i)) != 0) {
+                highlightSquare(new BoardLocation(i % 8, i / 8));
+            }
+        }
+    }
+
+    public void hideBitboardOverlay(PieceType pieceType, Team team) {
+        showBitboardTeam = null;
+        showBitboardPieceType = null;
+        long bitboard;
+        if (pieceType == null) {
+            board.bitboard.updateControlledSquares(team, board);
+            bitboard = board.bitboard.getControlledSquares(team);
+        } else {
+            bitboard = board.bitboard.getBitboard(pieceType, team);
+        }
+        for (int i = 0; i < 64; i++) {
+            if ((bitboard & (1L << i)) != 0) {
+                removeHighlightSquare(new BoardLocation(i % 8, i / 8));
+            }
+        }
+    }
+
+    public void highlightSquare(BoardLocation location) {
+        int row = location.getY();
+        int column = location.getX();
+
+        String squareClassName = column + "-" + row;
+        String jsCode = "let element = document.getElementById(\"" + squareClassName + "\");"
+                      + "element?.classList.add(\"highlighted\");";
+        this.getElement().executeJs(jsCode);
+    }
+
+    public void removeHighlightSquare(BoardLocation location) {
+        int row = location.getY();
+        int column = location.getX();
+
+        String squareClassName = column + "-" + row;
+        String jsCode = "let element = document.getElementById(\"" + squareClassName + "\");"
+                      + "element?.classList.remove(\"highlighted\");";
+        this.getElement().executeJs(jsCode);
     }
 
     /**
@@ -535,6 +592,7 @@ public class PlayView extends VerticalLayout {
                     square.addClassName("light_square");
                 }
                 square.addClassName(board.getPointFromArrayIndex(index).getX() + "-" + board.getPointFromArrayIndex(index).getY());
+                square.setId(board.getPointFromArrayIndex(index).getX() + "-" + board.getPointFromArrayIndex(index).getY());
                 VerticalLayout finalBoardLayout = boardLayout;
                 square.addClickListener(view -> {
                     if (gameState.hasGameEnded) return;
@@ -584,10 +642,13 @@ public class PlayView extends VerticalLayout {
                     square.add(image);
                 }
 
-
                 rowLayout.add(square);
             }
             boardLayout.add(rowLayout);
+        }
+
+        if (showBitboardTeam != null || showBitboardPieceType != null) {
+            showBitboardOverlay(showBitboardPieceType, showBitboardTeam);
         }
     }
 
