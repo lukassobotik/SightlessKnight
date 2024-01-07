@@ -84,7 +84,11 @@ html {
 }
 
 .selected {
-    background: gold;
+    background-color: gold;
+}
+
+.highlighted {
+    filter: hue-rotate(184deg);
 }
 
 .game_content_layout {
