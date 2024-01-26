@@ -32,7 +32,7 @@ class RulesTest {
                 Arguments.of("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", new BoardLocation(7, 7), Team.BLACK, false),
                 Arguments.of("3r1rk1/4qpp1/4p2p/p7/PpBnn1b1/1P3N2/5PPP/R1NQR1K1 w - - 0 21", new BoardLocation(1, 1), Team.BLACK, false),
                 Arguments.of("3r1rk1/4qpp1/4p2p/p7/PpBnn1b1/1P3N2/5PPP/R1NQR1K1 w - - 0 21", new BoardLocation(1, 2), Team.BLACK, true),
-                Arguments.of("3r1rk1/4qpp1/4p2p/p7/PpBnn1b1/1P3N2/5PPP/R1NQR1K1 w - - 0 21", new BoardLocation(3, 3), Team.WHITE, false),
+                Arguments.of("3r1rk1/4qpp1/4p2p/p7/PpBnn1b1/1P3N2/5PPP/R1NQR1K1 w - - 0 21", new BoardLocation(3, 3), Team.WHITE, true),
                 Arguments.of("3r1rk1/4qpp1/4p2p/p7/PpBnn1b1/1P3N2/5PPP/R1NQR1K1 w - - 0 21", new BoardLocation(2, 2), Team.WHITE, true),
                 Arguments.of("3r1rk1/4qpp1/4p2p/p7/PpBnn1b1/1P3N2/5PPP/R1NQR1K1 w - - 0 21", new BoardLocation(5, 5), Team.WHITE, true),
                 Arguments.of("3r1rk1/4qpp1/4p2p/p7/PpBnn1b1/1P3N2/5PPP/R1NQR1K1 w - - 0 21", new BoardLocation(1, 1), Team.WHITE, false)
