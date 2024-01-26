@@ -54,9 +54,8 @@ public class PerftFunction {
             if (piece == null || piece.team != team) continue;
 
             var allMoves = Rules.getValidMoves(board.getPointFromArrayIndex(i), piece, board, true);
-            var moves = allMoves.stream().map(Move::getTo).toList();
-            validMoves.addAll(new HashSet<>(moves).stream().map(moveLocation -> {
-                Move move = new Move(location, moveLocation, piece, board.getPiece(moveLocation));
+            validMoves.addAll(new HashSet<>(allMoves).stream().map(move -> {
+                var moveLocation = move.getTo();
                 // Pawn Promotion
                 if (((moveLocation.getY() == 0 && piece.team == Team.BLACK) || (moveLocation.getY() == 7 && piece.team == Team.WHITE))
                         && piece.type == PieceType.PAWN) {
@@ -110,42 +109,42 @@ public class PerftFunction {
         for (Move move : moves) {
             debugPause(numberOfPositions, move, depth);
             if (debug) beforeFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces, turn);
-            board.printBoardInConsole(true);
-            System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-            board.bitboard.printBitboard(board.bitboard.getTeamAttackedSquares(turn));
-            System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+//            board.printBoardInConsole(true);
+//            System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+//            board.bitboard.printBitboard(board.bitboard.getTeamAttackedSquares(turn));
+//            System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 
             gameState.playMove(move, true);
 
-            board.printBoardInConsole(true);
-            System.out.println("current \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"");
-            board.bitboard.printBitboard(board.bitboard.getTeamAttackedSquares(Team.BLACK));
-            System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-            System.out.println(Arrays.toString(board.bitboard.pieces));
-            System.out.println(Arrays.toString(board.bitboard.attackedSquares));
-            System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-            if (debug) moveFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces, turn);
+//            board.printBoardInConsole(true);
+//            System.out.println("current \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"");
+//            board.bitboard.printBitboard(board.bitboard.getTeamAttackedSquares(Team.BLACK));
+//            System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+//            System.out.println(Arrays.toString(board.bitboard.pieces));
+//            System.out.println(Arrays.toString(board.bitboard.attackedSquares));
+//            System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+//            if (debug) moveFen = fenUtils.generateFenFromPosition(gameState.getBoard().pieces, turn);
 
             int positions = playMoves(depth - 1, turn == Team.BLACK ? Team.WHITE : Team.BLACK, log, debug, false);
             numberOfPositions += positions;
             addPositionsToHashMap(move, numberOfPositionsOnMove, positions);
             debugPause(numberOfPositions, move, depth);
 
-            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>");
-            board.printBoardInConsole(true);
-            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>");
-            board.bitboard.printBitboard(board.bitboard.getTeamAttackedSquares(turn));
-            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>");
+//            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>");
+//            board.printBoardInConsole(true);
+//            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>");
+//            board.bitboard.printBitboard(board.bitboard.getTeamAttackedSquares(turn));
+//            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>");
 //
             // TODO: The rook does not recalculate when the pawn moves back
             //  there are two solution I can think of right now,
             //  1: recalculate everything after every move (not very efficient)
             //  2: create a bitboard history and undo the bitboard after every move (possibly more efficient but more complicated) (something like moveHistoryStack)
             gameState.undoMove(move);
-            board.printBoardInConsole(true);
-            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>");
-            board.bitboard.printBitboard(board.bitboard.getTeamAttackedSquares(Team.BLACK));
-            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>");
+//            board.printBoardInConsole(true);
+//            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>");
+//            board.bitboard.printBitboard(board.bitboard.getTeamAttackedSquares(Team.BLACK));
+//            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>");
 //
 //            System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 //            board.printBoardInConsole(true);
@@ -215,7 +214,7 @@ public class PerftFunction {
      * @param move what move the Perft Function is currently processing
      */
     private void debugPause(int numberOfPositions, Move move, int depth) {
-        boolean pause = true;
+        boolean pause = false;
 
 //        if (move.getMovedPiece().type == PieceType.PAWN) pause = true;
 
