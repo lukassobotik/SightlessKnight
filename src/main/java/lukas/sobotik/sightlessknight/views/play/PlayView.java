@@ -59,9 +59,6 @@ public class PlayView extends VerticalLayout {
     public boolean showBoard = true;
     public static CustomProgressBar boardWidthProgressBar;
 
-    public Team showBitboardTeam = null;
-    public PieceType showBitboardPieceType = null;
-
     /**
      * Generates a piece training game based on the given piece type.
      * @param s the piece type to generate the game for ("knight")
@@ -322,38 +319,6 @@ public class PlayView extends VerticalLayout {
                 componentSquare.setVisible(show);
             });
         }));
-    }
-
-    public void showBitboardOverlay(PieceType pieceType, Team team) {
-        showBitboardTeam = team;
-        showBitboardPieceType = pieceType;
-        long bitboard;
-        if (pieceType == null) {
-            bitboard = board.bitboard.getTeamAttackedSquares(team);
-        } else {
-            bitboard = board.bitboard.getBitboard(pieceType, team);
-        }
-        for (int i = 0; i < 64; i++) {
-            if ((bitboard & (1L << i)) != 0) {
-                highlightSquare(new BoardLocation(i % 8, i / 8));
-            }
-        }
-    }
-
-    public void hideBitboardOverlay(PieceType pieceType, Team team) {
-        showBitboardTeam = null;
-        showBitboardPieceType = null;
-        long bitboard;
-        if (pieceType == null) {
-            bitboard = board.bitboard.getTeamAttackedSquares(team);
-        } else {
-            bitboard = board.bitboard.getBitboard(pieceType, team);
-        }
-        for (int i = 0; i < 64; i++) {
-            if ((bitboard & (1L << i)) != 0) {
-                removeHighlightSquare(new BoardLocation(i % 8, i / 8));
-            }
-        }
     }
 
     public void highlightSquare(BoardLocation location) {
@@ -618,9 +583,6 @@ public class PlayView extends VerticalLayout {
                         });
                         System.out.println("MOVE to " + toLocation.get().getX() + "," + toLocation.get().getY() + " from " + selectedSquare.get().getX() + "," + selectedSquare.get().getY());
                         playMove(new Move(selectedSquare.get(), toLocation.get(), board.getPiece(selectedSquare.get()), board.getPiece(toLocation.get())));
-                        System.out.println("*************************************");
-                        board.bitboard.printBitboard();
-                        System.out.println("*************************************");
                     }
 
                     // Remove all previously selected squares
@@ -646,10 +608,6 @@ public class PlayView extends VerticalLayout {
                 rowLayout.add(square);
             }
             boardLayout.add(rowLayout);
-        }
-
-        if (showBitboardTeam != null || showBitboardPieceType != null) {
-            showBitboardOverlay(showBitboardPieceType, showBitboardTeam);
         }
     }
 

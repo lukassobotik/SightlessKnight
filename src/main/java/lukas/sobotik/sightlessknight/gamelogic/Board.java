@@ -23,7 +23,6 @@ public class Board {
     public MoveHistoryStack blackKingRookMoves = new MoveHistoryStack(false);
     public MoveHistoryStack blackQueenRookMoves = new MoveHistoryStack(false);
 
-    public Bitboard bitboard;
     /**
      * Initializes a new instance of the Board class.
      * @param size The size of the board.
@@ -36,32 +35,11 @@ public class Board {
         this.fenUtils = fenUtils;
         squareSize = size / 8;
 
-        bitboard = new Bitboard();
-
         whiteKingLocation = getPointFromArrayIndex(fenUtils.getWhiteKingIndex());
         blackKingLocation = getPointFromArrayIndex(fenUtils.getBlackKingIndex());
         fenUtils.whiteKingPosition = whiteKingLocation;
         fenUtils.blackKingPosition = blackKingLocation;
-
-        for (int i = 0; i < 64; i++) {
-            Piece piece = pieces[i];
-            if (piece != null) {
-                bitboard.setPiece(piece.type, piece.team, i);
-            }
-        }
-
-        calculateAttackedSquares(bitboard, false);
-
     }
-
-    // for (PieceType type : PieceType.values()) {
-    //            var whiteIndex = bitboard.getIndex(type, Team.WHITE);
-    //            var blackIndex = bitboard.getIndex(type, Team.BLACK);
-    //            bitboard.attackedSquares[whiteIndex]
-    //                    = bitboard.calculateAttackedSquaresForIndex(Team.WHITE, this, new Piece(Team.WHITE, type), whiteIndex, new ArrayList<>(), 0L);
-    //            bitboard.attackedSquares[blackIndex]
-    //                    = bitboard.calculateAttackedSquaresForIndex(Team.BLACK, this, new Piece(Team.BLACK, type), blackIndex, new ArrayList<>(), 0L);
-    //        }
 
     /**
      * Copy constructor for the Board class.
@@ -87,7 +65,6 @@ public class Board {
         this.blackKingMoves = new MoveHistoryStack(copyBoard.blackKingMoves);
         this.blackKingRookMoves = new MoveHistoryStack(copyBoard.blackKingRookMoves);
         this.blackQueenRookMoves = new MoveHistoryStack(copyBoard.blackQueenRookMoves);
-        this.bitboard = new Bitboard(copyBoard.bitboard);
 
         // Deep copy of pieces array
         this.pieces = new Piece[copyBoard.pieces.length];
@@ -95,34 +72,6 @@ public class Board {
             if (copyBoard.pieces[i] != null) {
                 this.pieces[i] = new Piece(copyBoard.pieces[i]);
             }
-        }
-    }
-
-    public void calculateAttackedSquares(Bitboard usedBitboard, boolean onlySlidingPieces) {
-        for (PieceType type : PieceType.values()) {
-            // TODO: Play around with the pieces more to figure out what pieces need to be updated and cause problems
-//            if (onlySlidingPieces
-//                           && (!type.equals(PieceType.KING)
-//                            && !type.equals(PieceType.QUEEN)
-//                            && !type.equals(PieceType.ROOK)
-//                            && !type.equals(PieceType.BISHOP)
-//                            && !type.equals(PieceType.KNIGHT)
-//                            && !type.equals(PieceType.PAWN))
-//            ) continue;
-            var whiteIndex = usedBitboard.getIndex(type, Team.WHITE);
-            var blackIndex = usedBitboard.getIndex(type, Team.BLACK);
-            usedBitboard.attackedSquares[whiteIndex]
-                    = usedBitboard.calculateAttackedSquaresForIndex(Team.WHITE, this, whiteIndex, 0L);
-            usedBitboard.attackedSquares[blackIndex]
-                    = usedBitboard.calculateAttackedSquaresForIndex(Team.BLACK, this, blackIndex, 0L);
-            /* TODO:
-                without recalculating attacked squares:
-                errors start at: testPos3 - depth 2
-                errors start at: testPos4 - depth 2
-                with recalculating attacked squares:
-                errors start at: enPassant - depth 6
-                errors start at: enPassant - depth 6
-             */
         }
     }
 
@@ -223,16 +172,12 @@ public class Board {
         return pieces[boardLocation.getX() + boardLocation.getY() * 8];
     }
 
-    public void movePiece(Move move) {
-        movePiece(move, false, false);
-    }
-
     /**
      * Moves a piece on the board based on the provided move.
      *
      * @param move the move object containing the from and to locations
      */
-    public void movePiece(Move move, boolean updateBitboard, boolean isUndo) {
+    public void movePiece(Move move) {
         var from = move.getFrom();
         var to = move.getTo();
         if (from == null || to == null) return;
@@ -264,7 +209,6 @@ public class Board {
                 && from.getX() != to.getX()
                 && (getPiece(enPassantCapture).doublePawnMoveOnMoveNumber == GameState.moveNumber - 1)) {
             movedPiece.enPassant = true;
-            bitboard.removePiece(PieceType.PAWN, getPiece(enPassantCapture).team, getArrayIndexFromLocation(enPassantCapture));
             removePiece(enPassantCapture);
             GameState.enPassantCaptures++;
         }
@@ -276,12 +220,6 @@ public class Board {
         }
 
         movedPiece.hasMoved = true;
-
-        movedPiece.index = getArrayIndexFromLocation(to);
-
-        if (updateBitboard) {
-            updateBitboardAfterAMove(move, isUndo);
-        }
 
         lastFromLocation = from;
         lastToLocation = to;
@@ -341,62 +279,25 @@ public class Board {
     private void handleCastling(Move move, Piece movedPiece) {
         // Queenside Castling
         if (move.getMoveFlag().equals(MoveFlag.queensideCastling)) {
-            var rookMove = new Move(
+            movePieceWithoutSpecialMovesAndSave(
                     movedPiece.team == Team.WHITE
                     ? new BoardLocation(0, 0) // White Rook From
                     : new BoardLocation(0, 7), // Black Rook From
                     movedPiece.team == Team.WHITE
                     ? new BoardLocation(3, 0) // White Rook To
-                    : new BoardLocation(3, 7), // Black Rook To
-                    new Piece(movedPiece.team, PieceType.ROOK));
-            movePieceWithoutSpecialMovesAndSave(rookMove);
+                    : new BoardLocation(3, 7)); // Black Rook To
             movedPiece.setCastling("O-O-O");
-            updateBitboardAfterAMove(rookMove, false);
         } // Kingside Castling
         else if (move.getMoveFlag().equals(MoveFlag.kingsideCastling)) {
-            var rookMove = new Move(
+            movePieceWithoutSpecialMovesAndSave(
                     movedPiece.team == Team.WHITE
                     ? new BoardLocation(7, 0) // White Rook From
                     : new BoardLocation(7, 7), // Black Rook From
                     movedPiece.team == Team.WHITE
                     ? new BoardLocation(5, 0) // White Rook To
-                    : new BoardLocation(5, 7), // Black Rook To
-                    new Piece(movedPiece.team, PieceType.ROOK));
-            movePieceWithoutSpecialMovesAndSave(rookMove);
+                    : new BoardLocation(5, 7)); //Black Rook To
             movedPiece.setCastling("O-O");
-            updateBitboardAfterAMove(rookMove, false);
         }
-    }
-
-    public void updateBitboardAfterAMove(Move move, boolean isUndo) {
-        updateBitboardAfterAMove(move, isUndo, false, null);
-    }
-
-    public void updateBitboardAfterAMove(Move move, boolean recalculateAttackedSquares, boolean isUndo) {
-        updateBitboardAfterAMove(move, isUndo, recalculateAttackedSquares, null);
-    }
-
-    public Bitboard updateBitboardAfterAMove(Move move, boolean isUndo, boolean recalculateAttackedSquares, Bitboard differentBitboard) {
-        var usedBitboard = differentBitboard != null ? differentBitboard : this.bitboard;
-        if (move.getMovedPiece() == null) return null;
-        usedBitboard.removePiece(move.getMovedPiece().type, move.getMovedPiece().team, getArrayIndexFromLocation(isUndo ? move.getTo() : move.getFrom()));
-        usedBitboard.setPiece(move.getMovedPiece().type, move.getMovedPiece().team, getArrayIndexFromLocation(isUndo ? move.getFrom() : move.getTo()));
-        if (move.getCapturedPiece() != null) {
-            usedBitboard.removePiece(move.getCapturedPiece().type, move.getCapturedPiece().team, getArrayIndexFromLocation(isUndo ? move.getFrom() : move.getTo()));
-            if (move.getMoveFlag().equals(MoveFlag.enPassant)) {
-                if (isUndo) {
-                    usedBitboard.setPiece(move.getCapturedPiece().type, move.getCapturedPiece().team, getArrayIndexFromLocation(move.getTo().transpose(0, (move.getMovedPiece().team == Team.WHITE ? -1 : 1))));
-                } else {
-                    usedBitboard.removePiece(move.getCapturedPiece().type, move.getCapturedPiece().team, getArrayIndexFromLocation(move.getTo().transpose(0, (move.getMovedPiece().team == Team.WHITE ? -1 : 1))));
-                }
-            }
-//            usedBitboard.updateAttackedSquares(move.getCapturedPiece().type, move.getCapturedPiece().team, this, move);
-        }
-        usedBitboard.updateAttackedSquares(move.getMovedPiece().type, move.getMovedPiece().team, this, move);
-        if (recalculateAttackedSquares) {
-//            calculateAttackedSquares(usedBitboard, true);
-        }
-        return usedBitboard;
     }
 
     /**
@@ -505,15 +406,8 @@ public class Board {
         if (!isInBounds(boardLocation)) {
             return;
         }
-
         int index = getArrayIndexFromLocation(boardLocation);
         pieces[index] = null;
-
-        // TODO: Move this up, here it does not make sense, because the piece is already removed
-        Piece piece = pieces[getArrayIndexFromLocation(boardLocation)];
-        if (piece != null) {
-            bitboard.removePiece(piece.type, piece.team, getArrayIndexFromLocation(boardLocation));
-        }
     }
 
     /**
@@ -531,10 +425,6 @@ public class Board {
         pieces[lastFromLocation.getX() + lastFromLocation.getY() * 8] = temp;
     }
 
-    public void undoMove(Move move) {
-        undoMove(move, false, true);
-    }
-
     /**
      * Undoes a given move on the chessboard.
      * If the move is null, the method returns without doing anything.
@@ -545,7 +435,7 @@ public class Board {
      *
      * @param move the move to undo
      */
-    public void undoMove(Move move, boolean updateBitboard, boolean isUndo) {
+    public void undoMove(Move move) {
         var from = move.getFrom();
         var to = move.getTo();
         var movedPiece = move.getMovedPiece();
@@ -569,15 +459,11 @@ public class Board {
                 GameState.enPassantCapturesReturned++;
             }
             pieces[pieceIndex] = capturedPiece;
-            bitboard.setPiece(capturedPiece.type, capturedPiece.team, pieceIndex);
         }
 
         // Undo a promotion
         if (move.getPromotionPiece() != null) {
-            pieces[getArrayIndexFromLocation(from)] = new Piece(movedPiece.team, PieceType.PAWN);
-            bitboard.setPiece(PieceType.PAWN, movedPiece.team, getArrayIndexFromLocation(from));
-            bitboard.removePiece(move.getPromotionPiece(), movedPiece.team, getArrayIndexFromLocation(to));
-            bitboard.updateAttackedSquaresAfterPromotion(this, PieceType.PAWN, movedPiece.team);
+            pieces[getArrayIndexFromLocation(from)] = movedPiece;
         }
 
         // Move the rooks back to the original position when castled
@@ -590,19 +476,15 @@ public class Board {
                 var rookLocation = team == Team.WHITE ? new BoardLocation(5, 0) : new BoardLocation(5, 7);
                 var originalRookLocation = team == Team.WHITE ? new BoardLocation(7, 0) : new BoardLocation(7, 7);
                 var castleMove = new Move(rookLocation, originalRookLocation, new Piece(team, PieceType.ROOK));
-                movePiece(castleMove, true, false);
+                movePiece(castleMove);
             }
             // Queenside castling
             else if (move.getTo().getX() < move.getFrom().getX()) {
                 var rookLocation = team == Team.WHITE ? new BoardLocation(3, 0) : new BoardLocation(3, 7);
                 var originalRookLocation = team == Team.WHITE ? new BoardLocation(0, 0) : new BoardLocation(0, 7);
                 var castleMove = new Move(rookLocation, originalRookLocation, new Piece(team, PieceType.ROOK));
-                movePiece(castleMove, true, false);
+                movePiece(castleMove);
             }
-        }
-
-        if (updateBitboard) {
-            updateBitboardAfterAMove(move, isUndo);
         }
     }
 
@@ -619,10 +501,7 @@ public class Board {
         var to = move.getTo();
 
         movePieceWithoutSpecialMoves(move);
-        var location = new BoardLocation(to.getX(), from.getY());
-//        bitboard.removePiece(PieceType.PAWN, getPiece(location).team, getArrayIndexFromLocation(location));
-//        bitboard.setPiece(PieceType.PAWN, getPiece(move.getTo()).team, getArrayIndexFromLocation(move.getTo()));
-        removePiece(location);
+        removePiece(new BoardLocation(to.getX(), from.getY()));
     }
 
     /**
@@ -640,7 +519,6 @@ public class Board {
 
         movePieceWithoutSpecialMoves(new Move(to, from, getPiece(to), getPiece(from)));
         pieces[getArrayIndexFromLocation(enPassantCapture)] = move.getCapturedPiece();
-//        bitboard.setPiece(PieceType.PAWN, getPiece(enPassantCapture).team, getArrayIndexFromLocation(enPassantCapture));
     }
 
     /**
@@ -676,13 +554,7 @@ public class Board {
         if (pawnLocation.getY() == 7) team = Team.WHITE;
         else team = Team.BLACK;
         Piece piece = new Piece(team, selectedPiece);
-        var pieceLocation = pawnLocation.getX() + pawnLocation.getY() * 8;
-        var pawnLocationBeforeMove = pawnLocation.getX() + pawnLocation.transpose(0, (team == Team.WHITE ? -1 : 1)).getY() * 8;
-        pieces[pieceLocation] = piece;
-        bitboard.setPiece(selectedPiece, team, pieceLocation);
-        bitboard.removePiece(PieceType.PAWN, team, pawnLocationBeforeMove);
-        // TODO: For some reason, this breaks enPassant Perft tests on depth 6
-        bitboard.updateAttackedSquaresAfterPromotion(this, selectedPiece, team);
+        pieces[pawnLocation.getX() + pawnLocation.getY() * 8] = piece;
     }
 
     /**
@@ -692,8 +564,6 @@ public class Board {
      * @return true if the board location is within the bounds, false otherwise
      */
     public boolean isInBounds(BoardLocation boardLocation) {
-        int x = boardLocation.getX();
-        int y = boardLocation.getY();
-        return x >= 0 && x < 8 && y >= 0 && y < 8;
+        return boardLocation.getX() < 8 && boardLocation.getX() >= 0 && boardLocation.getY() < 8 && boardLocation.getY() >= 0;
     }
 }

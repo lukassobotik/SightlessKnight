@@ -9,8 +9,6 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import lukas.sobotik.sightlessknight.ai.PerftFunction;
 import lukas.sobotik.sightlessknight.gamelogic.Move;
-import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
-import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 import lukas.sobotik.sightlessknight.views.play.PlayView;
 
 import java.util.concurrent.Executors;
@@ -42,38 +40,6 @@ public class CommandLine extends HorizontalLayout {
             System.out.println("Command: " + command);
 
             var split = command.split(" ");
-            if (command.startsWith("/bitboard show")) {
-                if (split.length == 4) {
-                    var team = Team.valueOf(split[2].toUpperCase());
-                    var pieceType = PieceType.valueOf(split[3].toUpperCase());
-
-                    playView.showBitboardOverlay(pieceType, team);
-                    return;
-                }
-                if (split.length == 3) {
-                    var team = Team.valueOf(split[2].toUpperCase());
-
-                    playView.showBitboardOverlay(null, team);
-                    return;
-                }
-                Notification.show("Invalid amount of arguments");
-            }
-            if (command.startsWith("/bitboard hide")) {
-                if (split.length == 4) {
-                    var team = Team.valueOf(split[2].toUpperCase());
-                    var pieceType = PieceType.valueOf(split[3].toUpperCase());
-
-                    playView.hideBitboardOverlay(pieceType, team);
-                    return;
-                }
-                if (split.length == 3) {
-                    var team = Team.valueOf(split[2].toUpperCase());
-
-                    playView.hideBitboardOverlay(null, team);
-                    return;
-                }
-                Notification.show("Invalid amount of arguments");
-            }
             if (command.startsWith("/undo")) {
                 Move lastMove = playView.gameState.moveHistory.get(playView.gameState.moveHistory.size() - 1);
                 playView.gameState.undoMove(lastMove);

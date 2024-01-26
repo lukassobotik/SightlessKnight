@@ -70,7 +70,7 @@ public class GameState {
      */
     public void movePieceAndEndTurn(Move move) {
         if (move.getFrom() != null && move.getTo() != null) {
-            board.movePiece(move, true, false);
+            board.movePiece(move);
         }
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
@@ -193,7 +193,7 @@ public class GameState {
     public void undoMove(Move move) {
         if (moveNumber - 1 >= 0) moveNumber -= 1;
 
-        board.undoMove(move, true, true);
+        board.undoMove(move);
 
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
