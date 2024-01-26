@@ -86,6 +86,11 @@ public class FenUtils {
             startingTeam = Team.WHITE;
         }
 
+        String fenCastlingAvailability = fen.split(" ")[2];
+        Rules.castlingNotAvailable[0] = !fenCastlingAvailability.contains("K");
+        Rules.castlingNotAvailable[1] = !fenCastlingAvailability.contains("Q");
+        Rules.castlingNotAvailable[2] = !fenCastlingAvailability.contains("k");
+        Rules.castlingNotAvailable[3] = !fenCastlingAvailability.contains("q");
         return pieces;
     }
 

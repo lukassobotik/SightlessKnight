@@ -48,32 +48,32 @@ public class Board {
      * @param copyBoard The Board object to be copied.
      */
     public Board(Board copyBoard) {
-    this.size = copyBoard.size;
-    this.squareSize = copyBoard.squareSize;
-    this.fenUtils = copyBoard.fenUtils; // Assuming fenUtils doesn't need to be deep copied
-    this.whiteKingLocation = new BoardLocation(copyBoard.whiteKingLocation);
-    this.blackKingLocation = new BoardLocation(copyBoard.blackKingLocation);
-    this.lastRemovedPiece = copyBoard.lastRemovedPiece != null ? new Piece(copyBoard.lastRemovedPiece) : null;
-    this.lastMovedPiece = copyBoard.lastMovedPiece != null ? new Piece(copyBoard.lastMovedPiece) : null;
-    this.lastFromLocation = copyBoard.lastFromLocation != null ? new BoardLocation(copyBoard.lastFromLocation) : null;
-    this.lastToLocation = copyBoard.lastToLocation != null ? new BoardLocation(copyBoard.lastToLocation) : null;
-    this.lastDoublePawnMoveWithWhitePieces = copyBoard.lastDoublePawnMoveWithWhitePieces != null ? new BoardLocation(copyBoard.lastDoublePawnMoveWithWhitePieces) : null;
-    this.lastDoublePawnMoveWithBlackPieces = copyBoard.lastDoublePawnMoveWithBlackPieces != null ? new BoardLocation(copyBoard.lastDoublePawnMoveWithBlackPieces) : null;
-    this.whiteKingMoves = new MoveHistoryStack(copyBoard.whiteKingMoves);
-    this.whiteKingRookMoves = new MoveHistoryStack(copyBoard.whiteKingRookMoves);
-    this.whiteQueenRookMoves = new MoveHistoryStack(copyBoard.whiteQueenRookMoves);
-    this.blackKingMoves = new MoveHistoryStack(copyBoard.blackKingMoves);
-    this.blackKingRookMoves = new MoveHistoryStack(copyBoard.blackKingRookMoves);
-    this.blackQueenRookMoves = new MoveHistoryStack(copyBoard.blackQueenRookMoves);
+        this.size = copyBoard.size;
+        this.squareSize = copyBoard.squareSize;
+        this.fenUtils = copyBoard.fenUtils; // Assuming fenUtils doesn't need to be deep copied
+        this.whiteKingLocation = new BoardLocation(copyBoard.whiteKingLocation);
+        this.blackKingLocation = new BoardLocation(copyBoard.blackKingLocation);
+        this.lastRemovedPiece = copyBoard.lastRemovedPiece != null ? new Piece(copyBoard.lastRemovedPiece) : null;
+        this.lastMovedPiece = copyBoard.lastMovedPiece != null ? new Piece(copyBoard.lastMovedPiece) : null;
+        this.lastFromLocation = copyBoard.lastFromLocation != null ? new BoardLocation(copyBoard.lastFromLocation) : null;
+        this.lastToLocation = copyBoard.lastToLocation != null ? new BoardLocation(copyBoard.lastToLocation) : null;
+        this.lastDoublePawnMoveWithWhitePieces = copyBoard.lastDoublePawnMoveWithWhitePieces != null ? new BoardLocation(copyBoard.lastDoublePawnMoveWithWhitePieces) : null;
+        this.lastDoublePawnMoveWithBlackPieces = copyBoard.lastDoublePawnMoveWithBlackPieces != null ? new BoardLocation(copyBoard.lastDoublePawnMoveWithBlackPieces) : null;
+        this.whiteKingMoves = new MoveHistoryStack(copyBoard.whiteKingMoves);
+        this.whiteKingRookMoves = new MoveHistoryStack(copyBoard.whiteKingRookMoves);
+        this.whiteQueenRookMoves = new MoveHistoryStack(copyBoard.whiteQueenRookMoves);
+        this.blackKingMoves = new MoveHistoryStack(copyBoard.blackKingMoves);
+        this.blackKingRookMoves = new MoveHistoryStack(copyBoard.blackKingRookMoves);
+        this.blackQueenRookMoves = new MoveHistoryStack(copyBoard.blackQueenRookMoves);
 
-    // Deep copy of pieces array
-    this.pieces = new Piece[copyBoard.pieces.length];
-    for (int i = 0; i < copyBoard.pieces.length; i++) {
-        if (copyBoard.pieces[i] != null) {
-            this.pieces[i] = new Piece(copyBoard.pieces[i]);
+        // Deep copy of pieces array
+        this.pieces = new Piece[copyBoard.pieces.length];
+        for (int i = 0; i < copyBoard.pieces.length; i++) {
+            if (copyBoard.pieces[i] != null) {
+                this.pieces[i] = new Piece(copyBoard.pieces[i]);
+            }
         }
     }
-}
 
     /**
      * Resets the board position based on the given starting position.

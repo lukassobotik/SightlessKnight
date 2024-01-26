@@ -21,6 +21,7 @@ public class Piece {
 	@Setter
 	public String castling = null;
 	public PieceType promotion = null;
+	public int index;
 
 	/**
 	 * Creates a new Instance of the Piece class with the given team and type.
@@ -47,6 +48,7 @@ public class Piece {
         this.enPassant = copyPiece.enPassant;
         this.castling = copyPiece.castling;
         this.promotion = copyPiece.promotion;
+		this.index = copyPiece.index;
     }
 
 	/**
@@ -73,8 +75,10 @@ public class Piece {
 	 * @param enPassant Indicates whether the piece is eligible for en passant capture or not.
 	 * @param castling The castling status of the piece.
 	 * @param promotion The type of piece to which the current piece can be promoted.
+	 * @param index The index of the piece.
 	 */
-	public Piece (Team team, PieceType type, int doublePawnMoveOnMoveNumber, boolean hasMoved, boolean enPassant, String castling, PieceType promotion) {
+	public Piece (Team team, PieceType type, int doublePawnMoveOnMoveNumber, boolean hasMoved, boolean enPassant,
+				  String castling, PieceType promotion, int index) {
 		this.team = team;
 		this.type = type;
 		this.doublePawnMoveOnMoveNumber = doublePawnMoveOnMoveNumber;
@@ -82,5 +86,6 @@ public class Piece {
 		this.enPassant = enPassant;
 		this.castling = castling;
 		this.promotion = promotion;
+		this.index = index;
 	}
 }

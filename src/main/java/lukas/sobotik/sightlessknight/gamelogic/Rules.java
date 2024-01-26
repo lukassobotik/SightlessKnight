@@ -11,6 +11,7 @@ import java.util.Objects;
 
 public class Rules {
     static final Team playerTeam = GameState.playerTeam;
+    static boolean[] castlingNotAvailable = {false, false, false, false};
     private Rules() {
 
     }
@@ -125,14 +126,14 @@ public class Rules {
                     && !pieces[0].hasMoved;
         } else {
             whiteKingMoved = !board.whiteKingMoves.getValue()
-                            && pieces[4] != null
-                            && pieces[4].type == PieceType.KING;
+                    && pieces[4] != null
+                    && pieces[4].type == PieceType.KING;
             whiteKingRookMoved = !board.whiteKingRookMoves.getValue()
-                            && pieces[7] != null
-                            && pieces[7].type == PieceType.ROOK;
+                    && pieces[7] != null
+                    && pieces[7].type == PieceType.ROOK;
             whiteQueenRookMoved = !board.whiteQueenRookMoves.getValue()
-                            && pieces[0] != null
-                            && pieces[0].type == PieceType.ROOK;
+                    && pieces[0] != null
+                    && pieces[0].type == PieceType.ROOK;
         }
 
         boolean blackKingMoved;
@@ -151,21 +152,21 @@ public class Rules {
                     && !pieces[7 * 8].hasMoved;
         } else {
             blackKingMoved = !board.blackKingMoves.getValue()
-                            && pieces[4 + 7 * 8] != null
-                            && pieces[4 + 7 * 8].type == PieceType.KING;
+                    && pieces[4 + 7 * 8] != null
+                    && pieces[4 + 7 * 8].type == PieceType.KING;
             blackKingRookMoved = !board.blackKingRookMoves.getValue()
-                            && pieces[7 + 7 * 8] != null
-                            && pieces[7 + 7 * 8].type == PieceType.ROOK;
+                    && pieces[7 + 7 * 8] != null
+                    && pieces[7 + 7 * 8].type == PieceType.ROOK;
             blackQueenRookMoved = !board.blackQueenRookMoves.getValue()
-                            && pieces[7 * 8] != null
-                            && pieces[7 * 8].type == PieceType.ROOK;
+                    && pieces[7 * 8] != null
+                    && pieces[7 * 8].type == PieceType.ROOK;
         }
 
         if (whiteKingMoved) {
-            if (whiteKingRookMoved) {
+            if (whiteKingRookMoved && !castlingNotAvailable[0]) {
                 castlingAvailability.append("K");
             }
-            if (whiteQueenRookMoved) {
+            if (whiteQueenRookMoved && !castlingNotAvailable[1]) {
                 castlingAvailability.append("Q");
             }
         }
@@ -174,10 +175,10 @@ public class Rules {
             castlingAvailability = new StringBuilder();
         }
         if (blackKingMoved) {
-            if (blackKingRookMoved) {
+            if (blackKingRookMoved && !castlingNotAvailable[2]) {
                 castlingAvailability.append("k");
             }
-            if (blackQueenRookMoved) {
+            if (blackQueenRookMoved && !castlingNotAvailable[3]) {
                 castlingAvailability.append("q");
             }
         }
