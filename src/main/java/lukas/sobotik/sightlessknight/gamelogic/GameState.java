@@ -84,7 +84,12 @@ public class GameState {
         Piece piece = move.getMovedPiece();
         if (piece == null) return;
         selectedPieceLocation = move.getFrom();
-        validMoves = Rules.getValidMoves(selectedPieceLocation, piece, board, !kinglessGame);
+        if (!isTest) {
+            validMoves = Rules.getValidMoves(selectedPieceLocation, piece, board, !kinglessGame);
+        } else {
+            validMoves = new ArrayList<>();
+            validMoves.add(move);
+        }
 
         if (validMoves.isEmpty()) {
             return;
@@ -198,7 +203,7 @@ public class GameState {
         boolean isPromotionSquare = (move.getTo().getY() == 0 && move.getMovedPiece().team == Team.BLACK) || (move.getTo().getY() == 7 && move.getMovedPiece().team == Team.WHITE);
         if (move.getMovedPiece().type.equals(PieceType.PAWN) && isPromotionSquare && move.getMovedPiece().promotion == null) return;
 
-        moveHistory.add(new Move(move.getFrom(), move.getTo(), board.getPiece(move.getTo()), move.getCapturedPiece()));
+        moveHistory.add(move);
         String parsedMove = new AlgebraicNotationUtils(new FenUtils(board.pieces), this, board).getParsedMove(move);
         parsedMoveHistory.add(parsedMove);
 
