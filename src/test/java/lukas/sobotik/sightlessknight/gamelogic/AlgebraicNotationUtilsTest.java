@@ -75,4 +75,66 @@ class AlgebraicNotationUtilsTest {
                  Arguments.of("r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1", "Bb5", new BoardLocation(5, 0), new BoardLocation(1, 4), false)
          );
     }
+
+//    public void refreshControlledSquares(Team team, Board board) {
+//        long squares = 0L;
+//        for (PieceType type : PieceType.values()) {
+//            long bitboard = getBitboard(type, team);
+//            for (int i = 0; i < 64; i++) {
+//                if ((bitboard & (1L << i)) != 0) {
+//                    Piece piece = new Piece(team, type);
+//                    List<Move> moves = new ArrayList<>();
+//                    if (type == PieceType.PAWN) {
+//                        // For pawns, consider the squares they can capture, not the squares they can move to
+//                        moves.addAll(Rules.getPawnCaptureMoves(new BoardLocation(i % 8, i / 8), team, board, true, true));
+//                    } else {
+//                        moves.addAll(Rules.getValidMoves(new BoardLocation(i % 8, i / 8), piece, board, false, false, true));
+//                    }
+//                    for (Move move : moves) {
+//                        squares |= (1L << board.getArrayIndexFromLocation(move.getTo()));
+//                    }
+//                }
+//            }
+//        }
+//        controlledSquares[team == Team.WHITE ? 0 : 1] = squares;
+//    }
+
+//    public void updateControlledSquares(Team team, Board board, Move move) {
+//        if (getControlledSquares(team) == 0) {
+//
+//        }
+//
+//        int sourceIndex = board.getArrayIndexFromLocation(move.getFrom());
+//        int destinationIndex = board.getArrayIndexFromLocation(move.getTo());
+//
+//        // Remove the source square from the controlled squares
+//        controlledSquares[team == Team.WHITE ? 0 : 1] &= ~(1L << sourceIndex);
+//
+//        List<Move> pseudoLegalMoves = Rules.getPseudoLegalMoves(move.getTo(), move.getMovedPiece(), board);
+//
+//        if (move.getMovedPiece() != null && move.getMovedPiece().type == PieceType.PAWN) {
+//            // For pawns, consider the squares they can capture, not the squares they can move to
+//            pseudoLegalMoves.addAll(Rules.getPawnCaptureMoves(move.getTo(), team, board, true, true));
+//
+//            // Remove the old controlled squares of the pawn
+//            List<Move> removeMoves = Rules.getPawnCaptureMoves(move.getFrom(), team, board, true, true);
+//            for (Move removeMove : removeMoves) {
+//                int removeIndex = board.getArrayIndexFromLocation(removeMove.getTo());
+//                controlledSquares[team == Team.WHITE ? 0 : 1] &= ~(1L << removeIndex);
+//            }
+//        } else {
+//            // Add the destination square to the controlled squares
+//            controlledSquares[team == Team.WHITE ? 0 : 1] |= (1L << destinationIndex);
+//        }
+//
+//        for (Move pseudoLegalMove : pseudoLegalMoves) {
+//            int moveDestinationIndex = board.getArrayIndexFromLocation(pseudoLegalMove.getTo());
+//            controlledSquares[team == Team.WHITE ? 0 : 1] |= (1L << moveDestinationIndex);
+//        }
+//
+//        // If the move is a capture, remove the captured square from the controlled squares of the enemy team
+//        if (move.getCapturedPiece() != null) {
+//            controlledSquares[team == Team.WHITE ? 1 : 0] &= ~(1L << destinationIndex);
+//        }
+//    }
 }

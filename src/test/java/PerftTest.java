@@ -3,7 +3,6 @@ import lukas.sobotik.sightlessknight.gamelogic.Board;
 import lukas.sobotik.sightlessknight.gamelogic.FenUtils;
 import lukas.sobotik.sightlessknight.gamelogic.GameState;
 import lukas.sobotik.sightlessknight.gamelogic.Piece;
-import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,12 +47,7 @@ public class PerftTest {
         GameState gameState = new GameState(board, fenUtils.getStartingTeam(), false);
         PerftFunction perftFunction = new PerftFunction(board, gameState, null);
 
-        int actualPositions = perftFunction.playMoves(depth, fenUtils.getStartingTeam(), false, false);
-        board.bitboard.printBitboard();
-        System.out.println("------");
-        board.bitboard.printControlledSquares(Team.WHITE);
-        System.out.println("------");
-        board.bitboard.printControlledSquares(Team.BLACK);
+        int actualPositions = perftFunction.playMoves(depth, fenUtils.getStartingTeam(), false, false, true);
         assertEquals(expectedPositions, actualPositions,
                 "Name: " + getPositionNameFromFen(fen)
                         + ", FEN: " + fen

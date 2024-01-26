@@ -70,7 +70,7 @@ public class GameState {
      */
     public void movePieceAndEndTurn(Move move) {
         if (move.getFrom() != null && move.getTo() != null) {
-            board.movePiece(move);
+            board.movePiece(move, true, false);
         }
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }
@@ -84,6 +84,10 @@ public class GameState {
         Piece piece = move.getMovedPiece();
         if (piece == null) return;
         selectedPieceLocation = move.getFrom();
+
+        // TODO: Remove this altogether, it's not needed
+        //  1: in tests, the move is already verified to be valid
+        //  2: in the GUI, precompute all valid moves in the given position and only allow the user to select from those
         if (!isTest) {
             validMoves = Rules.getValidMoves(selectedPieceLocation, piece, board, !kinglessGame);
         } else {
@@ -189,7 +193,7 @@ public class GameState {
     public void undoMove(Move move) {
         if (moveNumber - 1 >= 0) moveNumber -= 1;
 
-        board.undoMove(move);
+        board.undoMove(move, true, true);
 
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
     }

@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PlayView extends VerticalLayout {
     FenUtils fenUtils;
     AlgebraicNotationUtils algebraicNotationUtils;
-    GameState gameState;
+    public GameState gameState;
     Board board;
 
     // Piece Game
@@ -53,7 +53,7 @@ public class PlayView extends VerticalLayout {
     HorizontalLayout gameContentLayout, targetSquareLayout, gameLayout;
     VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout, quickSettingsLayout;
     Dialog quickSettingsDialog;
-    public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    public static String STARTING_POSITION = "8/1P6/8/8/8/8/8/K1k5 w - - 0 1";
 
     public boolean showPieces = true;
     public boolean showBoard = true;
@@ -329,8 +329,7 @@ public class PlayView extends VerticalLayout {
         showBitboardPieceType = pieceType;
         long bitboard;
         if (pieceType == null) {
-            board.bitboard.updateControlledSquares(team, board);
-            bitboard = board.bitboard.getControlledSquares(team);
+            bitboard = board.bitboard.getTeamAttackedSquares(team);
         } else {
             bitboard = board.bitboard.getBitboard(pieceType, team);
         }
@@ -346,8 +345,7 @@ public class PlayView extends VerticalLayout {
         showBitboardPieceType = null;
         long bitboard;
         if (pieceType == null) {
-            board.bitboard.updateControlledSquares(team, board);
-            bitboard = board.bitboard.getControlledSquares(team);
+            bitboard = board.bitboard.getTeamAttackedSquares(team);
         } else {
             bitboard = board.bitboard.getBitboard(pieceType, team);
         }
@@ -382,7 +380,7 @@ public class PlayView extends VerticalLayout {
      * Plays a move in the game.
      * @param move the move to be played
      */
-    private void playMove(Move move) {
+    public void playMove(Move move) {
         updateGameStateAndBoard(move);
         checkIfGameEnded();
 
@@ -620,6 +618,9 @@ public class PlayView extends VerticalLayout {
                         });
                         System.out.println("MOVE to " + toLocation.get().getX() + "," + toLocation.get().getY() + " from " + selectedSquare.get().getX() + "," + selectedSquare.get().getY());
                         playMove(new Move(selectedSquare.get(), toLocation.get(), board.getPiece(selectedSquare.get()), board.getPiece(toLocation.get())));
+                        System.out.println("*************************************");
+                        board.bitboard.printBitboard();
+                        System.out.println("*************************************");
                     }
 
                     // Remove all previously selected squares
