@@ -7,9 +7,13 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import lukas.sobotik.sightlessknight.ai.PerftFunction;
+import lukas.sobotik.sightlessknight.gamelogic.Move;
 import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
 import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 import lukas.sobotik.sightlessknight.views.play.PlayView;
+
+import java.util.concurrent.Executors;
 
 public class CommandLine extends HorizontalLayout {
 
@@ -66,6 +70,24 @@ public class CommandLine extends HorizontalLayout {
                     var team = Team.valueOf(split[2].toUpperCase());
 
                     playView.hideBitboardOverlay(null, team);
+                    return;
+                }
+                Notification.show("Invalid amount of arguments");
+            }
+            if (command.startsWith("/undo")) {
+                Move lastMove = playView.gameState.moveHistory.get(playView.gameState.moveHistory.size() - 1);
+                playView.gameState.undoMove(lastMove);
+                playView.createBoard(playView.gameState.board.pieces);
+                playView.gameState.moveHistory.remove(playView.gameState.moveHistory.size() - 1);
+            }
+            if (command.startsWith("/perft")) {
+                if (split.length == 2) {
+                    var depth = Integer.parseInt(split[1]);
+                    var perftFunction = new PerftFunction(playView.gameState.board, playView.gameState, playView);
+                    Executors.newSingleThreadExecutor().execute(() -> {
+                        var positions = perftFunction.playMoves(depth, playView.gameState.currentTurn, false, true, true);
+                        System.out.println("Positions: " + positions);
+                    });
                     return;
                 }
                 Notification.show("Invalid amount of arguments");
