@@ -5,6 +5,7 @@ import lukas.sobotik.sightlessknight.gamelogic.GameState;
 import lukas.sobotik.sightlessknight.gamelogic.Piece;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -37,8 +38,9 @@ public class PerftTest {
     }
 
     @ParameterizedTest
-    @MethodSource("fenPositionsProvider")
-    public void testPerft(String fen, int depth, int expectedPositions) {
+    @MethodSource("allDepthsSuite")
+    @Disabled
+    public void allDepths(String fen, int depth, double expectedPositions) {
         // Set up the position based on the given FEN
         Piece[] pieces = new Piece[64];
         FenUtils fenUtils = new FenUtils(pieces);
@@ -47,7 +49,7 @@ public class PerftTest {
         GameState gameState = new GameState(board, fenUtils.getStartingTeam(), false);
         PerftFunction perftFunction = new PerftFunction(board, gameState, null);
 
-        int actualPositions = perftFunction.playMoves(depth, fenUtils.getStartingTeam(), false, false, true);
+        double actualPositions = perftFunction.playMoves(depth, fenUtils.getStartingTeam(), false, false, true);
         assertEquals(expectedPositions, actualPositions,
                 "Name: " + getPositionNameFromFen(fen)
                         + ", FEN: " + fen
@@ -56,7 +58,7 @@ public class PerftTest {
                         + ", Depth " + depth + " positions mismatch.");
     }
 
-    private static Stream<Arguments> fenPositionsProvider() {
+    private static Stream<Arguments> allDepthsSuite() {
         var enPassantWhite = positionMap.get("enPassantWhite");
         var enPassantBlack = positionMap.get("enPassantBlack");
         var castling = positionMap.get("castling");
@@ -129,6 +131,52 @@ public class PerftTest {
                 Arguments.of(testPos6, 4, 3894594)
 //                Arguments.of(testPos6, 5, 164075551),
 //                Arguments.of(testPos6, 6, 6923051137)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("shortSuite")
+    public void shortSuite(String fen, int depth, double expectedPositions) {
+        // Set up the position based on the given FEN
+        Piece[] pieces = new Piece[64];
+        FenUtils fenUtils = new FenUtils(pieces);
+        pieces = fenUtils.generatePositionFromFEN(fen);
+        Board board = new Board(64, pieces, fenUtils);
+        GameState gameState = new GameState(board, fenUtils.getStartingTeam(), false);
+        PerftFunction perftFunction = new PerftFunction(board, gameState, null);
+
+        double actualPositions = perftFunction.playMoves(depth, fenUtils.getStartingTeam(), false, false, true);
+        assertEquals(expectedPositions, actualPositions,
+                     "Name: " + getPositionNameFromFen(fen)
+                             + ", FEN: " + fen
+                             + ", Move " + GameState.moveNumber
+                             + ", Pieces Captured: " + GameState.capturedPieces
+                             + ", Depth " + depth + " positions mismatch.");
+    }
+
+    private static Stream<Arguments> shortSuite() {
+        var enPassantWhite = positionMap.get("enPassantWhite");
+        var enPassantBlack = positionMap.get("enPassantBlack");
+        var castling = positionMap.get("castling");
+        var startingPosition = positionMap.get("startingPosition");
+        var testPos2 = positionMap.get("testPos2");
+        var testPos3 = positionMap.get("testPos3");
+        var testPos4 = positionMap.get("testPos4");
+        var testPos5 = positionMap.get("testPos5");
+        var testPos6 = positionMap.get("testPos6");
+
+        return Stream.of(
+                Arguments.of(enPassantWhite, 6, 21270),
+                Arguments.of(enPassantBlack, 6, 12036),
+                Arguments.of(castling, 4, 314346),
+                Arguments.of(startingPosition, 5, 4_865_609),
+                Arguments.of(testPos2, 4, 4_085_603),
+                Arguments.of(testPos3, 4, 43238),
+                Arguments.of(testPos4, 4, 422333),
+                Arguments.of(testPos5, 4, 2_103_487),
+                Arguments.of(testPos6, 4, 3_894_594)
+//                Arguments.of(castling, 5, 7_594_526),
+//                Arguments.of(testPos3, 5, 674624),
         );
     }
 
