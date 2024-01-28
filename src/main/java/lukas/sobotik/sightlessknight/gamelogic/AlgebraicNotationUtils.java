@@ -296,6 +296,7 @@ public class AlgebraicNotationUtils {
             movedPieceType = PieceType.PAWN;
         }
 
+        // TODO: Break this into smaller methods
         if (parsedMove.length() == 2 || Objects.equals(movedPieceType, PieceType.PAWN)) {
             BoardLocation from = null;
             Piece piece = null;

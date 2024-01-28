@@ -75,9 +75,12 @@ public class Rules {
     }
 
     /**
-     * Returns all valid moves for a given team.
-     * @param team team whose valid moves are to be returned.
-     * @return list of all valid moves for the given team.
+     * This method is used to get all valid moves for a specific team on the board.
+     * It also handles special moves like pawn promotion and en passant.
+     * @param team The team for which to generate the moves.
+     * @param board The current state of the game board.
+     * @param addTestMoves A boolean flag indicating whether to add test moves or not. If true, it will add all possible promotion moves for pawns and mark en passant possible moves.
+     * @return A list of all valid moves for the given team.
      */
     public static List<Move> getAllValidMovesForTeam(Team team, Board board, boolean addTestMoves) {
         List<Move> validMoves = new ArrayList<>();

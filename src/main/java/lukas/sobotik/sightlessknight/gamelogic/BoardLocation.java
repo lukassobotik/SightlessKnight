@@ -16,6 +16,12 @@ public class BoardLocation {
         this.y = y;
     }
 
+    /**
+     * Copy constructor for the BoardLocation class.
+     * Creates a new BoardLocation object by copying the properties of the given BoardLocation object.
+     *
+     * @param other the BoardLocation object to be copied
+     */
     public BoardLocation(BoardLocation other) {
         this.x = other.x;
         this.y = other.y;

@@ -10,17 +10,20 @@ public class Move {
     private Piece movedPiece, capturedPiece;
     private PieceType promotionPiece;
     private MoveFlag moveFlag;
+
     public Move(BoardLocation from, BoardLocation to) {
         this.from = from;
         this.to = to;
         moveFlag = MoveFlag.none;
     }
+
     public Move(BoardLocation from, BoardLocation to, Piece movedPiece) {
         this.from = from;
         this.to = to;
         this.movedPiece = movedPiece;
         moveFlag = MoveFlag.none;
     }
+
     public Move(BoardLocation from, BoardLocation to, Piece movedPiece, Piece capturedPiece) {
         this.from = from;
         this.to = to;
@@ -52,12 +55,30 @@ public class Move {
     public void setMoveFlag(MoveFlag moveFlag) {
         this.moveFlag = moveFlag;
     }
+
+    /**
+     * Returns the algebraic notation of the move.
+     * @param pieces the pieces on the board
+     * @param gameState the current state of the game
+     * @param board the game board
+     * @return the algebraic notation of the move
+     */
     public String getMoveNotation(Piece[] pieces, GameState gameState, Board board) {
         return new AlgebraicNotationUtils(this, new FenUtils(pieces), gameState, board).getParsedMove(this);
     }
+
+    /**
+     * Returns a simplified version of the moved piece.
+     * @return a simplified version of the moved piece.
+     */
     public Piece getSimplifiedMovedPiece() {
         return new Piece(movedPiece.team, movedPiece.type);
     }
+
+    /**
+     * Returns a simplified version of the captured piece.
+     * @return a simplified version of the captured piece.
+     */
     public Piece getSimplifiedCapturedPiece() {
         if (capturedPiece == null) return new Piece(null, null);
         return new Piece(capturedPiece.team, capturedPiece.type);
