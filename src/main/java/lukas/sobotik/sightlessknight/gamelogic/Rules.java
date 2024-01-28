@@ -5,7 +5,9 @@ import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
 import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -70,6 +72,47 @@ public class Rules {
             case KING -> legalMoves.addAll(getValidKingMoves(legalMoves, selectedPieceLocation, piece.team, board, true, true));
         }
         return legalMoves;
+    }
+
+    /**
+     * Returns all valid moves for a given team.
+     * @param team team whose valid moves are to be returned.
+     * @return list of all valid moves for the given team.
+     */
+    public static List<Move> getAllValidMovesForTeam(Team team, Board board, boolean addTestMoves) {
+        List<Move> validMoves = new ArrayList<>();
+        for (int i = 0; i < 64; i++) {
+            var piece = board.pieces[i];
+            var location = board.getPointFromArrayIndex(i);
+            if (piece == null || piece.team != team) continue;
+
+            var allMoves = Rules.getValidMoves(board.getPointFromArrayIndex(i), piece, board, true);
+            validMoves.addAll(new HashSet<>(allMoves).stream().map(move -> {
+                if (!addTestMoves) return move;
+                var moveLocation = move.getTo();
+                // Pawn Promotion
+                if (((moveLocation.getY() == 0 && piece.team == Team.BLACK) || (moveLocation.getY() == 7 && piece.team == Team.WHITE))
+                        && piece.type == PieceType.PAWN) {
+                    // Add four promotion options: bishop, knight, rook, queen
+                    List<PieceType> promotionPieces = Arrays.asList(PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK, PieceType.QUEEN);
+                    for (PieceType promotionPiece : promotionPieces) {
+                        Move promotionMove = new Move(location, moveLocation, piece, board.getPiece(moveLocation));
+                        promotionMove.setPromotionPiece(promotionPiece);
+                        if (promotionPiece == PieceType.QUEEN) return promotionMove;
+                        validMoves.add(promotionMove);
+                    }
+                }
+                // En Passant
+                BoardLocation enPassantCapture = new BoardLocation(moveLocation.getX(), location.getY());
+                if (board.getPiece(enPassantCapture) != null
+                        && location.getX() != moveLocation.getX()) {
+                    piece.enPassant = true;
+                }
+                return move;
+            }).toList());
+        }
+
+        return validMoves;
     }
 
     /**

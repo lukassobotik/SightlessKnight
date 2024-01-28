@@ -85,82 +85,39 @@ public class GameState {
         if (piece == null) return;
         selectedPieceLocation = move.getFrom();
 
-        // TODO: Remove this altogether, it's not needed
-        //  1: in tests, the move is already verified to be valid
-        //  2: in the GUI, precompute all valid moves in the given position and only allow the user to select from those
-        if (!isTest) {
-            validMoves = Rules.getValidMoves(selectedPieceLocation, piece, board, !kinglessGame);
-        } else {
-            validMoves = new ArrayList<>();
-            validMoves.add(move);
+        moveNumber++;
+        // Pawn Promotion
+        if (isPawnPromotion(move) && (isTest || move.getPromotionPiece() != null)) {
+            promotionLocation = move.getTo();
+            movePieceAndEndTurn(move);
+            promotePawn(move.getPromotionPiece());
+            return;
         }
-
-        if (validMoves.isEmpty()) {
+        if ((move.getTo().getY() == 0 || move.getTo().getY() == 7) && piece.type == PieceType.PAWN && piece.promotion == null && !isTest) {
+            promotionLocation = move.getTo();
+            isPawnPromotionPending = true;
             return;
         }
 
-        for (Move validMove : validMoves) {
-            if (!move.getTo().equals(validMove.getTo())) {
-                continue;
-            }
-
-            moveNumber++;
-            updateMoveFlagsAndPieces(move, validMove);
-
-            // Pawn Promotion
-            if (isPawnPromotion(move, validMove) && (isTest || move.getPromotionPiece() != null)) {
-                promotionLocation = move.getTo();
-                movePieceAndEndTurn(move);
-                promotePawn(move.getPromotionPiece());
-                break;
-            }
-            if ((validMove.getTo().getY() == 0 || validMove.getTo().getY() == 7) && piece.type == PieceType.PAWN && piece.promotion == null && !isTest) {
-                promotionLocation = validMove.getTo();
-                isPawnPromotionPending = true;
-                return;
-            }
-
-            // En Passant
-            else if (isEnPassantCapture(move, validMove) && isTest) {
-                move.setCapturedPiece(board.getPiece(new BoardLocation(move.getTo().getX(), move.getFrom().getY())));
-                move.setMoveFlag(MoveFlag.enPassant);
-            }
-
-            movePieceAndEndTurn(move);
-            if (!isTest) {
-                createParsedMoveHistory(move);
-                hasGameEnded = Rules.isCheckmate(currentTurn, board) || Rules.isStalemate(currentTurn, board);
-            }
-            break;
+        // En Passant
+        else if (isEnPassantCapture(move) && isTest) {
+            move.setCapturedPiece(board.getPiece(new BoardLocation(move.getTo().getX(), move.getFrom().getY())));
+            move.setMoveFlag(MoveFlag.enPassant);
         }
-        validMoves.clear();
-        selectedPieceLocation = null;
-    }
 
-    /**
-     * Updates the move flags and pieces of the given move based on the valid move.
-     * @param move the move to be updated
-     * @param validMove the valid move to update the move with
-     */
-    private void updateMoveFlagsAndPieces(Move move, Move validMove) {
-        if (validMove.getMoveFlag() != null && !validMove.getMoveFlag().equals(MoveFlag.none)) {
-            move.setMoveFlag(validMove.getMoveFlag());
-        }
-        if (validMove.getCapturedPiece() != null) {
-            move.setCapturedPiece(validMove.getCapturedPiece());
-        }
-        if (validMove.getMovedPiece() != null) {
-            move.setMovedPiece(validMove.getMovedPiece());
+        movePieceAndEndTurn(move);
+        if (!isTest) {
+            createParsedMoveHistory(move);
+            hasGameEnded = Rules.isCheckmate(currentTurn, board) || Rules.isStalemate(currentTurn, board);
         }
     }
 
     /**
      * Determines if the given move is an en passant capture.
      * @param move the move to check
-     * @param validMove the valid move
      * @return true if the move is an en passant capture, false otherwise
      */
-    private boolean isEnPassantCapture(Move move, Move validMove) {
+    private boolean isEnPassantCapture(Move move) {
         BoardLocation enPassantCapture = new BoardLocation(move.getTo().getX(), move.getFrom().getY());
         return board.getPiece(enPassantCapture) != null
                 && board.getPiece(enPassantCapture).type == PieceType.PAWN
@@ -174,16 +131,13 @@ public class GameState {
      * Determines if the given move is a pawn promotion.
      *
      * @param move the move to check
-     * @param validMove the valid move
      * @return true if the move is a pawn promotion, false otherwise
      */
-    private boolean isPawnPromotion(Move move, Move validMove) {
+    private boolean isPawnPromotion(Move move) {
         return (move.getTo().getY() == 0 || move.getTo().getY() == 7)
                 && move.getMovedPiece().type == PieceType.PAWN
                 && move.getPromotionPiece() != null;
     }
-
-    public static int capturedPieces = 0, enPassantCapturesReturned = 0;
 
     /**
      * Undoes a move and reverts the game state to the previous state.

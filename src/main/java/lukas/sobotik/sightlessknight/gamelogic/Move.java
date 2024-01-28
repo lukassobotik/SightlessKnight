@@ -62,4 +62,11 @@ public class Move {
         if (capturedPiece == null) return new Piece(null, null);
         return new Piece(capturedPiece.team, capturedPiece.type);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof final Move move)) return false;
+        return move.from.equals(from) && move.to.equals(to) && move.movedPiece.equals(movedPiece);
+    }
 }

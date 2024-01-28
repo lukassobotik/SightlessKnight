@@ -77,8 +77,7 @@ public class Piece {
 	 * @param promotion The type of piece to which the current piece can be promoted.
 	 * @param index The index of the piece.
 	 */
-	public Piece (Team team, PieceType type, int doublePawnMoveOnMoveNumber, boolean hasMoved, boolean enPassant,
-				  String castling, PieceType promotion, int index) {
+	public Piece (Team team, PieceType type, int doublePawnMoveOnMoveNumber, boolean hasMoved, boolean enPassant, String castling, PieceType promotion, int index) {
 		this.team = team;
 		this.type = type;
 		this.doublePawnMoveOnMoveNumber = doublePawnMoveOnMoveNumber;
@@ -87,5 +86,12 @@ public class Piece {
 		this.castling = castling;
 		this.promotion = promotion;
 		this.index = index;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o == this) return true;
+		if (!(o instanceof final Piece piece)) return false;
+        return piece.team == this.team && piece.type == this.type;
 	}
 }

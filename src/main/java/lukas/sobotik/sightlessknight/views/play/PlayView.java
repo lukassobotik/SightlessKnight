@@ -42,6 +42,7 @@ public class PlayView extends VerticalLayout {
     AlgebraicNotationUtils algebraicNotationUtils;
     public GameState gameState;
     Board board;
+    List<Move> validMovesForPosition;
 
     // Piece Game
     BoardLocation targetSquare = null;
@@ -53,7 +54,7 @@ public class PlayView extends VerticalLayout {
     HorizontalLayout gameContentLayout, targetSquareLayout, gameLayout;
     VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout, quickSettingsLayout;
     Dialog quickSettingsDialog;
-    public static String STARTING_POSITION = "8/1P6/8/8/8/8/8/K1k5 w - - 0 1";
+    public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     public boolean showPieces = true;
     public boolean showBoard = true;
@@ -126,6 +127,7 @@ public class PlayView extends VerticalLayout {
         gameState = new GameState(board, fenUtils.getStartingTeam(), kinglessGame);
         algebraicNotationUtils = new AlgebraicNotationUtils(fenUtils, gameState, board);
         algebraicNotationUtils.setKinglessGame(kinglessGame);
+        validMovesForPosition = Rules.getAllValidMovesForTeam(GameState.currentTurn, board, true);
 
         gameContentLayout = new HorizontalLayout();
         gameContentLayout.addClassName("game_content_layout");
@@ -356,6 +358,7 @@ public class PlayView extends VerticalLayout {
         }
 
         managePieceMoveDrills();
+        updateValidMovesList();
     }
 
     /**
@@ -363,10 +366,25 @@ public class PlayView extends VerticalLayout {
      * @param move the Move object representing the move that was played
      */
     private void updateGameStateAndBoard(Move move) {
-        gameState.playMove(move, false);
-        board = gameState.getBoard();
-        printBoard(board.pieces);
-        createBoard(board.pieces);
+        if (isMoveValid(move)) {
+            gameState.playMove(move, false);
+            board = gameState.getBoard();
+            printBoard(board.pieces);
+            createBoard(board.pieces);
+        }
+    }
+
+    public boolean isMoveValid(Move move) {
+        for (Move validMove : validMovesForPosition) {
+            if (move.equals(validMove)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void updateValidMovesList() {
+        validMovesForPosition = Rules.getAllValidMovesForTeam(GameState.currentTurn, board, true);
     }
 
     /**

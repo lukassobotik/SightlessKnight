@@ -54,7 +54,6 @@ public class PerftTest {
                 "Name: " + getPositionNameFromFen(fen)
                         + ", FEN: " + fen
                         + ", Move " + GameState.moveNumber
-                        + ", Pieces Captured: " + GameState.capturedPieces
                         + ", Depth " + depth + " positions mismatch.");
     }
 
@@ -150,7 +149,6 @@ public class PerftTest {
                      "Name: " + getPositionNameFromFen(fen)
                              + ", FEN: " + fen
                              + ", Move " + GameState.moveNumber
-                             + ", Pieces Captured: " + GameState.capturedPieces
                              + ", Depth " + depth + " positions mismatch.");
     }
 

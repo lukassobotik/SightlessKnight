@@ -450,13 +450,11 @@ public class Board {
         }
 
         if (capturedPiece != null) {
-            GameState.capturedPieces++;
             int pieceIndex = getArrayIndexFromLocation(to);
             // En Passant
             if (moveFlag.equals(MoveFlag.enPassant)) {
                 pieceIndex = getArrayIndexFromLocation(to.transpose(0, (movedPiece.team == Team.WHITE ? -1 : 1)));
                 if (!isInBounds(to.transpose(0, (movedPiece.team == Team.WHITE ? -1 : 1)))) return;
-                GameState.enPassantCapturesReturned++;
             }
             pieces[pieceIndex] = capturedPiece;
         }
