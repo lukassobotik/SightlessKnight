@@ -296,75 +296,106 @@ public class AlgebraicNotationUtils {
             movedPieceType = PieceType.PAWN;
         }
 
-        // TODO: Break this into smaller methods
-        if (parsedMove.length() == 2 || Objects.equals(movedPieceType, PieceType.PAWN)) {
-            BoardLocation from = null;
-            Piece piece = null;
-            if (!parsedMove.contains("x")) {
-                try {
-                    var loc = board.getPiece(to.transpose(0, playerTeam == Team.WHITE ? -1 : 1));
-                    if (loc != null && loc.type.equals(PieceType.PAWN) && loc.team.equals(playerTeam)) {
-                        piece = loc;
-                        from = to.transpose(0, playerTeam == Team.WHITE ? -1 : 1);
-                    }
-                } catch (Exception ignored) {}
-                try {
-                    var loc = board.getPiece(to.transpose(0, playerTeam == Team.WHITE ? -2 : 2));
-                    if (loc != null && loc.type.equals(PieceType.PAWN) && loc.team.equals(playerTeam)) {
-                        piece = loc;
-                        from = to.transpose(0, playerTeam == Team.WHITE ? -2 : 2);
-                    }
-                } catch (Exception ignored) {}
-
-            } else {
-                if (isEnPassant) {
-                    BoardLocation pawnLocation = null;
-                    try {
-                        var loc = to.transpose(-1, playerTeam == Team.WHITE ? -1 : 1);
-                        if (board.getPiece(loc).team.equals(playerTeam) && board.getPiece(loc).type.equals(PieceType.PAWN)) {
-                            pawnLocation = loc;
-                        }
-                    } catch (Exception ignored) {}
-                    try {
-                        var loc = to.transpose(1, playerTeam == Team.WHITE ? -1 : 1);
-                        if (board.getPiece(loc).team.equals(playerTeam) && board.getPiece(loc).type.equals(PieceType.PAWN)) {
-                            pawnLocation = loc;
-                        }
-                    } catch (Exception ignored) {}
-
-                    var moves = Rules.addLegalEnPassant(playerTeam, board, to, pawnLocation, new BoardLocation(to.getX(), to.getY() - 1), true);
-                    if (!moves.isEmpty()) {
-                        return moves.get(0);
-                    }
-                }
-
-                try {
-                    var loc = board.getPiece(to.transpose(-1, playerTeam == Team.WHITE ? -1 : 1));
-                    if (loc != null && loc.type.equals(PieceType.PAWN) && loc.team.equals(playerTeam)) {
-                        piece = loc;
-                        from = to.transpose(-1, playerTeam == Team.WHITE ? -1 : 1);
-                    }
-                } catch (Exception ignored) {}
-                try {
-                    var loc = board.getPiece(to.transpose(1, playerTeam == Team.WHITE ? -1 : 1));
-                    if (loc != null && loc.type.equals(PieceType.PAWN) && loc.team.equals(playerTeam)) {
-                        piece = loc;
-                        from = to.transpose(1, playerTeam == Team.WHITE ? -1 : 1);
-                    }
-                } catch (Exception ignored) {}
-
-            }
-            if (piece != null && from != null) {
-                var move = new Move(from, to, piece, board.getPiece(to));
-                if (promotionPiece != null) {
-                    move.setPromotionPiece(promotionPiece);
-                }
-                return move;
-            }
+        boolean continueParsing = parsedMove.length() == 2 || Objects.equals(movedPieceType, PieceType.PAWN);
+        if (!continueParsing) {
+            return null;
         }
 
-        System.out.println("to: " + to.getAlgebraicNotationLocation());
+        BoardLocation from;
+        Piece piece;
+        if (!parsedMove.contains("x")) {
+            Object[] pawnMoves = getPawnLocation(to, playerTeam, 0, 1, 2);
+            Objects.requireNonNull(pawnMoves);
+            piece = (Piece) pawnMoves[0];
+            from = (BoardLocation) pawnMoves[1];
+        } else {
+            var enPassantMove = getPawnEnPassantMoves(to, playerTeam, isEnPassant);
+            if (enPassantMove != null) {
+                return enPassantMove;
+            }
+            Object[] pawnCaptures = getPawnLocation(to, playerTeam, 1, 1, 1);
+            Objects.requireNonNull(pawnCaptures);
+            piece = (Piece) pawnCaptures[0];
+            from = (BoardLocation) pawnCaptures[1];
+        }
+        if (piece != null && from != null) {
+            var move = new Move(from, to, piece, board.getPiece(to));
+            if (promotionPiece != null) {
+                move.setPromotionPiece(promotionPiece);
+            }
+            return move;
+        }
+
         return null;
+    }
+
+    /**
+     * This method is used to get the move of the pawn that can perform an en passant move.
+     * If the en passant move is not possible, it returns null.
+     * @param to The location to which the pawn is moving.
+     * @param playerTeam The team of the pawn.
+     * @param isEnPassant A boolean indicating whether the move is an en passant move.
+     * @return The Move object representing the en passant move if it is possible, null otherwise.
+     */
+    public Move getPawnEnPassantMoves(BoardLocation to, Team playerTeam, boolean isEnPassant) {
+        if (isEnPassant) {
+            BoardLocation pawnLocation = null;
+            pawnLocation = getEnPassantLocation(to, playerTeam, pawnLocation);
+
+            var moves = Rules.addLegalEnPassant(playerTeam, board, to, pawnLocation, new BoardLocation(to.getX(), to.getY() - 1), true);
+            if (!moves.isEmpty()) {
+                return moves.get(0);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * This method is used to get the location of the pawn based on the given parameters.
+     * @param to The location to which the pawn is moving.
+     * @param playerTeam The team of the pawn.
+     * @param x The x-coordinate for the transpose operation.
+     * @param transposeValue The value to transpose in the first try block.
+     * @param transposeValue2 The value to transpose in the second try block.
+     * @return An array containing the Piece and BoardLocation objects if a pawn is found, null otherwise.
+     */
+    public Object[] getPawnLocation(BoardLocation to, Team playerTeam, int x, int transposeValue, int transposeValue2) {
+        try {
+            var loc = board.getPiece(to.transpose(x, playerTeam == Team.WHITE ? -transposeValue : transposeValue));
+            if (loc != null && loc.type.equals(PieceType.PAWN) && loc.team.equals(playerTeam)) {
+                return new Object[]{loc, to.transpose(x, playerTeam == Team.WHITE ? -transposeValue : transposeValue)};
+            }
+        } catch (Exception ignored) {}
+        try {
+            var loc = board.getPiece(to.transpose(-x, playerTeam == Team.WHITE ? -transposeValue2 : transposeValue2));
+            if (loc != null && loc.type.equals(PieceType.PAWN) && loc.team.equals(playerTeam)) {
+                return new Object[]{loc, to.transpose(-x, playerTeam == Team.WHITE ? -transposeValue2 : transposeValue2)};
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    /**
+     * This method is used to get the location of the pawn that can perform an en passant move.
+     * @param to The location to which the pawn is moving.
+     * @param playerTeam The team of the pawn.
+     * @param pawnLocation The original location of the pawn.
+     * @return The location of the pawn that can perform an en passant move, or the original pawn location if there is no such pawn.
+     */
+    private BoardLocation getEnPassantLocation(final BoardLocation to, final Team playerTeam, BoardLocation pawnLocation) {
+        try {
+            var loc = to.transpose(-1, playerTeam == Team.WHITE ? -1 : 1);
+            if (board.getPiece(loc).team.equals(playerTeam) && board.getPiece(loc).type.equals(PieceType.PAWN)) {
+                pawnLocation = loc;
+            }
+        } catch (Exception ignored) {}
+        try {
+            var loc = to.transpose(1, playerTeam == Team.WHITE ? -1 : 1);
+            if (board.getPiece(loc).team.equals(playerTeam) && board.getPiece(loc).type.equals(PieceType.PAWN)) {
+                pawnLocation = loc;
+            }
+        } catch (Exception ignored) {}
+        return pawnLocation;
     }
 
     /**
