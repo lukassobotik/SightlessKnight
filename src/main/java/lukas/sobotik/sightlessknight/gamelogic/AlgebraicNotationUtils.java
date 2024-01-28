@@ -218,6 +218,8 @@ public class AlgebraicNotationUtils {
      * @return The Move object representing the parsed move if it is a valid move, null otherwise.
      */
     public Move getMoveFromParsedMove(String parsedMove) {
+        // TODO: Make this method more readable
+
         var playerTeam = GameState.currentTurn;
         if (parsedMove.equals("O-O") || parsedMove.equals("0-0")) {
             var from = new BoardLocation(4, playerTeam == Team.WHITE ? 0 : 7);
