@@ -88,6 +88,7 @@ public class Move {
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof final Move move)) return false;
+        if (move.movedPiece == null || movedPiece == null) return move.from.equals(from) && move.to.equals(to);
         return move.from.equals(from) && move.to.equals(to) && move.movedPiece.equals(movedPiece);
     }
 }

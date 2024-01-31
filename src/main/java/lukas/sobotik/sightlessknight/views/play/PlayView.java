@@ -7,6 +7,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.dnd.DragSource;
+import com.vaadin.flow.component.dnd.DropTarget;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
@@ -620,8 +622,27 @@ public class PlayView extends VerticalLayout {
                     Image image = new Image(getChessPieceUrl(cellValue), cellValue);
                     image.addClassName("square_image");
                     image.setVisible(showPieces);
+
+                    DragSource<Image> dragSource = DragSource.create(image);
+                    dragSource.setDraggable(true);
+                    final int finalFile = file, finalRank = rank;
+                    dragSource.addDragStartListener(event -> {
+                        event.setDragData(new BoardLocation(finalFile, finalRank));
+                        System.out.println("DRAG from " + finalFile + "," + finalRank);
+                    });
+
                     square.add(image);
                 }
+
+                DropTarget<VerticalLayout> dropTarget = DropTarget.create(square);
+                final int finalFile1 = file, finalRank1 = rank;
+                dropTarget.addDropListener(event -> {
+                    System.out.println("DROP to " + finalFile1 + "," + finalRank1);
+                    var from = (BoardLocation) event.getDragData().orElse(null);
+                    var to = new BoardLocation(finalFile1, finalRank1);
+                    var movedPiece = board.getPiece(from);
+                    playMove(new Move(from, to, movedPiece));
+                });
 
                 rowLayout.add(square);
             }
