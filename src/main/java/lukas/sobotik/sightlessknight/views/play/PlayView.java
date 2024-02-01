@@ -18,6 +18,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import elemental.json.Json;
+import elemental.json.JsonObject;
 import lukas.sobotik.sightlessknight.components.CommandLine;
 import lukas.sobotik.sightlessknight.components.CustomProgressBar;
 import lukas.sobotik.sightlessknight.gamelogic.AlgebraicNotationUtils;
@@ -236,29 +238,34 @@ public class PlayView extends VerticalLayout {
         boardWidthProgressBar.setValue(1);
 
         boardWidthProgressBar.getElement().executeJs(getProgressBarCode());
+        loadLocalStorageItems();
         boardSizeLayout.add(boardWidthProgressBar);
 
         var showPiecesButton = new Checkbox("Show Pieces");
-        showPiecesButton.setValue(true);
+        showPiecesButton.setValue(showPieces);
         showPiecesButton.addValueChangeListener(valueChangeEvent -> {
             if (valueChangeEvent.getValue()) {
                 showPieces(true);
+                setLocalStorageItem("showPieces", true);
             } else {
                 showPieces(false);
+                setLocalStorageItem("showPieces", false);
             }
         });
 
         var showBoardButton = new Checkbox("Show Board");
-        showBoardButton.setValue(true);
+        showBoardButton.setValue(showBoard);
         showBoardButton.addValueChangeListener(valueChangeEvent -> {
             if (valueChangeEvent.getValue()) {
                 showBoard(true);
                 showPiecesButton.setEnabled(true);
                 boardWidthProgressBar.setDisabled(false);
+                setLocalStorageItem("showBoard", true);
             } else {
                 showBoard(false);
                 showPiecesButton.setEnabled(false);
                 boardWidthProgressBar.setDisabled(true);
+                setLocalStorageItem("showBoard", false);
             }
         });
 
@@ -267,6 +274,47 @@ public class PlayView extends VerticalLayout {
 
         quickSettingsLayout.add(boardSizeLayout);
         quickSettingsLayout.add(boardWidthProgressBar);
+    }
+
+    public void loadLocalStorageItems() {
+        getElement().executeJs("return {showPieces: localStorage.getItem('showPieces'), showBoard: localStorage.getItem('showBoard'), boardSize: localStorage.getItem('boardSize')};")
+                .then(jsonValue -> {
+                    System.out.println("jsonValue: " + jsonValue.toJson());
+                    JsonObject jsonObject = Json.parse(jsonValue.toJson());
+                    if (!Json.createNull().jsEquals(jsonObject.get("showPieces"))) {
+                        System.out.println("jsonShowPieces: " + jsonObject.getString("showPieces"));
+                        showPieces(Boolean.parseBoolean(jsonObject.getString("showPieces")));
+                    }
+                    if (!Json.createNull().jsEquals(jsonObject.get("showBoard"))) {
+                        System.out.println("jsonShowBoard: " + jsonObject.getString("showBoard"));
+                        showBoard(Boolean.parseBoolean(jsonObject.getString("showBoard")));
+                    }
+                    if (!Json.createNull().jsEquals(jsonObject.get("boardSize"))) {
+                        System.out.println("jsonBoardSize: " + jsonObject.getString("boardSize"));
+                        boardWidthProgressBar.setValue(Double.parseDouble(jsonObject.getString("boardSize")) / 100);
+                        setBoardWidth(Double.parseDouble(jsonObject.getString("boardSize")));
+                    }
+                });
+    }
+
+    public void setBoardWidth(Double value) {
+        boardWidthProgressBar
+                .getElement()
+                .executeJs("const gameLayout = document.querySelector('.game_layout');"
+                                   + "const progressContainer = document.querySelector('.progress-container');"
+
+                                   + "const getNumericValue = (value) => parseFloat(value.match(/(\\d+(\\.\\d+)?)|(\\.\\d+)/)[0]);"
+                                   + "const minAllowedWidth = getNumericValue(getComputedStyle(gameLayout).getPropertyValue('min-width'));"
+                                   + "const maxAllowedWidth = getNumericValue(getComputedStyle(gameLayout).getPropertyValue" + "('max-width'));"
+
+                                   + "const w = " + value + ";"
+                                   + "const mappedWidth = (minAllowedWidth + (w * 0.01 * (maxAllowedWidth - minAllowedWidth))).toFixed(2) + 'px';"
+                                      + "console.log(w, minAllowedWidth, maxAllowedWidth, mappedWidth);"
+                                   + "gameLayout.style.width = mappedWidth;");
+    }
+
+    public void setLocalStorageItem(String setting, boolean value) {
+        getElement().executeJs("localStorage.setItem('" + setting + "', '" + value + "');");
     }
 
     public String getProgressBarCode() {
@@ -294,7 +342,9 @@ public class PlayView extends VerticalLayout {
                 + "      const mappedWidth = (minAllowedWidth + (w * 0.01 * (maxAllowedWidth - minAllowedWidth))).toFixed(2) + 'px';"
                 + "      if (container.style.opacity === '1') {"
                 + "         bar.style.width = `${percent}%`;"
+                + "         localStorage.setItem('boardSize', percent);"
                 + "         gameLayout.style.width = mappedWidth;"
+                + "         container.value = percent;"
                 + "         boardSizeNumber.innerHTML = `${Math.floor(percent)}%`;"
                 + "      }"
                 + "  }"
