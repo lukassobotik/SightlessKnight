@@ -290,18 +290,14 @@ public class PlayView extends VerticalLayout {
     public void loadLocalStorageItems() {
         getElement().executeJs("return {showPieces: localStorage.getItem('showPieces'), showBoard: localStorage.getItem('showBoard'), boardSize: localStorage.getItem('boardSize')};")
                 .then(jsonValue -> {
-                    System.out.println("jsonValue: " + jsonValue.toJson());
                     JsonObject jsonObject = Json.parse(jsonValue.toJson());
                     if (!Json.createNull().jsEquals(jsonObject.get("showPieces"))) {
-                        System.out.println("jsonShowPieces: " + jsonObject.getString("showPieces"));
                         showPieces(Boolean.parseBoolean(jsonObject.getString("showPieces")));
                     }
                     if (!Json.createNull().jsEquals(jsonObject.get("showBoard"))) {
-                        System.out.println("jsonShowBoard: " + jsonObject.getString("showBoard"));
                         showBoard(Boolean.parseBoolean(jsonObject.getString("showBoard")));
                     }
                     if (!Json.createNull().jsEquals(jsonObject.get("boardSize"))) {
-                        System.out.println("jsonBoardSize: " + jsonObject.getString("boardSize"));
                         boardWidthProgressBar.setValue(Double.parseDouble(jsonObject.getString("boardSize")) / 100);
                         setBoardWidth(Double.parseDouble(jsonObject.getString("boardSize")));
                     }
