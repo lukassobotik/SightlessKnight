@@ -58,8 +58,10 @@ public class PlayView extends VerticalLayout {
     HorizontalLayout gameContentLayout, targetSquareLayout, gameLayout;
     VerticalLayout algebraicNotationHistoryLayout, gameInfoLayout, quickSettingsLayout;
     Dialog quickSettingsDialog;
+    Checkbox showBoardButton, showPiecesButton;
     public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
+    boolean localStorageItemsLoaded = false;
     public boolean showPieces = true;
     public boolean showBoard = true;
     public static CustomProgressBar boardWidthProgressBar;
@@ -147,6 +149,7 @@ public class PlayView extends VerticalLayout {
                                         (e) -> quickSettingsDialog.close());
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         quickSettingsDialog.getHeader().add(closeButton);
+        loadLocalStorageItems();
 
         quickSettingsDialog.add(quickSettingsLayout);
 
@@ -222,6 +225,11 @@ public class PlayView extends VerticalLayout {
         return commandLine;
     }
 
+    /**
+     * Method used to create the game settings.
+     * It creates the layout for the board size setting and the checkboxes for showing the pieces and the board.
+     * It also sets up the event listeners for the checkboxes.
+     */
     private void createGameSettings() {
         var boardSizeLayout = new HorizontalLayout();
         boardSizeLayout.setWidthFull();
@@ -241,7 +249,7 @@ public class PlayView extends VerticalLayout {
         loadLocalStorageItems();
         boardSizeLayout.add(boardWidthProgressBar);
 
-        var showPiecesButton = new Checkbox("Show Pieces");
+        showPiecesButton = new Checkbox("Show Pieces");
         showPiecesButton.setValue(showPieces);
         showPiecesButton.addValueChangeListener(valueChangeEvent -> {
             if (valueChangeEvent.getValue()) {
@@ -253,7 +261,7 @@ public class PlayView extends VerticalLayout {
             }
         });
 
-        var showBoardButton = new Checkbox("Show Board");
+        showBoardButton = new Checkbox("Show Board");
         showBoardButton.setValue(showBoard);
         showBoardButton.addValueChangeListener(valueChangeEvent -> {
             if (valueChangeEvent.getValue()) {
@@ -276,6 +284,9 @@ public class PlayView extends VerticalLayout {
         quickSettingsLayout.add(boardWidthProgressBar);
     }
 
+    /**
+     * Method used to load the local storage items.
+     */
     public void loadLocalStorageItems() {
         getElement().executeJs("return {showPieces: localStorage.getItem('showPieces'), showBoard: localStorage.getItem('showBoard'), boardSize: localStorage.getItem('boardSize')};")
                 .then(jsonValue -> {
@@ -294,29 +305,44 @@ public class PlayView extends VerticalLayout {
                         boardWidthProgressBar.setValue(Double.parseDouble(jsonObject.getString("boardSize")) / 100);
                         setBoardWidth(Double.parseDouble(jsonObject.getString("boardSize")));
                     }
+                    localStorageItemsLoaded = true;
+                    createBoard(board.pieces);
                 });
     }
 
+    /**
+     * Method used to set the width of the game board.
+     * @param value the value to set
+     */
     public void setBoardWidth(Double value) {
-        boardWidthProgressBar
-                .getElement()
+        this.getElement()
                 .executeJs("const gameLayout = document.querySelector('.game_layout');"
                                    + "const progressContainer = document.querySelector('.progress-container');"
 
                                    + "const getNumericValue = (value) => parseFloat(value.match(/(\\d+(\\.\\d+)?)|(\\.\\d+)/)[0]);"
                                    + "const minAllowedWidth = getNumericValue(getComputedStyle(gameLayout).getPropertyValue('min-width'));"
-                                   + "const maxAllowedWidth = getNumericValue(getComputedStyle(gameLayout).getPropertyValue" + "('max-width'));"
+                                   + "const maxAllowedWidth = getNumericValue(getComputedStyle(gameLayout).getPropertyValue('max-width'));"
 
                                    + "const w = " + value + ";"
                                    + "const mappedWidth = (minAllowedWidth + (w * 0.01 * (maxAllowedWidth - minAllowedWidth))).toFixed(2) + 'px';"
-                                      + "console.log(w, minAllowedWidth, maxAllowedWidth, mappedWidth);"
                                    + "gameLayout.style.width = mappedWidth;");
     }
 
+    /**
+     * Method used to set a value in the local storage.
+     * @param setting the setting to set
+     * @param value the value to set
+     */
     public void setLocalStorageItem(String setting, boolean value) {
         getElement().executeJs("localStorage.setItem('" + setting + "', '" + value + "');");
     }
 
+    /**
+     * Method that returns a string of JavaScript code that is used to control the behavior of a progress bar.
+     * The progress bar is used to adjust the size of the game board in the UI.
+     *
+     * @return A string of JavaScript code that controls the behavior of a progress bar.
+     */
     public String getProgressBarCode() {
         return    "const container = document.querySelector('.progress-container');"
                 + "const bar = document.querySelector('.progress-bar');"
@@ -355,8 +381,13 @@ public class PlayView extends VerticalLayout {
                 + "});";
     }
 
+    /**
+     * Method used to show or hide the pieces on the game board.
+     * @param show A boolean value indicating whether to show the pieces (true) or hide them (false).
+     */
     public void showPieces(boolean show) {
         showPieces = show;
+        showPiecesButton.setValue(show);
         gameLayout.getChildren().forEach(component -> component.getChildren().forEach(componentRow -> {
             componentRow.getChildren().forEach(componentSquare -> {
                 componentSquare.getChildren().forEach(componentImage -> {
@@ -366,8 +397,13 @@ public class PlayView extends VerticalLayout {
         }));
     }
 
+    /**
+     * Method used to show or hide the game board.
+     * @param show A boolean value indicating whether to show the board (true) or hide it (false).
+     */
     public void showBoard(boolean show) {
         showBoard = show;
+        showBoardButton.setValue(show);
         gameLayout.getChildren().forEach(component -> component.getChildren().forEach(componentRow -> {
             componentRow.getChildren().forEach(componentSquare -> {
                 componentSquare.setVisible(show);
@@ -375,6 +411,10 @@ public class PlayView extends VerticalLayout {
         }));
     }
 
+    /**
+     * Method that highlights a square on the game board.
+     * @param location which square to highlight
+     */
     public void highlightSquare(BoardLocation location) {
         int row = location.getY();
         int column = location.getX();
@@ -385,6 +425,10 @@ public class PlayView extends VerticalLayout {
         this.getElement().executeJs(jsCode);
     }
 
+    /**
+     * Method that removes the highlighted square on the game board.
+     * @param location which square to remove the highlight from
+     */
     public void removeHighlightSquare(BoardLocation location) {
         int row = location.getY();
         int column = location.getX();
@@ -426,6 +470,11 @@ public class PlayView extends VerticalLayout {
         }
     }
 
+    /**
+     * Method that checks if a move is valid.
+     * @param move the move to check
+     * @return if the move is valid
+     */
     public boolean isMoveValid(Move move) {
         for (Move validMove : validMovesForPosition) {
             if (move.equals(validMove)) {
@@ -435,6 +484,9 @@ public class PlayView extends VerticalLayout {
         return false;
     }
 
+    /**
+     * Method that updates the valid moves list for the current position.
+     */
     public void updateValidMovesList() {
         validMovesForPosition = Rules.getAllValidMovesForTeam(GameState.currentTurn, board, true);
     }
@@ -594,7 +646,12 @@ public class PlayView extends VerticalLayout {
         add(dialog);
     }
 
+    /**
+     * Method that creates the UI for the board.
+     * @param pieces the pieces to create the board with
+     */
     public void createBoard(Piece[] pieces) {
+        if (!localStorageItemsLoaded) return;
         VerticalLayout boardLayout = findBoardLayout();
         if (boardLayout == null) {
             boardLayout = new VerticalLayout();
@@ -700,6 +757,10 @@ public class PlayView extends VerticalLayout {
         }
     }
 
+    /**
+     * Find the board layout in the game content layout.
+     * @return The board layout.
+     */
     private VerticalLayout findBoardLayout() {
         AtomicReference<VerticalLayout> layout = new AtomicReference<>();
         gameContentLayout.getChildren().forEach(component -> {
