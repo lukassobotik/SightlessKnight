@@ -1,11 +1,21 @@
 import {Button} from "@hilla/react-components/Button.js";
 import {Notification} from "@hilla/react-components/Notification.js";
 import {TextField} from "@hilla/react-components/TextField.js";
-import {HelloEndpoint} from "Frontend/generated/endpoints.js";
-import {useState} from "react";
+import {PlayGameEndpoint} from "Frontend/generated/endpoints.js";
+import {useEffect, useState} from "react";
 
 export default function MainView() {
   const [name, setName] = useState("");
+
+  useEffect(() => {
+      const fetchData = async () => {
+          await PlayGameEndpoint.initialize();
+          await PlayGameEndpoint.printBoard();
+      };
+      fetchData().then(() => {
+          Notification.show("Game initialized");
+      });
+  }, []);
 
   return (
     <>
@@ -17,8 +27,7 @@ export default function MainView() {
       />
       <Button
         onClick={async () => {
-          const serverResponse = await HelloEndpoint.sayHello(name);
-          if (serverResponse) Notification.show(serverResponse);
+            await PlayGameEndpoint.playMoveFromText(name);
         }}
       >
         Say hello
