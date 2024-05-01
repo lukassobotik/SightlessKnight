@@ -1,9 +1,7 @@
 package lukas.sobotik.sightlessknight.endpoints;
 
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import dev.hilla.Endpoint;
 import lukas.sobotik.sightlessknight.gamelogic.AlgebraicNotationUtils;
@@ -15,7 +13,6 @@ import lukas.sobotik.sightlessknight.gamelogic.Move;
 import lukas.sobotik.sightlessknight.gamelogic.Piece;
 import lukas.sobotik.sightlessknight.gamelogic.Rules;
 import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
-import lukas.sobotik.sightlessknight.gamelogic.entity.Team;
 
 import java.util.List;
 import java.util.Random;
@@ -59,7 +56,6 @@ public class PlayGameEndpoint {
      */
     public void playMove(Move move) {
         updateGameStateAndBoard(move);
-        checkIfGameEnded();
 
         if (GameState.isPawnPromotionPending) {
 //            handlePawnPromotion(move);
@@ -79,6 +75,22 @@ public class PlayGameEndpoint {
             return;
         }
         playMove(move);
+    }
+
+    /**
+     * Get the current FEN position of the game.
+     * @return the current FEN position of the game.
+     */
+    public String getCurrentPosition() {
+        return fenUtils.generateFenFromPosition(board.pieces);
+    }
+
+    /**
+     * Get the valid moves for the current position.
+     * @return the valid moves for the current position.
+     */
+    public List<Move> getValidMovesForPosition() {
+        return validMovesForPosition;
     }
 
     /**
@@ -118,21 +130,16 @@ public class PlayGameEndpoint {
     /**
      * Check if the game has ended and display the appropriate message and dialog.
      */
-    private void checkIfGameEnded() {
+    public String checkIfGameEnded() {
         if (gameState.hasGameEnded) {
             if (Rules.isStalemate(GameState.currentTurn, board) && !GameState.isPawnPromotionPending) {
-                Notification.show("Game Over!");
-                VerticalLayout dialogLayout = new VerticalLayout();
-                Text dialogText = new Text("Game Drawn by Stalemate");
-//                createGameOverDialog(dialogLayout, dialogText);
+                return "Stalemate";
             }
             if (Rules.isCheckmate(GameState.currentTurn, board)) {
-                Notification.show("Game Over!");
-                VerticalLayout dialogLayout = new VerticalLayout();
-                Text dialogText = new Text((GameState.currentTurn == Team.WHITE ? "Black" : "White") + " Won by Checkmate");
-//                createGameOverDialog(dialogLayout, dialogText);
+                return "Checkmate";
             }
         }
+        return "";
     }
 
     /**

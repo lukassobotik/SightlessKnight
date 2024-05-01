@@ -1,0 +1,9 @@
+.board_parent {
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+}
+
+.board {
+    width: 80vh;
+}

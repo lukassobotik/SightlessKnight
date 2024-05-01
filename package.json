@@ -97,6 +97,7 @@
     "lit": "3.1.2",
     "proj4": "2.9.2",
     "react": "^18.2.0",
+    "react-chessboard": "^4.5.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "6.18.0"
   },
@@ -217,7 +218,8 @@
     "@vaadin/vaadin-material-styles": "$@vaadin/vaadin-material-styles",
     "@vaadin/router": "$@vaadin/router",
     "@vaadin/vaadin-usage-statistics": "$@vaadin/vaadin-usage-statistics",
-    "@vaadin/vaadin-themable-mixin": "$@vaadin/vaadin-themable-mixin"
+    "@vaadin/vaadin-themable-mixin": "$@vaadin/vaadin-themable-mixin",
+    "react-chessboard": "$react-chessboard"
   },
   "vaadin": {
     "dependencies": {
@@ -334,6 +336,6 @@
       "workbox-core": "7.0.0",
       "workbox-precaching": "7.0.0"
     },
-    "hash": "eab56dba99d04ed0392d0dad5b786175ae33ee6c901da81aaf6acc75166ded03"
+    "hash": "d2845ca7b961fe1f652bef2a79e3bd05e735608c160edf5587db354cbe375277"
   }
 }
