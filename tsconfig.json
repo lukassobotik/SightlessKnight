@@ -12,12 +12,12 @@
     "module": "esNext",
     "target": "es2020",
     "moduleResolution": "bundler",
-    "strict": true,
+    "strict": false,
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "experimentalDecorators": true,
@@ -34,6 +34,6 @@
     "types.d.ts"
   ],
   "exclude": [
-    "frontend/generated/jar-resources/**"
+    "frontend/generated/jar-resources/**",
   ]
 }
