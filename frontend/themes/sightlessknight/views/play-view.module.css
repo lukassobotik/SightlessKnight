@@ -1,9 +1,30 @@
-.board_parent {
+.game_container {
     width: 100vw;
     display: flex;
     justify-content: center;
 }
 
 .board {
-    width: 80vh;
+    width: 90vh;
+}
+
+.game_info {
+    display: flex;
+
+    flex-direction: column;
+    width: 40vh;
+    background: var(--lumo-dark-color);
+    margin-left: 2rem;
+}
+
+.target_square {
+    text-align: center;
+    padding: 1rem;
+    margin-top: 0;
+    margin-bottom: 0;
+    color: #90bdf9;
+    background: #1a2a41;
+    border-radius: .5rem;
+    font-weight: bold;
+    font-size: 2rem;
 }

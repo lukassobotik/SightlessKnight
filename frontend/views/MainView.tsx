@@ -22,7 +22,7 @@ function MainView() {
             await getValidMoves();
         };
         fetchData().then(() => {
-            Notification.show("Game initialized");
+            console.log("Game initialized successfully.");
         });
     }, []);
 
@@ -136,9 +136,23 @@ function MainView() {
                 Say hello
             </Button>
 
-            <div className={styles.board_parent}>
-                <div className={styles.board}>
-                    <Chessboard id="BasicBoard" arePremovesAllowed={true} boardOrientation={"black"} position={currentFen} onPieceDrop={onDrop}/>
+            <div className={styles.game_container}>
+                <div className={styles.board_parent}>
+                    <div className={styles.board}>
+                        <Chessboard id="MainBoard" arePremovesAllowed={true} boardOrientation={"black"}
+                                    position={currentFen} onPieceDrop={onDrop}/>
+                    </div>
+                </div>
+                <div className={styles.game_info}>
+                    <div className={styles.target_square}>
+                        e4
+                    </div>
+                    <div className={styles.move_history}>
+                        a
+                    </div>
+                    <div className={styles.command_line}>
+                        a
+                    </div>
                 </div>
             </div>
         </>
