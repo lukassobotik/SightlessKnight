@@ -12,9 +12,15 @@ export default function CommandLineTooltip({command, hideTooltip} : {command : s
         setCommands(predictCommand(command));
     }, [command]);
 
-    function ignoreVariables(inputCommand: string): string {
-        return inputCommand.replace(/<[^>]*>/g, "<>");
+    function isCommandValid(command: string, userCommand: string): boolean {
+        const placeholderRegex = /<.*?>/g;
+        const userValue = userCommand.split(' ').pop();
+        if (!command.includes("<") && !command.includes(">")) return false;
+
+        const formattedCommand = command.replace(placeholderRegex, userValue);
+        return formattedCommand === userCommand;
     }
+
 
     function predictCommand(inputCommand: string): string[] {
         const predictions = [];
@@ -22,9 +28,8 @@ export default function CommandLineTooltip({command, hideTooltip} : {command : s
         // Check for commands starting with "/"s
         if (inputCommand.startsWith("/")) {
             const matchedCommands = Commands.filter((cmd) => {
-                let replacedVariablesWithGenericString = ignoreVariables(inputCommand);
-                console.warn(cmd, replacedVariablesWithGenericString, "Matched: ", cmd.startsWith(replacedVariablesWithGenericString));
-                return cmd.startsWith(replacedVariablesWithGenericString)
+                if (isCommandValid(cmd, inputCommand)) return true;
+                return cmd.startsWith(inputCommand);
             }
             );
             predictions.push(...matchedCommands);
