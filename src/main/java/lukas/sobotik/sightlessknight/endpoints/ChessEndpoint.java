@@ -19,7 +19,7 @@ import java.util.Random;
 
 @Endpoint
 @AnonymousAllowed
-public class PlayGameEndpoint {
+public class ChessEndpoint {
     public static String STARTING_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     FenUtils fenUtils;
     AlgebraicNotationUtils algebraicNotationUtils;
@@ -125,6 +125,14 @@ public class PlayGameEndpoint {
      */
     public void updateValidMovesList() {
         validMovesForPosition = Rules.getAllValidMovesForTeam(GameState.currentTurn, board, true);
+    }
+
+    /**
+     * Get the algebraic notation of the moves played in the game.
+     * @return the list of the moves played in the game.
+     */
+    public List<String> getMoveHistory() {
+        return gameState.parsedMoveHistory;
     }
 
     /**

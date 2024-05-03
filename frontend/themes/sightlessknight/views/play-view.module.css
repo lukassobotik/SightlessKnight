@@ -10,7 +10,7 @@
 
 .game_info {
     display: flex;
-
+    position: relative;
     flex-direction: column;
     width: 40vh;
     background: var(--lumo-dark-color);
@@ -27,4 +27,32 @@
     border-radius: .5rem;
     font-weight: bold;
     font-size: 2rem;
+}
+
+.move_history {
+    display: flex;
+    height: 100%;
+    overflow: scroll;
+    scrollbar-width: none;
+}
+
+.move_history::-webkit-scrollbar {
+    display: none;
+}
+
+.moves {
+    display: flex;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--lumo-dark-color);
+    border-radius: .5rem;
+}
+
+.white_moves {
+
+}
+
+.black_moves {
+    margin-left: 4rem;
 }

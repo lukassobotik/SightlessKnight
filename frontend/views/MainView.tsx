@@ -1,23 +1,22 @@
-import {Button} from "@hilla/react-components/Button.js";
 import {Notification} from "@hilla/react-components/Notification.js";
-import {TextField} from "@hilla/react-components/TextField.js";
-import {PlayGameEndpoint} from "Frontend/generated/endpoints.js";
+import {ChessEndpoint} from "Frontend/generated/endpoints.js";
 import {useEffect, useState} from "react";
 import {Chessboard} from "react-chessboard";
 import styles from "../themes/sightlessknight/views/play-view.module.css"
 import Move from "Frontend/generated/lukas/sobotik/sightlessknight/gamelogic/Move";
 import PieceType from "Frontend/generated/lukas/sobotik/sightlessknight/gamelogic/entity/PieceType";
+import CommandLine from "Frontend/themes/components/CommandLine";
 
 function MainView() {
-    const [name, setName] = useState("");
     const [currentFen, setCurrentFen] = useState("");
     const [validMoves, setValidMoves] = useState<Move[]>([]);
     const [gameEnded, setGameEnded] = useState("");
+    const [moveHistory, setMoveHistory] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
-            await PlayGameEndpoint.initialize();
-            await PlayGameEndpoint.printBoard();
+            await ChessEndpoint.initialize();
+            await ChessEndpoint.printBoard();
             await setCurrentPosition();
             await getValidMoves();
         };
@@ -27,23 +26,29 @@ function MainView() {
     }, []);
 
     async function getValidMoves() {
-        const moves = await PlayGameEndpoint.getValidMovesForPosition();
+        const moves = await ChessEndpoint.getValidMovesForPosition();
         setValidMoves(moves);
     }
 
     async function setCurrentPosition() {
-        const pos = await PlayGameEndpoint.getCurrentPosition();
+        const pos = await ChessEndpoint.getCurrentPosition();
         setCurrentFen(pos);
     }
 
     async function getCurrentPosition() {
-        return await PlayGameEndpoint.getCurrentPosition();
+        return await ChessEndpoint.getCurrentPosition();
     }
 
     async function playMove(move : Move) {
-        await PlayGameEndpoint.playMove(move);
+        await ChessEndpoint.playMove(move);
         await setCurrentPosition();
         await getValidMoves();
+        await updateMoveHistory();
+    }
+
+    async function updateMoveHistory() {
+        const moves = await ChessEndpoint.getMoveHistory();
+        setMoveHistory(moves);
     }
 
     function doesMoveEqual(move1 : Move, move2 : any) {
@@ -101,7 +106,7 @@ function MainView() {
         const validMove = findValidMove(move);
         if (validMove != null) {
             playMove(validMove).then(() => {
-                PlayGameEndpoint.checkIfGameEnded().then((gameEnded) => {
+                ChessEndpoint.checkIfGameEnded().then((gameEnded) => {
                     if (gameEnded != "" && gameEnded != null) {
                         console.log("Game ended by ", gameEnded);
                         Notification.show("Game ended by " + gameEnded);
@@ -118,24 +123,23 @@ function MainView() {
         }
     }
 
+    async function onCommandSubmit(command : string) {
+        if (command.startsWith("/")) {
+            console.log("Command is a command");
+        } else {
+            await ChessEndpoint.playMoveFromText(command);
+            setCurrentFen(await ChessEndpoint.getCurrentPosition());
+            await getValidMoves();
+            await updateMoveHistory();
+        }
+    }
+
+    async function onCommandEnter(command : string) {
+        console.log("SHOW COMMAND MENU")
+    }
+
     return (
         <>
-            <TextField
-                label="Your name"
-                onValueChanged={(e) => {
-                    setName(e.detail.value);
-                }}
-            />
-            <Button
-                onClick={async () => {
-                    await PlayGameEndpoint.playMoveFromText(name);
-                    setCurrentFen(await PlayGameEndpoint.getCurrentPosition());
-                    await getValidMoves();
-                }}
-            >
-                Say hello
-            </Button>
-
             <div className={styles.game_container}>
                 <div className={styles.board_parent}>
                     <div className={styles.board}>
@@ -148,10 +152,26 @@ function MainView() {
                         e4
                     </div>
                     <div className={styles.move_history}>
-                        a
+                        <div className={styles.moves}>
+                            <div className={styles.white_moves}>
+                                {moveHistory.map((move, index) => {
+                                    const moveNumber = Math.floor(index / 2) + 1;
+                                    if (index % 2 == 0) {
+                                        return (<div id={moveNumber.toString()} key={index} className={styles.move}>{moveNumber}: {move}</div>)
+                                    } else return null;
+                                })}
+                            </div>
+                            <div className={styles.black_moves}>
+                                {moveHistory.map((move, index) => {
+                                    if (index % 2 != 0) {
+                                        return (<div key={index} className={styles.move}>{move}</div>)
+                                    } else return null;
+                                })}
+                            </div>
+                        </div>
                     </div>
                     <div className={styles.command_line}>
-                        a
+                        <CommandLine onCommandSubmit={onCommandSubmit} onCommandEnter={onCommandEnter} />
                     </div>
                 </div>
             </div>
