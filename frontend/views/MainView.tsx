@@ -134,10 +134,6 @@ function MainView() {
         }
     }
 
-    async function onCommandEnter(command : string) {
-        console.log("SHOW COMMAND MENU")
-    }
-
     return (
         <>
             <div className={styles.game_container}>
@@ -171,7 +167,7 @@ function MainView() {
                         </div>
                     </div>
                     <div className={styles.command_line}>
-                        <CommandLine onCommandSubmit={onCommandSubmit} onCommandEnter={onCommandEnter} />
+                        <CommandLine onCommandSubmit={onCommandSubmit} />
                     </div>
                 </div>
             </div>

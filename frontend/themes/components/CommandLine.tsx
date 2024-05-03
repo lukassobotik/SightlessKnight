@@ -4,7 +4,7 @@ import {useEffect, useState} from "react";
 import styles from "Frontend/themes/sightlessknight/components/commandline.module.css";
 import CommandLineTooltip from "Frontend/themes/components/CommandLineTooltip";
 
-export default function CommandLine({onCommandSubmit, onCommandEnter} : {onCommandSubmit: (command: string) => void, onCommandEnter: (command: string) => void}) {
+export default function CommandLine({onCommandSubmit} : {onCommandSubmit: (command: string) => void}) {
     const [command, setCommand] = useState<string>("");
     const [tooltipVisible, setTooltipVisible] = useState<boolean>(false);
 
@@ -17,13 +17,8 @@ export default function CommandLine({onCommandSubmit, onCommandEnter} : {onComma
         onCommandSubmit(command);
     }
 
-    function toggleTooltip() {
-        setTooltipVisible(!tooltipVisible);
-    }
-
     function checkTooltipVisibility() {
         if (command.length != 0 && command.startsWith("/")) {
-            onCommandEnter(command);
             setTooltipVisible(true);
         } else {
             setTooltipVisible(false);
