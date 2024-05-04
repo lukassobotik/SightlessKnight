@@ -54,6 +54,10 @@ public class ChessEndpoint {
         validMovesForPosition = Rules.getAllValidMovesForTeam(GameState.currentTurn, board, true);
     }
 
+    public void resetGame() {
+        initialize();
+    }
+
     /**
      * Plays a move in the game.
      * @param move the move to be played

@@ -1,17 +1,23 @@
 import {Notification} from "@hilla/react-components/Notification.js";
+import {Dialog} from "@hilla/react-components/Dialog.js";
+import {Checkbox} from "@hilla/react-components/Checkbox.js";
 import {ChessEndpoint} from "Frontend/generated/endpoints.js";
-import {useEffect, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {Chessboard} from "react-chessboard";
 import styles from "../themes/sightlessknight/views/play-view.module.css"
 import Move from "Frontend/generated/lukas/sobotik/sightlessknight/gamelogic/Move";
 import PieceType from "Frontend/generated/lukas/sobotik/sightlessknight/gamelogic/entity/PieceType";
 import CommandLine from "Frontend/themes/components/CommandLine";
+import {Button} from "@hilla/react-components/Button";
 
 function MainView() {
     const [currentFen, setCurrentFen] = useState("");
     const [validMoves, setValidMoves] = useState<Move[]>([]);
     const [gameEnded, setGameEnded] = useState("");
     const [moveHistory, setMoveHistory] = useState<string[]>([]);
+    const [settingsDialogOpened, setSettingsDialogOpened] = useState<boolean>(false);
+    const [showBoard, setShowBoard] = useState<boolean>(true);
+    const [showPieces, setShowPieces] = useState<boolean>(true);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -21,7 +27,7 @@ function MainView() {
             await getValidMoves();
         };
         fetchData().then(() => {
-            console.log("Game initialized successfully.");
+            console.info("Game initialized successfully.");
         });
     }, []);
 
@@ -108,7 +114,7 @@ function MainView() {
             playMove(validMove).then(() => {
                 ChessEndpoint.checkIfGameEnded().then((gameEnded) => {
                     if (gameEnded != "" && gameEnded != null) {
-                        console.log("Game ended by ", gameEnded);
+                        console.info("Game ended by ", gameEnded);
                         Notification.show("Game ended by " + gameEnded);
                         setGameEnded(gameEnded);
                         return;
@@ -139,7 +145,7 @@ function MainView() {
                     return;
                 }
                 const result = await ChessEndpoint.playPerftTest(depth);
-                console.log("Perft result: ", result);
+                console.info("Perft result: ", result);
                 Notification.show("Perft result: " + result);
             }
         } else {
@@ -150,16 +156,56 @@ function MainView() {
         }
     }
 
+    function toggleShowBoard() {
+        setShowBoard(!showBoard);
+    }
+
+    function toggleShowPieces() {
+        setShowPieces(!showPieces);
+    }
+
+    const pieces = [
+        "wP",
+        "wN",
+        "wB",
+        "wR",
+        "wQ",
+        "wK",
+        "bP",
+        "bN",
+        "bB",
+        "bR",
+        "bQ",
+        "bK",
+    ];
+
+    const customPieces = useMemo(() => {
+        const pieceComponents = {};
+        pieces.forEach((piece) => {
+            pieceComponents[piece] = ({ squareWidth }) => (
+                <div
+                    style={{
+                        width: squareWidth,
+                        height: squareWidth,
+                        backgroundImage: `url(/${piece}.png)`,
+                        backgroundSize: "100%",
+                    }}
+                />
+            );
+        });
+        return pieceComponents;
+    }, []);
+
     return (
         <>
             <div className={styles.game_container}>
                 <div className={styles.board_parent}>
-                    <div className={styles.board}>
+                    <div className={showBoard ? styles.board : styles.board_hidden}>
                         <Chessboard id="MainBoard" arePremovesAllowed={true} boardOrientation={"black"}
-                                    position={currentFen} onPieceDrop={onDrop}/>
+                                    position={currentFen} onPieceDrop={onDrop} customPieces={showPieces ? null : customPieces}/>
                     </div>
                 </div>
-                <div className={styles.game_info}>
+                <div className={showBoard ? styles.game_info : styles.game_info_extended}>
                     <div className={styles.target_square}>
                         e4
                     </div>
@@ -182,11 +228,54 @@ function MainView() {
                             </div>
                         </div>
                     </div>
-                    <div className={styles.command_line}>
-                        <CommandLine onCommandSubmit={onCommandSubmit} />
+                    <div className={styles.game_actions}>
+                        <div className={styles.command_line}>
+                            <CommandLine onCommandSubmit={onCommandSubmit} />
+                        </div>
+                        <div className={styles.game_actions_buttons}>
+                            <div className={styles.game_actions_group}>
+                                <Button className={styles.button} onClick={async () => {
+                                    await ChessEndpoint.resetGame();
+                                    setCurrentFen(await getCurrentPosition());
+                                    setGameEnded("");
+                                    await getValidMoves();
+                                    await updateMoveHistory();
+                                }}>Reset</Button>
+                                <Button className={styles.button} onClick={async () => {
+                                    await ChessEndpoint.undoMove();
+                                    setCurrentFen(await getCurrentPosition());
+                                    await getValidMoves();
+                                    await updateMoveHistory();
+                                }}>Undo</Button>
+                            </div>
+                            <Button className={styles.button} onClick={async () => {
+                                setSettingsDialogOpened(true);
+                            }}>Settings</Button>
+                        </div>
                     </div>
                 </div>
             </div>
+            <Dialog
+                aria-label="System maintenance notice"
+                opened={settingsDialogOpened}
+                onOpenedChanged={(event) => {
+                    setSettingsDialogOpened(event.detail.value);
+                }}
+                header-title="User details"
+                headerRenderer={() => (
+                    <Button theme="tertiary" style={{fontWeight: "bolder"}} onClick={() => setSettingsDialogOpened(false)}>
+                        ×
+                    </Button>
+                )}>
+                <div className={styles.settings}>
+                    <div className={styles.settings_item}>
+                        <Checkbox label="Show board" checked={showBoard} onCheckedChanged={toggleShowBoard}></Checkbox>
+                    </div>
+                    <div className={styles.settings_item}>
+                        <Checkbox label="Show pieces" checked={showPieces} disabled={!showBoard} onCheckedChanged={toggleShowPieces}></Checkbox>
+                    </div>
+                </div>
+            </Dialog>
         </>
     );
 }

@@ -17,6 +17,10 @@ export default function CommandLine({onCommandSubmit} : {onCommandSubmit: (comma
         onCommandSubmit(command);
     }
 
+    function toggleTooltip() {
+        setTooltipVisible(!tooltipVisible);
+    }
+
     function checkTooltipVisibility() {
         if (command.length != 0 && command.startsWith("/")) {
             setTooltipVisible(true);
@@ -29,7 +33,9 @@ export default function CommandLine({onCommandSubmit} : {onCommandSubmit: (comma
         <div className={styles.layout}>
             <CommandLineTooltip command={command} hideTooltip={tooltipVisible}/>
             <div className={styles.parent}>
-                <Button className={styles.command_line_tooltip_button}>?</Button>
+                <Button
+                    className={styles.command_line_tooltip_button}
+                    onClick={toggleTooltip}>?</Button>
                 <TextField
                     className={styles.command_line}
                     placeholder="Enter a move or /command"

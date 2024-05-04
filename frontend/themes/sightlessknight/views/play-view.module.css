@@ -1,5 +1,6 @@
 .game_container {
     width: 100vw;
+    height: 90vh;
     display: flex;
     justify-content: center;
 }
@@ -8,13 +9,27 @@
     width: 90vh;
 }
 
+.board_hidden {
+    display: none;
+}
+
 .game_info {
     display: flex;
     position: relative;
     flex-direction: column;
     width: 40vh;
+    height: 100%;
     background: var(--lumo-dark-color);
     margin-left: 2rem;
+}
+
+.game_info_extended {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    width: 60vw;
+    height: 100%;
+    background: var(--lumo-dark-color);
 }
 
 .target_square {
@@ -55,4 +70,30 @@
 
 .black_moves {
     margin-left: 4rem;
+}
+
+.game_actions {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-top: 1rem;
+    padding: 1rem;
+}
+
+.game_actions_buttons {
+    display: flex;
+    justify-content: space-between;
+}
+
+.game_actions_group {
+    display: flex;
+    justify-content: space-between;
+}
+
+.game_actions_group:first-child vaadin-button{
+    margin-right: .25rem;
+}
+
+.settings {
+    width: 25vw;
 }
