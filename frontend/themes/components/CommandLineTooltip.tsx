@@ -35,7 +35,6 @@ export default function CommandLineTooltip({command, hideTooltip} : {command : s
             predictions.push(...matchedCommands);
         }
 
-        console.error(predictions);
         if (predictions.length === 0) {
             predictions.push("No commands found.");
         }

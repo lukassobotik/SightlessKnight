@@ -126,6 +126,22 @@ function MainView() {
     async function onCommandSubmit(command : string) {
         if (command.startsWith("/")) {
             console.log("Command is a command");
+            if (command == "/undo") {
+                await ChessEndpoint.undoMove();
+                setCurrentFen(await getCurrentPosition());
+                await getValidMoves();
+                await updateMoveHistory();
+            } else if (command.startsWith("/perft")) {
+                const depth = parseInt(command.split(" ")[1]);
+                if (depth > 4) {
+                    console.warn("Perft depth is too high.");
+                    Notification.show("Perft depth is too high.");
+                    return;
+                }
+                const result = await ChessEndpoint.playPerftTest(depth);
+                console.log("Perft result: ", result);
+                Notification.show("Perft result: " + result);
+            }
         } else {
             await ChessEndpoint.playMoveFromText(command);
             setCurrentFen(await ChessEndpoint.getCurrentPosition());

@@ -4,6 +4,7 @@ import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import dev.hilla.Endpoint;
+import lukas.sobotik.sightlessknight.ai.PerftFunction;
 import lukas.sobotik.sightlessknight.gamelogic.AlgebraicNotationUtils;
 import lukas.sobotik.sightlessknight.gamelogic.Board;
 import lukas.sobotik.sightlessknight.gamelogic.BoardLocation;
@@ -16,6 +17,9 @@ import lukas.sobotik.sightlessknight.gamelogic.entity.PieceType;
 
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @Endpoint
 @AnonymousAllowed
@@ -75,6 +79,33 @@ public class ChessEndpoint {
             return;
         }
         playMove(move);
+    }
+
+    /**
+     * Preform a Perft test on the current position.
+     *
+     * @param depth the depth of the Perft test.
+     */
+    public Double playPerftTest(int depth) throws InterruptedException, ExecutionException {
+        var perftFunction = new PerftFunction(gameState.board, gameState, null);
+        System.out.println("Playing Perft test with depth: " + depth);
+        Future<Double> future = Executors.newSingleThreadExecutor().submit(() -> {
+            var positions = perftFunction.playMoves(depth, GameState.currentTurn, false, true, true);
+            System.out.println("Positions: " + positions);
+            return positions;
+        });
+        return future.get();
+    }
+
+    /**
+     * Undo the last move played in the game.
+     */
+    public void undoMove() {
+        if (!gameState.moveHistory.isEmpty()) {
+            Move lastMove = gameState.moveHistory.get(gameState.moveHistory.size() - 1);
+            gameState.undoMove(lastMove);
+            gameState.moveHistory.remove(gameState.moveHistory.size() - 1);
+        }
     }
 
     /**
