@@ -1,21 +1,18 @@
 import {Notification} from "@hilla/react-components/Notification.js";
-import {Dialog} from "@hilla/react-components/Dialog.js";
-import {Checkbox} from "@hilla/react-components/Checkbox.js";
 import {ChessEndpoint} from "Frontend/generated/endpoints.js";
 import React, {useEffect, useMemo, useState} from "react";
 import {Chessboard} from "react-chessboard";
 import styles from "../themes/sightlessknight/views/play-view.module.css"
 import Move from "Frontend/generated/lukas/sobotik/sightlessknight/gamelogic/Move";
 import PieceType from "Frontend/generated/lukas/sobotik/sightlessknight/gamelogic/entity/PieceType";
-import CommandLine from "Frontend/themes/components/CommandLine";
-import {Button} from "@hilla/react-components/Button";
+import GameInfoSideBar from "Frontend/themes/components/GameInfoSideBar";
 
 function MainView() {
+    const [fetchedData, setFetchedData] = useState<boolean>(false);
     const [currentFen, setCurrentFen] = useState("");
     const [validMoves, setValidMoves] = useState<Move[]>([]);
     const [gameEnded, setGameEnded] = useState("");
     const [moveHistory, setMoveHistory] = useState<string[]>([]);
-    const [settingsDialogOpened, setSettingsDialogOpened] = useState<boolean>(false);
     const [showBoard, setShowBoard] = useState<boolean>(true);
     const [showPieces, setShowPieces] = useState<boolean>(true);
 
@@ -25,9 +22,12 @@ function MainView() {
             await ChessEndpoint.printBoard();
             await setCurrentPosition();
             await getValidMoves();
+            localStorage.getItem('showBoard') ? setShowBoard(localStorage.getItem('showBoard') == "true") : setShowBoard(true);
+            localStorage.getItem('showPieces') ? setShowPieces(localStorage.getItem('showPieces') == "true") : setShowPieces(true);
         };
         fetchData().then(() => {
             console.info("Game initialized successfully.");
+            setFetchedData(true);
         });
     }, []);
 
@@ -48,6 +48,28 @@ function MainView() {
     async function playMove(move : Move) {
         await ChessEndpoint.playMove(move);
         await setCurrentPosition();
+        await getValidMoves();
+        await updateMoveHistory();
+    }
+
+    async function playMoveFromText(move : string) {
+        await ChessEndpoint.playMoveFromText(move);
+        setCurrentFen(await ChessEndpoint.getCurrentPosition());
+        await getValidMoves();
+        await updateMoveHistory();
+    }
+
+    async function undoMove() {
+        await ChessEndpoint.undoMove();
+        setCurrentFen(await getCurrentPosition());
+        await getValidMoves();
+        await updateMoveHistory();
+    }
+
+    async function resetGame() {
+        await ChessEndpoint.resetGame();
+        setCurrentFen(await getCurrentPosition());
+        setGameEnded("");
         await getValidMoves();
         await updateMoveHistory();
     }
@@ -129,41 +151,6 @@ function MainView() {
         }
     }
 
-    async function onCommandSubmit(command : string) {
-        if (command.startsWith("/")) {
-            console.log("Command is a command");
-            if (command == "/undo") {
-                await ChessEndpoint.undoMove();
-                setCurrentFen(await getCurrentPosition());
-                await getValidMoves();
-                await updateMoveHistory();
-            } else if (command.startsWith("/perft")) {
-                const depth = parseInt(command.split(" ")[1]);
-                if (depth > 4) {
-                    console.warn("Perft depth is too high.");
-                    Notification.show("Perft depth is too high.");
-                    return;
-                }
-                const result = await ChessEndpoint.playPerftTest(depth);
-                console.info("Perft result: ", result);
-                Notification.show("Perft result: " + result);
-            }
-        } else {
-            await ChessEndpoint.playMoveFromText(command);
-            setCurrentFen(await ChessEndpoint.getCurrentPosition());
-            await getValidMoves();
-            await updateMoveHistory();
-        }
-    }
-
-    function toggleShowBoard() {
-        setShowBoard(!showBoard);
-    }
-
-    function toggleShowPieces() {
-        setShowPieces(!showPieces);
-    }
-
     const pieces = [
         "wP",
         "wN",
@@ -200,82 +187,21 @@ function MainView() {
         <>
             <div className={styles.game_container}>
                 <div className={styles.board_parent}>
-                    <div className={showBoard ? styles.board : styles.board_hidden}>
+                    <div id="board" className={showBoard ? styles.board : styles.board_hidden}>
                         <Chessboard id="MainBoard" arePremovesAllowed={true} boardOrientation={"black"}
                                     position={currentFen} onPieceDrop={onDrop} customPieces={showPieces ? null : customPieces}/>
                     </div>
                 </div>
                 <div className={showBoard ? styles.game_info : styles.game_info_extended}>
-                    <div className={styles.target_square}>
-                        e4
-                    </div>
-                    <div className={styles.move_history}>
-                        <div className={styles.moves}>
-                            <div className={styles.white_moves}>
-                                {moveHistory.map((move, index) => {
-                                    const moveNumber = Math.floor(index / 2) + 1;
-                                    if (index % 2 == 0) {
-                                        return (<div id={moveNumber.toString()} key={index} className={styles.move}>{moveNumber}: {move}</div>)
-                                    } else return null;
-                                })}
-                            </div>
-                            <div className={styles.black_moves}>
-                                {moveHistory.map((move, index) => {
-                                    if (index % 2 != 0) {
-                                        return (<div key={index} className={styles.move}>{move}</div>)
-                                    } else return null;
-                                })}
-                            </div>
-                        </div>
-                    </div>
-                    <div className={styles.game_actions}>
-                        <div className={styles.command_line}>
-                            <CommandLine onCommandSubmit={onCommandSubmit} />
-                        </div>
-                        <div className={styles.game_actions_buttons}>
-                            <div className={styles.game_actions_group}>
-                                <Button className={styles.button} onClick={async () => {
-                                    await ChessEndpoint.resetGame();
-                                    setCurrentFen(await getCurrentPosition());
-                                    setGameEnded("");
-                                    await getValidMoves();
-                                    await updateMoveHistory();
-                                }}>Reset</Button>
-                                <Button className={styles.button} onClick={async () => {
-                                    await ChessEndpoint.undoMove();
-                                    setCurrentFen(await getCurrentPosition());
-                                    await getValidMoves();
-                                    await updateMoveHistory();
-                                }}>Undo</Button>
-                            </div>
-                            <Button className={styles.button} onClick={async () => {
-                                setSettingsDialogOpened(true);
-                            }}>Settings</Button>
-                        </div>
-                    </div>
+                    <GameInfoSideBar
+                        moveHistory={moveHistory}
+                        onResetGame={resetGame}
+                        onUndo={undoMove}
+                        onPlayFromText={playMoveFromText}
+                        onShowBoardChange={(show) => setShowBoard(show)}
+                        onShowPiecesChange={(show) => setShowPieces(show)}/>
                 </div>
             </div>
-            <Dialog
-                aria-label="System maintenance notice"
-                opened={settingsDialogOpened}
-                onOpenedChanged={(event) => {
-                    setSettingsDialogOpened(event.detail.value);
-                }}
-                header-title="User details"
-                headerRenderer={() => (
-                    <Button theme="tertiary" style={{fontWeight: "bolder"}} onClick={() => setSettingsDialogOpened(false)}>
-                        ×
-                    </Button>
-                )}>
-                <div className={styles.settings}>
-                    <div className={styles.settings_item}>
-                        <Checkbox label="Show board" checked={showBoard} onCheckedChanged={toggleShowBoard}></Checkbox>
-                    </div>
-                    <div className={styles.settings_item}>
-                        <Checkbox label="Show pieces" checked={showPieces} disabled={!showBoard} onCheckedChanged={toggleShowPieces}></Checkbox>
-                    </div>
-                </div>
-            </Dialog>
         </>
     );
 }

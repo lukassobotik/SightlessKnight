@@ -301,3 +301,10 @@ html {
         width: 20vw;
     }
 }
+
+
+
+/* Range Slider as a Single Thumb Slider */
+.range-slider__thumb[data-lower] {
+    width: 0;
+}

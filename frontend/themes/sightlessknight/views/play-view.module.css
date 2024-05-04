@@ -6,11 +6,16 @@
 }
 
 .board {
+    display: flex;
     width: 90vh;
+    height: 100%;
+    max-width: 90vh;
+    min-width: 40vh;
 }
 
 .board_hidden {
     display: none;
+    height: 100%;
 }
 
 .game_info {
@@ -92,8 +97,4 @@
 
 .game_actions_group:first-child vaadin-button{
     margin-right: .25rem;
-}
-
-.settings {
-    width: 25vw;
 }
