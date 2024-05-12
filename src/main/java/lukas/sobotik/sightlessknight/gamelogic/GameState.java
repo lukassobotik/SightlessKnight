@@ -90,7 +90,6 @@ public class GameState {
         selectedPieceLocation = move.getFrom();
 
         moveNumber++;
-        System.out.println("Move number: " + moveNumber);
         // Pawn Promotion
         if (isPawnPromotion(move) && (isTest || move.getPromotionPiece() != null)) {
             promotionLocation = move.getTo();

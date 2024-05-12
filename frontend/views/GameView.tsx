@@ -17,6 +17,7 @@ function GameView({train} : {train?: boolean}) {
     const [targetSquare, setTargetSquare] = useState<string>("");
     const [showBoard, setShowBoard] = useState<boolean>(true);
     const [showPieces, setShowPieces] = useState<boolean>(true);
+    const [boardOrientation, setBoardOrientation] = useState<"white" | "black">("white");
     let { id } = useParams<{ id: string }>();
     let navigate = useNavigate();
 
@@ -78,7 +79,10 @@ function GameView({train} : {train?: boolean}) {
     async function showTargetSquare() {
         const startSquare = await ChessEndpoint.getStartSquare();
         const targetSquare = await ChessEndpoint.getTargetSquare();
-        setTargetSquare(startSquare.algebraicNotationLocation + " → " + targetSquare.algebraicNotationLocation);
+        if (startSquare == null || targetSquare == null) {
+            return;
+        }
+        setTargetSquare(startSquare?.algebraicNotationLocation + " → " + targetSquare?.algebraicNotationLocation);
     }
 
     async function undoMove() {
@@ -204,7 +208,7 @@ function GameView({train} : {train?: boolean}) {
             <div className={styles.game_container}>
                 <div className={styles.board_parent}>
                     <div id="board" className={showBoard ? styles.board : styles.board_hidden}>
-                        <Chessboard id="MainBoard" arePremovesAllowed={!id} boardOrientation={"black"}
+                        <Chessboard id="MainBoard" arePremovesAllowed={!id} boardOrientation={boardOrientation}
                                     position={currentFen} onPieceDrop={onDrop}
                                     customPieces={showPieces ? null : customPieces}/>
                     </div>
