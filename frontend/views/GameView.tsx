@@ -6,7 +6,7 @@ import styles from "../themes/sightlessknight/views/play-view.module.css"
 import Move from "Frontend/generated/lukas/sobotik/sightlessknight/gamelogic/Move";
 import PieceType from "Frontend/generated/lukas/sobotik/sightlessknight/gamelogic/entity/PieceType";
 import GameInfoSideBar from "Frontend/themes/components/GameInfoSideBar";
-import {useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 
 function GameView({train} : {train?: boolean}) {
     const [fetchedData, setFetchedData] = useState<boolean>(false);
@@ -17,8 +17,16 @@ function GameView({train} : {train?: boolean}) {
     const [targetSquare, setTargetSquare] = useState<string>("");
     const [showBoard, setShowBoard] = useState<boolean>(true);
     const [showPieces, setShowPieces] = useState<boolean>(true);
+    let { id } = useParams<{ id: string }>();
+    let navigate = useNavigate();
 
-    const { id } = useParams<{ id: string }>();
+    useEffect(() => {
+        if (!train) return;
+        if (id !== "king" && id !== "rook" && id !== "knight" && id !== "bishop" && id !== "queen") {
+            id = null;
+            navigate("/train");
+        }
+    }, [id]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -61,7 +69,7 @@ function GameView({train} : {train?: boolean}) {
 
     async function playMoveFromText(move : string) {
         await ChessEndpoint.playMoveFromText(move);
-        setCurrentFen(await ChessEndpoint.getCurrentPosition());
+        await setCurrentPosition();
         await getValidMoves();
         await updateMoveHistory();
         await showTargetSquare();
@@ -185,12 +193,18 @@ function GameView({train} : {train?: boolean}) {
         return pieceComponents;
     }, []);
 
+    if (!fetchedData) {
+        return (
+            <div>Loading...</div>
+        );
+    }
+
     return (
         <>
             <div className={styles.game_container}>
                 <div className={styles.board_parent}>
                     <div id="board" className={showBoard ? styles.board : styles.board_hidden}>
-                        <Chessboard id="MainBoard" arePremovesAllowed={true} boardOrientation={"black"}
+                        <Chessboard id="MainBoard" arePremovesAllowed={!id} boardOrientation={"black"}
                                     position={currentFen} onPieceDrop={onDrop}
                                     customPieces={showPieces ? null : customPieces}/>
                     </div>

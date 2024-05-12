@@ -20,6 +20,7 @@
     "@polymer/polymer": "3.5.1",
     "@types/react": "18.2.37",
     "@types/react-dom": "18.2.15",
+    "@types/react-router-dom": "^5.3.3",
     "@vaadin-component-factory/vcf-nav": "1.1.0",
     "@vaadin/a11y-base": "24.3.11",
     "@vaadin/accordion": "24.3.11",
@@ -100,7 +101,7 @@
     "react-chessboard": "^4.5.0",
     "react-dom": "^18.2.0",
     "react-range-slider-input": "^3.0.7",
-    "react-router-dom": "6.18.0"
+    "react-router-dom": "^6.23.1"
   },
   "devDependencies": {
     "@lit-labs/react": "^1.1.0",
@@ -221,7 +222,8 @@
     "@vaadin/vaadin-usage-statistics": "$@vaadin/vaadin-usage-statistics",
     "@vaadin/vaadin-themable-mixin": "$@vaadin/vaadin-themable-mixin",
     "react-chessboard": "$react-chessboard",
-    "react-range-slider-input": "$react-range-slider-input"
+    "react-range-slider-input": "$react-range-slider-input",
+    "@types/react-router-dom": "$@types/react-router-dom"
   },
   "vaadin": {
     "dependencies": {
@@ -338,6 +340,6 @@
       "workbox-core": "7.0.0",
       "workbox-precaching": "7.0.0"
     },
-    "hash": "6b5a190953871abd738fc2fef6578a76ccb041c0f1a77ee61a49191af191c658"
+    "hash": "77a0ef1e57a33941bbc7c7494134948dd28ae820ed2b06cfe4c2c23c26878572"
   }
 }

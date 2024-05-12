@@ -58,7 +58,9 @@ public class GameState {
         if (destination != null) {
             board.movePiece(new Move(selectedPieceLocation, destination));
         }
-        currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
+        if (!kinglessGame) {
+            currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
+        }
     }
 
     /**
@@ -72,7 +74,9 @@ public class GameState {
         if (move.getFrom() != null && move.getTo() != null) {
             board.movePiece(move);
         }
-        currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
+        if (!kinglessGame) {
+            currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
+        }
     }
 
     /**
@@ -86,6 +90,7 @@ public class GameState {
         selectedPieceLocation = move.getFrom();
 
         moveNumber++;
+        System.out.println("Move number: " + moveNumber);
         // Pawn Promotion
         if (isPawnPromotion(move) && (isTest || move.getPromotionPiece() != null)) {
             promotionLocation = move.getTo();

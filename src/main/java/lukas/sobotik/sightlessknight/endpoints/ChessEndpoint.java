@@ -64,9 +64,9 @@ public class ChessEndpoint {
     }
 
     public void initializeGame(boolean kinglessGame) {
-        gameState = new GameState(board, fenUtils.getStartingTeam(), kinglessGame); // TODO: Implement kingless games
+        gameState = new GameState(board, fenUtils.getStartingTeam(), kinglessGame);
         algebraicNotationUtils = new AlgebraicNotationUtils(fenUtils, gameState, board);
-        algebraicNotationUtils.setKinglessGame(kinglessGame); // TODO: Implement kingless games
+        algebraicNotationUtils.setKinglessGame(kinglessGame);
         validMovesForPosition = Rules.getAllValidMovesForTeam(GameState.currentTurn, board, true);
     }
 
@@ -80,6 +80,8 @@ public class ChessEndpoint {
      */
     public void playMove(Move move) {
         updateGameStateAndBoard(move);
+
+        System.out.println("current turn: " + GameState.currentTurn);
 
         if (GameState.isPawnPromotionPending) {
 //            handlePawnPromotion(move);
@@ -169,7 +171,6 @@ public class ChessEndpoint {
             gameState.playMove(move, false);
             board = gameState.getBoard();
             printBoard(board.pieces);
-//            createBoard(board.pieces);
         }
     }
 
