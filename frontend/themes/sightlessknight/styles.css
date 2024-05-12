@@ -1,4 +1,4 @@
-@import url('./main-layout.css');
+@import url('main-layout.module.css');
 
 html {
     --lumo-border-radius-s: calc(var(--lumo-size-m) / 6);

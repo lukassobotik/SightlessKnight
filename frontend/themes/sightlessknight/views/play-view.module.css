@@ -1,8 +1,10 @@
 .game_container {
-    width: 100vw;
+    width: 100%;
     height: 90vh;
     display: flex;
     justify-content: center;
+    overflow: hidden;
+    position: relative;
 }
 
 .board {
@@ -22,9 +24,10 @@
     display: flex;
     position: relative;
     flex-direction: column;
-    width: 40vh;
+    width: 50vh;
     height: 100%;
     background: var(--lumo-dark-color);
+    border-radius: var(--lumo-border-radius-m);
     margin-left: 2rem;
 }
 
@@ -35,66 +38,4 @@
     width: 60vw;
     height: 100%;
     background: var(--lumo-dark-color);
-}
-
-.target_square {
-    text-align: center;
-    padding: 1rem;
-    margin-top: 0;
-    margin-bottom: 0;
-    color: #90bdf9;
-    background: #1a2a41;
-    border-radius: .5rem;
-    font-weight: bold;
-    font-size: 2rem;
-}
-
-.move_history {
-    display: flex;
-    height: 100%;
-    overflow: scroll;
-    scrollbar-width: none;
-}
-
-.move_history::-webkit-scrollbar {
-    display: none;
-}
-
-.moves {
-    display: flex;
-    width: 100%;
-    margin-top: 1rem;
-    padding: 1rem;
-    background: var(--lumo-dark-color);
-    border-radius: .5rem;
-}
-
-.white_moves {
-
-}
-
-.black_moves {
-    margin-left: 4rem;
-}
-
-.game_actions {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    margin-top: 1rem;
-    padding: 1rem;
-}
-
-.game_actions_buttons {
-    display: flex;
-    justify-content: space-between;
-}
-
-.game_actions_group {
-    display: flex;
-    justify-content: space-between;
-}
-
-.game_actions_group:first-child vaadin-button{
-    margin-right: .25rem;
 }

@@ -1,4 +1,4 @@
-import styles from "Frontend/themes/sightlessknight/views/play-view.module.css";
+import styles from "Frontend/themes/sightlessknight/components/game-sidebar.module.css";
 import CommandLine from "Frontend/themes/components/CommandLine";
 import {Button} from "@hilla/react-components/Button";
 import {ChessEndpoint} from "Frontend/generated/endpoints";
@@ -7,13 +7,14 @@ import {Notification} from "@hilla/react-components/Notification";
 import QuickSettingsDialog from "Frontend/themes/components/QuickSettingsDialog";
 
 
-export default function GameInfoSideBar({moveHistory, onResetGame, onUndo, onPlayFromText, onShowBoardChange, onShowPiecesChange}: {
+export default function GameInfoSideBar({moveHistory, onResetGame, onUndo, onPlayFromText, onShowBoardChange, onShowPiecesChange, targetSquare}: {
     moveHistory: string[],
     onResetGame: () => void,
     onUndo: () => void,
     onPlayFromText: (move: string) => void
     onShowBoardChange: (show: boolean) => void,
-    onShowPiecesChange: (show: boolean) => void
+    onShowPiecesChange: (show: boolean) => void,
+    targetSquare: string
 }) {
     const [settingsDialogOpened, setSettingsDialogOpened] = useState<boolean>(false);
 
@@ -40,9 +41,9 @@ export default function GameInfoSideBar({moveHistory, onResetGame, onUndo, onPla
 
     return (
         <>
-            <div className={styles.target_square}>
-                e4
-            </div>
+            {targetSquare ? <div className={styles.target_square}>
+                {targetSquare}
+            </div> : null}
             <div className={styles.move_history}>
                 <div className={styles.moves}>
                     <div className={styles.white_moves}>

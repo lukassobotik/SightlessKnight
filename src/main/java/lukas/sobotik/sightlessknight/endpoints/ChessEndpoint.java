@@ -42,20 +42,36 @@ public class ChessEndpoint {
      * Initializes the game board and pieces.
      * This method is called internally when starting a new game.
      */
-    public void initialize() {
-        Piece[] pieces = new Piece[64];
-        fenUtils = new FenUtils(pieces);
-        pieces = fenUtils.generatePositionFromFEN(STARTING_POSITION);
-        board = new Board(64, pieces, fenUtils);
+    public void initializeBoard(String piece) {
+        try {
+            if (piece != null && !piece.isEmpty()) {
+                isTrainingMode = true;
+                trainingPiece = new Piece(GameState.currentTurn, getPieceTypeFromString(piece));
+                generatePieceTrainingGame(trainingPiece);
+                initializeGame(true);
+                return;
+            }
 
-        gameState = new GameState(board, fenUtils.getStartingTeam(), false); // TODO: Implement kingless games
+            Piece[] pieces = new Piece[64];
+            fenUtils = new FenUtils(pieces);
+            pieces = fenUtils.generatePositionFromFEN(STARTING_POSITION);
+            board = new Board(64, pieces, fenUtils);
+
+            initializeGame(false);
+        } catch (Exception e) {
+            System.err.println("Error initializing board: " + e.getMessage());
+        }
+    }
+
+    public void initializeGame(boolean kinglessGame) {
+        gameState = new GameState(board, fenUtils.getStartingTeam(), kinglessGame); // TODO: Implement kingless games
         algebraicNotationUtils = new AlgebraicNotationUtils(fenUtils, gameState, board);
-        algebraicNotationUtils.setKinglessGame(false); // TODO: Implement kingless games
+        algebraicNotationUtils.setKinglessGame(kinglessGame); // TODO: Implement kingless games
         validMovesForPosition = Rules.getAllValidMovesForTeam(GameState.currentTurn, board, true);
     }
 
     public void resetGame() {
-        initialize();
+        initializeBoard(null);
     }
 
     /**
@@ -71,7 +87,7 @@ public class ChessEndpoint {
 //            getAlgebraicNotation();
         }
 
-//        managePieceMoveDrills();
+        managePieceMoveDrills();
         updateValidMovesList();
     }
 
@@ -126,6 +142,22 @@ public class ChessEndpoint {
      */
     public List<Move> getValidMovesForPosition() {
         return validMovesForPosition;
+    }
+
+    /**
+     * Get the target square of the piece for piece move drills.
+     * @return the target square of the piece for piece move drills.
+     */
+    public BoardLocation getTargetSquare() {
+        return targetSquare;
+    }
+
+    /**
+     * Get the start square of the piece for piece move drills.
+     * @return the start square of the piece for piece move drills.
+     */
+    public BoardLocation getStartSquare() {
+        return startSquare;
     }
 
     /**
@@ -211,6 +243,27 @@ public class ChessEndpoint {
             case "k" -> url = "images/sprites/b_king.svg";
         }
         return url;
+    }
+
+    private PieceType getPieceTypeFromString(String piece) {
+        String formattedPiece = piece.toUpperCase();
+        try {
+            return PieceType.valueOf(formattedPiece);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Invalid piece type: " + formattedPiece);
+            return null;
+        }
+    }
+
+    /**
+     * Manages piece move drills.
+     * If there is a target square and the piece for kingless games is on that square,
+     * it generates a knight game, creates the game board, and shows the target square.
+     */
+    private void managePieceMoveDrills() {
+        if (targetSquare != null && Rules.isPieceOnSquare(pieceForKinglessGames, targetSquare, board)) {
+            generatePieceTrainingGame(trainingPiece);
+        }
     }
 
     /**

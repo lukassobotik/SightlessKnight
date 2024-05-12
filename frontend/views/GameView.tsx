@@ -6,28 +6,34 @@ import styles from "../themes/sightlessknight/views/play-view.module.css"
 import Move from "Frontend/generated/lukas/sobotik/sightlessknight/gamelogic/Move";
 import PieceType from "Frontend/generated/lukas/sobotik/sightlessknight/gamelogic/entity/PieceType";
 import GameInfoSideBar from "Frontend/themes/components/GameInfoSideBar";
+import {useParams} from "react-router-dom";
 
-function MainView() {
+function GameView({train} : {train?: boolean}) {
     const [fetchedData, setFetchedData] = useState<boolean>(false);
     const [currentFen, setCurrentFen] = useState("");
     const [validMoves, setValidMoves] = useState<Move[]>([]);
     const [gameEnded, setGameEnded] = useState("");
     const [moveHistory, setMoveHistory] = useState<string[]>([]);
+    const [targetSquare, setTargetSquare] = useState<string>("");
     const [showBoard, setShowBoard] = useState<boolean>(true);
     const [showPieces, setShowPieces] = useState<boolean>(true);
 
+    const { id } = useParams<{ id: string }>();
+
     useEffect(() => {
         const fetchData = async () => {
-            await ChessEndpoint.initialize();
+            await ChessEndpoint.initializeBoard(id ? id : null);
             await ChessEndpoint.printBoard();
             await setCurrentPosition();
             await getValidMoves();
+            await showTargetSquare();
             localStorage.getItem('showBoard') ? setShowBoard(localStorage.getItem('showBoard') == "true") : setShowBoard(true);
             localStorage.getItem('showPieces') ? setShowPieces(localStorage.getItem('showPieces') == "true") : setShowPieces(true);
         };
         fetchData().then(() => {
             console.info("Game initialized successfully.");
             setFetchedData(true);
+            console.warn("id: ", id);
         });
     }, []);
 
@@ -50,6 +56,7 @@ function MainView() {
         await setCurrentPosition();
         await getValidMoves();
         await updateMoveHistory();
+        await showTargetSquare();
     }
 
     async function playMoveFromText(move : string) {
@@ -57,6 +64,13 @@ function MainView() {
         setCurrentFen(await ChessEndpoint.getCurrentPosition());
         await getValidMoves();
         await updateMoveHistory();
+        await showTargetSquare();
+    }
+
+    async function showTargetSquare() {
+        const startSquare = await ChessEndpoint.getStartSquare();
+        const targetSquare = await ChessEndpoint.getTargetSquare();
+        setTargetSquare(startSquare.algebraicNotationLocation + " → " + targetSquare.algebraicNotationLocation);
     }
 
     async function undoMove() {
@@ -79,21 +93,9 @@ function MainView() {
         setMoveHistory(moves);
     }
 
-    function doesMoveEqual(move1 : Move, move2 : any) {
-        return move1.from.algebraicNotationLocation == move2.from && move1.to.algebraicNotationLocation == move2.to;
-    }
-
-    function algebraicToRankFile(notation: string): { x: number; y: number } {
-        const fileIndex = notation.charCodeAt(0) - 'a'.charCodeAt(0);
-
-        const rankIndex = 8 - parseInt(notation.charAt(1));
-
-        return { x: fileIndex, y: rankIndex };
-    }
-
     function findValidMove(move : any) {
         for (let validMove of validMoves) {
-            if (doesMoveEqual(validMove, move)) {
+            if (validMove.from.algebraicNotationLocation == move.from && validMove.to.algebraicNotationLocation == move.to) {
                 if (validMove.to.y == 0 && validMove.movedPiece.type == "PAWN" || validMove.to.y == 7 && validMove.movedPiece.type == "PAWN") {
                     console.log("Promotion move", getPromotionPiece(move.promotion));
                     validMove.promotionPiece = getPromotionPiece(move.promotion);
@@ -189,7 +191,8 @@ function MainView() {
                 <div className={styles.board_parent}>
                     <div id="board" className={showBoard ? styles.board : styles.board_hidden}>
                         <Chessboard id="MainBoard" arePremovesAllowed={true} boardOrientation={"black"}
-                                    position={currentFen} onPieceDrop={onDrop} customPieces={showPieces ? null : customPieces}/>
+                                    position={currentFen} onPieceDrop={onDrop}
+                                    customPieces={showPieces ? null : customPieces}/>
                     </div>
                 </div>
                 <div className={showBoard ? styles.game_info : styles.game_info_extended}>
@@ -199,11 +202,12 @@ function MainView() {
                         onUndo={undoMove}
                         onPlayFromText={playMoveFromText}
                         onShowBoardChange={(show) => setShowBoard(show)}
-                        onShowPiecesChange={(show) => setShowPieces(show)}/>
+                        onShowPiecesChange={(show) => setShowPieces(show)}
+                        targetSquare={targetSquare} />
                 </div>
             </div>
         </>
     );
 }
 
-export default MainView;
+export default GameView;
