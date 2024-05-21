@@ -42,7 +42,6 @@ function GameView({train} : {train?: boolean}) {
         fetchData().then(() => {
             console.info("Game initialized successfully.");
             setFetchedData(true);
-            console.warn("id: ", id);
         });
     }, []);
 
@@ -64,7 +63,6 @@ function GameView({train} : {train?: boolean}) {
     }
 
     async function playMove(move: Move | string) {
-        console.log("Playing move...", currentFen);
         if (typeof move === 'string') {
             await ChessEndpoint.playMoveFromText(move);
         } else {
