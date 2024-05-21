@@ -32,10 +32,7 @@ function GameView({train} : {train?: boolean}) {
     useEffect(() => {
         const fetchData = async () => {
             await ChessEndpoint.initializeBoard(id ? id : null);
-            await ChessEndpoint.printBoard();
-            await setCurrentPosition();
-            await getValidMoves();
-            await showTargetSquare();
+            await afterMoveActions();
             localStorage.getItem('showBoard') ? setShowBoard(localStorage.getItem('showBoard') == "true") : setShowBoard(true);
             localStorage.getItem('showPieces') ? setShowPieces(localStorage.getItem('showPieces') == "true") : setShowPieces(true);
         };
@@ -45,20 +42,12 @@ function GameView({train} : {train?: boolean}) {
         });
     }, []);
 
-    async function getValidMoves() {
-        const moves = await ChessEndpoint.getValidMovesForPosition();
-        setValidMoves(moves);
-    }
-
-    async function setCurrentPosition() {
-        const pos = await ChessEndpoint.getCurrentPosition();
-        setCurrentFen(pos);
-    }
-
     async function afterMoveActions() {
-        await setCurrentPosition();
-        await getValidMoves();
-        await updateMoveHistory();
+        setCurrentFen(await ChessEndpoint.getCurrentPosition());
+        setValidMoves(await ChessEndpoint.getValidMovesForPosition());
+
+        // Update move history
+        setMoveHistory(await ChessEndpoint.getMoveHistory());
         await showTargetSquare();
     }
 
@@ -81,21 +70,15 @@ function GameView({train} : {train?: boolean}) {
     }
 
     async function undoMove() {
-        console.log("Undoing move...", currentFen);
+        console.info("Undoing move...", currentFen);
         await ChessEndpoint.undoMove();
         await afterMoveActions();
-        console.log("Move undone.", currentFen)
     }
 
     async function resetGame() {
         await ChessEndpoint.resetGame();
         await afterMoveActions();
         setGameEnded("");
-    }
-
-    async function updateMoveHistory() {
-        const moves = await ChessEndpoint.getMoveHistory();
-        setMoveHistory(moves);
     }
 
     function findValidMove(move : any) {
