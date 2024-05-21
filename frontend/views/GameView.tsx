@@ -56,24 +56,21 @@ function GameView({train} : {train?: boolean}) {
         setCurrentFen(pos);
     }
 
-    async function getCurrentPosition() {
-        return await ChessEndpoint.getCurrentPosition();
-    }
-
-    async function playMove(move : Move) {
-        await ChessEndpoint.playMove(move);
+    async function afterMoveActions() {
         await setCurrentPosition();
         await getValidMoves();
         await updateMoveHistory();
         await showTargetSquare();
     }
 
-    async function playMoveFromText(move : string) {
-        await ChessEndpoint.playMoveFromText(move);
-        await setCurrentPosition();
-        await getValidMoves();
-        await updateMoveHistory();
-        await showTargetSquare();
+    async function playMove(move: Move | string) {
+        console.log("Playing move...", currentFen);
+        if (typeof move === 'string') {
+            await ChessEndpoint.playMoveFromText(move);
+        } else {
+            await ChessEndpoint.playMove(move);
+        }
+        await afterMoveActions();
     }
 
     async function showTargetSquare() {
@@ -86,18 +83,16 @@ function GameView({train} : {train?: boolean}) {
     }
 
     async function undoMove() {
+        console.log("Undoing move...", currentFen);
         await ChessEndpoint.undoMove();
-        setCurrentFen(await getCurrentPosition());
-        await getValidMoves();
-        await updateMoveHistory();
+        await afterMoveActions();
+        console.log("Move undone.", currentFen)
     }
 
     async function resetGame() {
         await ChessEndpoint.resetGame();
-        setCurrentFen(await getCurrentPosition());
+        await afterMoveActions();
         setGameEnded("");
-        await getValidMoves();
-        await updateMoveHistory();
     }
 
     async function updateMoveHistory() {
@@ -218,7 +213,7 @@ function GameView({train} : {train?: boolean}) {
                         moveHistory={moveHistory}
                         onResetGame={resetGame}
                         onUndo={undoMove}
-                        onPlayFromText={playMoveFromText}
+                        onPlayFromText={playMove}
                         onShowBoardChange={(show) => setShowBoard(show)}
                         onShowPiecesChange={(show) => setShowPieces(show)}
                         targetSquare={targetSquare} />

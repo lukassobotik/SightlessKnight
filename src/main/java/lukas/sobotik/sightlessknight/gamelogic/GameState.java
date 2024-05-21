@@ -154,6 +154,7 @@ public class GameState {
         board.undoMove(move);
 
         currentTurn = (currentTurn == Team.WHITE) ? Team.BLACK : Team.WHITE;
+        System.out.println("Undoing move: " + move + " Move Number: " + moveNumber + " Current Turn: " + currentTurn);
     }
 
     /**

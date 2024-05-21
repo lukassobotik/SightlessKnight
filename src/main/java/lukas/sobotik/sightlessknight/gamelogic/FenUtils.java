@@ -140,7 +140,7 @@ public class FenUtils {
         }
 
         // Active color
-        fenBuilder.append(" ").append(GameState.currentTurn == Team.WHITE ? "b" : "w");
+        fenBuilder.append(" ").append(GameState.currentTurn == Team.WHITE ? "w" : "b");
 
         // Castling availability
         StringBuilder castlingAvailability = new StringBuilder();
