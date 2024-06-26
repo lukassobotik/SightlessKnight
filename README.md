@@ -4,7 +4,7 @@
 <h1 align="center">SightlessKnight</h1>
 <h3 align="center">Learn blindfolded chess easily!</h3>
 <p align="center">
-<a href="https://www.buymeacoffee.com/lukassobotik">Support Me</a> | <a href="https://www.lukassobotik.dev/project/SightlessKnight">Website</a> | <a href="https://github.com/lukassobotik/SightlessKnight/blob/master/LICENSE">License</a>
+<a href="https://sightlessknight.lukassobotik.dev/">Try it Out</a> | <a href="https://www.buymeacoffee.com/lukassobotik">Support Me</a> | <a href="https://www.lukassobotik.dev/project/SightlessKnight">Website</a> | <a href="https://github.com/lukassobotik/SightlessKnight/blob/master/LICENSE">License</a>
 </p>
 
 ### Overview
