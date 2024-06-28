@@ -8,7 +8,7 @@
 </p>
 
 ### Overview
-SightlessKnight is a free and open-source program that will help users learn blindfold chess or train visualization. The program is available on the web and will provide a variety of games and resources to help users learn at their own pace. It is a great tool for both beginners and experienced players who want to improve their blindfold chess skills.
+SightlessKnight is a free and open-source program that will help users learn blindfold chess or train visualization. The program is available on the web and will provide a variety of games and resources to help users learn at their own pace. It is a great tool for all levels of players who want to improve their blindfold chess skills.
 
 ### Credits
 - Chess Sprites: [By Cburnett - Own work, CC BY-SA 3.0](https://commons.wikimedia.org/w/index.php?curid=1499809)
